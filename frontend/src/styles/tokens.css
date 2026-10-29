@@ -1,0 +1,43 @@
+/* Design tokens. Palette is drawn from the subject: turquoise tilework (فیروزه‌ای),
+   deep lapis (لاجورد) and saffron gold (زعفرانی). Light by default, dark follows the OS. */
+:root {
+  --paper: #f1f5f5;
+  --paper-tint: #e5eded;
+  --surface: #ffffff;
+  --ink: #0d1c24;
+  --muted: #53656d;
+  --line: #c6d4d6;
+  --turquoise: #0e7c86;
+  --turquoise-strong: #0a5f68;
+  --on-turquoise: #ffffff;
+  --lapis: #13284f;
+  --on-lapis: #e9eef8;
+  --lapis-line: #34508a;
+  --saffron: #e8b53a;
+  --on-saffron: #2b1d00;
+  --ok: #17794a;
+  --bad: #b3261e;
+
+  --font: 'Vazirmatn Variable', 'Vazirmatn', Tahoma, system-ui, sans-serif;
+  --radius-panel: 20px;
+  --radius-item: 10px;
+  --container: 72rem;
+  --gutter: clamp(1rem, 4vw, 2rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0a1519;
+    --paper-tint: #0f1e24;
+    --surface: #12242b;
+    --ink: #e8f0f1;
+    --muted: #9db0b6;
+    --line: #28414a;
+    --turquoise: #3bb3bf;
+    --turquoise-strong: #6cd0da;
+    --on-turquoise: #04181b;
+    --lapis: #0f2147;
+    --ok: #4cc38a;
+    --bad: #ff8a80;
+  }
+}

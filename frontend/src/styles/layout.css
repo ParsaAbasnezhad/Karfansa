@@ -1,0 +1,132 @@
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.container--narrow {
+  max-width: 44rem;
+}
+
+.main {
+  min-height: 60vh;
+}
+
+/* Header */
+.site-header {
+  border-block-end: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 4.25rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.wordmark__mark {
+  width: 2rem;
+  height: 2rem;
+  color: var(--turquoise);
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.5rem;
+  margin-inline-start: auto;
+}
+
+.site-nav a {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.site-nav a:hover {
+  color: var(--turquoise-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.4em;
+}
+
+/* Server status (proof that the frontend reaches the backend) */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  line-height: 1.8;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.status__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.status--ok .status__dot {
+  background: var(--ok);
+}
+
+.status--error .status__dot {
+  background: var(--bad);
+}
+
+/* Sections */
+.section {
+  padding-block: clamp(3rem, 7vw, 5rem);
+}
+
+.section--tint {
+  background: var(--paper-tint);
+}
+
+.section__title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  line-height: 1.5;
+  margin-block-end: 1.5rem;
+}
+
+.notice {
+  margin-block: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-inline-start: 4px solid var(--saffron);
+  background: var(--surface);
+}
+
+/* Footer */
+.site-footer {
+  padding-block: 2rem;
+  border-block-start: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 40rem) {
+  .site-nav {
+    display: none;
+  }
+
+  .status {
+    margin-inline-start: auto;
+  }
+}
