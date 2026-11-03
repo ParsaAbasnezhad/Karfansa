@@ -1,60 +1,45 @@
-import { z } from 'zod'
-import { ApiError, apiGet } from './api-client'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ApiError, apiGet, apiPost, toQueryString } from './api-client'
 
-const schema = z.object({ status: z.literal('ok') })
-
-function mockFetch(response: Response | Error) {
-  const fn = vi.fn(() =>
-    response instanceof Error ? Promise.reject(response) : Promise.resolve(response),
-  )
-  vi.stubGlobal('fetch', fn)
-  return fn
-}
-
-afterEach(() => {
-  vi.unstubAllGlobals()
+describe('toQueryString', () => {
+  it('skips empty values and encodes the rest', () => {
+    expect(toQueryString({ q: 'دلار', type: undefined, limit: 6, x: '' })).toBe(
+      `?q=${encodeURIComponent('دلار')}&limit=6`,
+    )
+  })
+  it('returns an empty string when there is nothing to send', () => {
+    expect(toQueryString({})).toBe('')
+  })
 })
 
-describe('apiGet', () => {
-  it('returns validated data and calls the versioned API path', async () => {
-    const fetchMock = mockFetch(Response.json({ status: 'ok' }))
+describe('real API mode', () => {
+  afterEach(() => vi.unstubAllGlobals())
 
-    await expect(apiGet('/health/', schema)).resolves.toEqual({ status: 'ok' })
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/v1/health/',
-      expect.objectContaining({ credentials: 'same-origin' }),
-    )
+  const useFetch = (response: Partial<Response> & { json?: () => Promise<unknown> }) => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, ...response })
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    return fetchMock
+  }
+
+  it('GETs under /api with the query string', async () => {
+    const fetchMock = useFetch({ json: async () => ({ ok: 1 }) })
+    await expect(apiGet('/markets/', { limit: 4 })).resolves.toEqual({ ok: 1 })
+    expect(String(fetchMock.mock.calls[0]![0])).toBe('/api/markets/?limit=4')
   })
 
-  it('turns the backend error envelope into an ApiError', async () => {
-    mockFetch(
-      Response.json(
-        { error: { code: 'conflict', message: 'Name is taken.', details: [{ field: 'name' }] } },
-        { status: 409 },
-      ),
-    )
-
-    const error: unknown = await apiGet('/x/', schema).catch((e: unknown) => e)
-
-    expect(error).toBeInstanceOf(ApiError)
-    expect(error).toMatchObject({ status: 409, code: 'conflict', message: 'Name is taken.' })
+  it('throws ApiError with the status on failure', async () => {
+    useFetch({ ok: false, status: 500, json: async () => ({ detail: 'x' }) })
+    await expect(apiGet('/markets/')).rejects.toMatchObject({ name: 'ApiError', status: 500 })
+    await expect(apiGet('/markets/')).rejects.toBeInstanceOf(ApiError)
   })
 
-  it('handles non-JSON error responses such as proxy pages', async () => {
-    mockFetch(new Response('<html>Bad gateway</html>', { status: 502 }))
-
-    await expect(apiGet('/x/', schema)).rejects.toMatchObject({ status: 502, code: 'http_error' })
-  })
-
-  it('reports an unreachable server as network_error', async () => {
-    mockFetch(new TypeError('Failed to fetch'))
-
-    await expect(apiGet('/x/', schema)).rejects.toMatchObject({ status: 0, code: 'network_error' })
-  })
-
-  it('rejects data that does not match the schema', async () => {
-    mockFetch(Response.json({ status: 'weird' }))
-
-    await expect(apiGet('/x/', schema)).rejects.toMatchObject({ code: 'invalid_response' })
+  it('sends the CSRF token from the cookie on POST', async () => {
+    document.cookie = 'csrftoken=abc123'
+    const fetchMock = useFetch({ json: async () => ({ ok: true }) })
+    await apiPost('/newsletter/', { email: 'a@b.ir' })
+    const init = fetchMock.mock.calls[0]![1] as RequestInit
+    expect(init.method).toBe('POST')
+    expect((init.headers as Record<string, string>)['X-CSRFToken']).toBe('abc123')
   })
 })

@@ -1,23 +1,19 @@
-import { useHealth } from './health'
+import { useHealth, type HealthState } from './health'
 
+const LABELS: Record<HealthState, string> = {
+  checking: 'در حال بررسی سرویس',
+  ok: 'سرویس برقرار است',
+  degraded: 'سرویس با اختلال',
+  offline: 'سرویس در دسترس نیست',
+}
+
+/** Small status dot with a label, shown in the footer. */
 export function StatusChip() {
-  const { isPending, isError, data } = useHealth()
-
-  const state = isPending ? 'pending' : isError ? 'error' : 'ok'
-  const label = {
-    pending: 'در حال بررسی سرور',
-    ok: 'سرور متصل است',
-    error: 'سرور در دسترس نیست',
-  }[state]
-
+  const { state } = useHealth()
   return (
-    <p
-      className={`status status--${state}`}
-      role="status"
-      title={data ? `نسخه‌ی سرور ${data.version}` : undefined}
-    >
-      <span className="status__dot" aria-hidden="true" />
-      {label}
-    </p>
+    <span className={`status-chip is-${state}`} role="status">
+      <i aria-hidden="true" />
+      {LABELS[state]}
+    </span>
   )
 }

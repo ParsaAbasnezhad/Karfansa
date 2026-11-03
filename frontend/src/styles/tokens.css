@@ -1,43 +1,68 @@
-/* Design tokens. Palette is drawn from the subject: turquoise tilework (فیروزه‌ای),
-   deep lapis (لاجورد) and saffron gold (زعفرانی). Light by default, dark follows the OS. */
+/* Design tokens: colors, shadows, fonts. Light values on :root, dark values for system dark mode and for [data-theme=dark]. */
 :root {
-  --paper: #f1f5f5;
-  --paper-tint: #e5eded;
+  --navy: #0b1655;
+  --navy-2: #122072;
+  --blue: #1d4ed8;
+  --blue-soft: #e8eefc;
+  --bg: #f3f5fb;
   --surface: #ffffff;
-  --ink: #0d1c24;
-  --muted: #53656d;
-  --line: #c6d4d6;
-  --turquoise: #0e7c86;
-  --turquoise-strong: #0a5f68;
-  --on-turquoise: #ffffff;
-  --lapis: #13284f;
-  --on-lapis: #e9eef8;
-  --lapis-line: #34508a;
-  --saffron: #e8b53a;
-  --on-saffron: #2b1d00;
-  --ok: #17794a;
-  --bad: #b3261e;
-
-  --font: 'Vazirmatn Variable', 'Vazirmatn', Tahoma, system-ui, sans-serif;
-  --radius-panel: 20px;
-  --radius-item: 10px;
-  --container: 72rem;
-  --gutter: clamp(1rem, 4vw, 2rem);
+  --surface-2: #f6f8fd;
+  --line: #e3e8f3;
+  --fg: #101a3d;
+  --muted: #6b7794;
+  --red: #d6282f;
+  --up: #13935b;
+  --up-bg: #e3f6ec;
+  --down: #d6282f;
+  --down-bg: #fde8e9;
+  --shadow: 0 1px 2px rgba(15, 28, 90, 0.05), 0 8px 24px rgba(15, 28, 90, 0.06);
+  --logo-bg: transparent;
+  --chip: #f0f3fa;
+  --font: 'Vazirmatn Variable', 'Vazirmatn', Tahoma, 'Segoe UI', sans-serif;
+  --latin: 'Montserrat', 'Vazirmatn', sans-serif;
+  --r: 16px;
 }
-
 @media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0a1519;
-    --paper-tint: #0f1e24;
-    --surface: #12242b;
-    --ink: #e8f0f1;
-    --muted: #9db0b6;
-    --line: #28414a;
-    --turquoise: #3bb3bf;
-    --turquoise-strong: #6cd0da;
-    --on-turquoise: #04181b;
-    --lapis: #0f2147;
-    --ok: #4cc38a;
-    --bad: #ff8a80;
+  :root:not([data-theme='light']) {
+    --navy: #060d33;
+    --navy-2: #0d1750;
+    --blue: #5b8bff;
+    --blue-soft: #17235f;
+    --bg: #0a1033;
+    --surface: #101847;
+    --surface-2: #0d1440;
+    --line: #1f2b66;
+    --fg: #e9edff;
+    --muted: #9aa6d0;
+    --red: #ff6b72;
+    --up: #3fd391;
+    --up-bg: #0f3a2c;
+    --down: #ff6b72;
+    --down-bg: #3d1620;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+    --logo-bg: #fff;
+    --chip: #17215a;
+    color-scheme: dark;
   }
+}
+:root[data-theme='dark'] {
+  --navy: #060d33;
+  --navy-2: #0d1750;
+  --blue: #5b8bff;
+  --blue-soft: #17235f;
+  --bg: #0a1033;
+  --surface: #101847;
+  --surface-2: #0d1440;
+  --line: #1f2b66;
+  --fg: #e9edff;
+  --muted: #9aa6d0;
+  --red: #ff6b72;
+  --up: #3fd391;
+  --up-bg: #0f3a2c;
+  --down: #ff6b72;
+  --down-bg: #3d1620;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --logo-bg: #fff;
+  --chip: #17215a;
+  color-scheme: dark;
 }

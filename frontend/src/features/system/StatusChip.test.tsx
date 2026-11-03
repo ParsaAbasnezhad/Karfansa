@@ -1,22 +1,19 @@
 import { screen } from '@testing-library/react'
-import { mockHealth, renderApp } from '@/test/render'
-
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
+import { describe, expect, it, vi } from 'vitest'
+import { renderWithProviders } from '@/test/render'
+import { StatusChip } from './StatusChip'
 
 describe('StatusChip', () => {
-  it('shows that the server is connected when the health check succeeds', async () => {
-    mockHealth(true)
-    renderApp()
-
-    expect(await screen.findByText('سرور متصل است')).toBeInTheDocument()
+  it('shows ok when the API answers ok', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'true')
+    renderWithProviders(<StatusChip />)
+    expect(await screen.findByText('سرویس برقرار است')).toBeInTheDocument()
   })
 
-  it('shows that the server is unavailable when the health check fails', async () => {
-    mockHealth(false)
-    renderApp()
-
-    expect(await screen.findByText('سرور در دسترس نیست')).toBeInTheDocument()
+  it('shows offline when the request fails', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
+    renderWithProviders(<StatusChip />)
+    expect(await screen.findByText('سرویس در دسترس نیست')).toBeInTheDocument()
   })
 })

@@ -1,10 +1,10 @@
-import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from '@/components/layout/RootLayout'
 import { HomePage } from '@/features/home/HomePage'
 import { NotFoundPage } from '@/features/search/NotFoundPage'
 import { SearchPage } from '@/features/search/SearchPage'
 
-export const routes: RouteObject[] = [
+export const routes = [
   {
     path: '/',
     element: <RootLayout />,
@@ -16,6 +16,4 @@ export const routes: RouteObject[] = [
   },
 ]
 
-export const createAppRouter = () => createBrowserRouter(routes)
-export const createTestRouter = (initialEntries: string[]) =>
-  createMemoryRouter(routes, { initialEntries })
+export const router = createBrowserRouter(routes)

@@ -1,76 +1,81 @@
-import { z } from 'zod'
+// Thin fetch wrapper for the Django API.
+// - Base path from VITE_API_BASE (default /api).
+// - Sends Django's CSRF token on POST.
+// - With VITE_USE_MOCK=true it answers from built-in sample data instead (no backend needed).
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1'
-
-const errorEnvelope = z.object({
-  error: z.object({
-    code: z.string(),
-    message: z.string(),
-    details: z.array(z.record(z.string(), z.unknown())).nullish(),
-  }),
-})
-
-/** Every failure of an API call is an ApiError, so callers handle one shape. */
 export class ApiError extends Error {
   readonly status: number
-  readonly code: string
-  readonly details: readonly Record<string, unknown>[] | null
+  readonly body: unknown
 
-  constructor(
-    status: number,
-    code: string,
-    message: string,
-    details: readonly Record<string, unknown>[] | null = null,
-  ) {
-    super(message)
+  constructor(status: number, body?: unknown) {
+    super(`API error ${status}`)
     this.name = 'ApiError'
     this.status = status
-    this.code = code
-    this.details = details
+    this.body = body
   }
 }
 
-async function toApiError(response: Response): Promise<ApiError> {
-  try {
-    const parsed = errorEnvelope.safeParse(await response.json())
-    if (parsed.success) {
-      const { code, message, details } = parsed.data.error
-      return new ApiError(response.status, code, message, details ?? null)
-    }
-  } catch {
-    // Not JSON (for example a proxy error page): fall through to the generic error.
+export type QueryParams = Record<string, string | number | boolean | undefined | null>
+
+const apiBase = (): string => String(import.meta.env.VITE_API_BASE ?? '/api').replace(/\/$/, '')
+
+export const isMockMode = (): boolean =>
+  String(import.meta.env.VITE_USE_MOCK ?? (import.meta.env.DEV ? 'true' : 'false')) === 'true'
+
+export function toQueryString(params?: QueryParams): string {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value !== undefined && value !== null && value !== '') search.set(key, String(value))
   }
-  return new ApiError(
-    response.status,
-    'http_error',
-    `Request failed with status ${response.status}.`,
-  )
+  const text = search.toString()
+  return text ? `?${text}` : ''
 }
 
-/** GET a JSON endpoint and validate the response with a zod schema. */
+/** Django sets the csrftoken cookie; POST requests must send it back in X-CSRFToken. */
+function csrfToken(): string {
+  const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)
+  return match?.[1] ? decodeURIComponent(match[1]) : ''
+}
+
 export async function apiGet<T>(
   path: string,
-  schema: z.ZodType<T>,
-  options: { signal?: AbortSignal } = {},
+  params?: QueryParams,
+  signal?: AbortSignal,
 ): Promise<T> {
-  let response: Response
+  if (isMockMode()) {
+    const { mockGet } = await import('./mock-api')
+    return mockGet<T>(path, params)
+  }
+  const res = await fetch(`${apiBase()}${path}${toQueryString(params)}`, {
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+  return (await res.json()) as T
+}
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  if (isMockMode()) {
+    const { mockPost } = await import('./mock-api')
+    return mockPost<T>(path, body)
+  }
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-CSRFToken': csrfToken(),
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  })
+  let data: unknown = null
   try {
-    response = await fetch(`${API_BASE}${path}`, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      signal: options.signal ?? null,
-    })
-  } catch (cause) {
-    if (cause instanceof DOMException && cause.name === 'AbortError') throw cause
-    throw new ApiError(0, 'network_error', 'The server could not be reached.')
+    data = await res.json()
+  } catch {
+    // empty or non-JSON body
   }
-
-  if (!response.ok) throw await toApiError(response)
-
-  const parsed = schema.safeParse(await response.json())
-  if (!parsed.success) {
-    throw new ApiError(response.status, 'invalid_response', 'The server returned unexpected data.')
-  }
-  return parsed.data
+  if (!res.ok) throw new ApiError(res.status, data)
+  return data as T
 }

@@ -7,6 +7,7 @@ each app's ``services`` modules.
 from django.conf import settings
 from ninja import NinjaAPI
 
+from apps.accounts.api import router as accounts_router
 from apps.core.api import router as core_router
 from apps.core.errors import register_exception_handlers
 
@@ -21,3 +22,4 @@ api = NinjaAPI(
 register_exception_handlers(api)
 
 api.add_router("/health", core_router, tags=["system"])
+api.add_router("/auth", accounts_router, tags=["authentication"])

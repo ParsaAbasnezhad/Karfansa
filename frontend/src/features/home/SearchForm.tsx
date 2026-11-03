@@ -1,38 +1,62 @@
-import { useState, type SubmitEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useToast } from '@/components/toast-context'
+import { Icon } from './icons'
 
-export function SearchForm({ initialQuery = '' }: { initialQuery?: string }) {
-  const [query, setQuery] = useState(initialQuery)
+interface Props {
+  /** "masthead" is the large desktop search box, "drawer" the one inside the mobile menu. */
+  variant: 'masthead' | 'drawer'
+  /** Called after a search was submitted (the drawer uses it to close). */
+  onDone?: () => void
+}
+
+export function SearchForm({ variant, onDone }: Props) {
   const navigate = useNavigate()
+  const toast = useToast()
+  const [params] = useSearchParams()
+  const [text, setText] = useState(params.get('q') ?? '')
 
-  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const trimmed = query.trim()
-    if (!trimmed) return
-    void navigate(`/search?q=${encodeURIComponent(trimmed)}`)
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = text.trim()
+    if (!q) {
+      toast('عبارتی برای جستجو وارد کنید.')
+      return
+    }
+    navigate(`/search?q=${encodeURIComponent(q)}`)
+    onDone?.()
+  }
+
+  if (variant === 'drawer') {
+    return (
+      <form className="dsearch" role="search" onSubmit={submit}>
+        <Icon name="search" />
+        <input
+          id="dq"
+          type="search"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="جستجو در اخبار و شرکت‌ها..."
+          aria-label="جستجو"
+        />
+      </form>
+    )
   }
 
   return (
-    <form className="search-form" role="search" onSubmit={handleSubmit}>
-      <label className="visually-hidden" htmlFor="product-query">
-        نام محصول
-      </label>
+    <form className="search" role="search" onSubmit={submit}>
+      <Icon name="search" />
       <input
-        id="product-query"
-        className="search-form__input"
+        id="q"
         type="search"
-        name="q"
-        value={query}
-        onChange={(event) => {
-          setQuery(event.target.value)
-        }}
-        placeholder="نام محصول، مثلاً زعفران"
-        autoComplete="off"
-        maxLength={100}
-        required
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="جستجو در اخبار، شرکت‌ها و نمادهای بورسی..."
+        aria-label="جستجو"
       />
-      <button className="search-form__button" type="submit">
-        جست‌وجو
+      <kbd>/</kbd>
+      <button className="go" type="submit" aria-label="جستجو">
+        <Icon name="arrow-l" />
       </button>
     </form>
   )

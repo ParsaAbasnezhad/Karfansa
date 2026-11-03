@@ -16,6 +16,7 @@ SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 # Container health checks call the app over plain HTTP; they must not be redirected.
 SECURE_REDIRECT_EXEMPT = [r"^api/v1/health/"]
 CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
 
 # Start low and raise via env once HTTPS is verified end to end.
