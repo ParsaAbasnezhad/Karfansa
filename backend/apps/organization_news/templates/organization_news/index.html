@@ -1,0 +1,3 @@
+<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><title>اخبار شرکت‌ها</title><body><h1>اخبار شرکت‌ها</h1>
+<form method="get"><input name="search" value="{{ request.GET.search }}" placeholder="جستجو"><button>جستجو</button></form>
+{% for item in news_list %}<article><h2><a href="{% url 'organization_news:detail' item.organization.slug item.slug %}">{{ item.title }}</a></h2><p>{{ item.summary }}</p><small>{{ item.organization.name }} — {{ item.published_at }}</small></article>{% empty %}<p>خبری یافت نشد.</p>{% endfor %}</body></html>

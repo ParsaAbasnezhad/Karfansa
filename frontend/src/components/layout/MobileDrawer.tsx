@@ -14,10 +14,9 @@ interface Props {
   today: string
   time: string
   markets?: Market[]
-  onTheme: () => void
 }
 
-export function MobileDrawer({ open, onClose, today, time, markets, onTheme }: Props) {
+export function MobileDrawer({ open, onClose, today, time, markets }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null)
   const asideRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
@@ -53,7 +52,7 @@ export function MobileDrawer({ open, onClose, today, time, markets, onTheme }: P
       <aside ref={asideRef} className={'drawer' + (open ? ' open' : '')} aria-label="منوی کارفنسا">
         <div className="dh">
           <div className="row">
-            <Logo showTagline={false} />
+            <Logo />
             <button
               ref={closeRef}
               type="button"
@@ -140,11 +139,6 @@ export function MobileDrawer({ open, onClose, today, time, markets, onTheme }: P
             ورود / ثبت‌نام
           </AppLink>
           <div className="row2">
-            <button type="button" className="dtheme" onClick={onTheme}>
-              <Icon name="moon" className="ic-moon" />
-              <Icon name="sun" className="ic-sun" />
-              حالت نمایش
-            </button>
             <div className="dsoc">
               {SOCIAL.slice(0, 3).map((s) => (
                 <a

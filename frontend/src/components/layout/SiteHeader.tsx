@@ -5,14 +5,13 @@ import { useMarkets, useTicker } from '@/features/home/data'
 import { Icon } from '@/features/home/icons'
 import { SearchForm } from '@/features/home/SearchForm'
 import { formatChange, formatClock, formatNumber } from '@/lib/format'
-import { scrollToNewsletter, useTehranClock, useThemeToggle } from '@/lib/hooks'
+import { scrollToNewsletter, useTehranClock } from '@/lib/hooks'
 import { NAV, SOCIAL, TOP_LINKS, URLS } from '@/lib/site'
 import { Logo } from './Logo'
 import { MobileDrawer } from './MobileDrawer'
 
 export function SiteHeader() {
   const clock = useTehranClock()
-  const toggleTheme = useThemeToggle()
   const { pathname } = useLocation()
   const markets = useMarkets().data?.results
   const ticker = useTicker().data?.results ?? []
@@ -113,15 +112,6 @@ export function SiteHeader() {
             </button>
             <button
               type="button"
-              className="iconbtn"
-              aria-label="تغییر حالت روشن و تیره"
-              onClick={toggleTheme}
-            >
-              <Icon name="moon" className="ic-moon" />
-              <Icon name="sun" className="ic-sun" />
-            </button>
-            <button
-              type="button"
               className="iconbtn bell"
               aria-label="خبرنامه"
               onClick={scrollToNewsletter}
@@ -131,7 +121,8 @@ export function SiteHeader() {
             </button>
             <AppLink className="btn login" href={URLS.login}>
               <Icon name="user" />
-              <span>ورود / ثبت‌نام</span>
+              <span className="desktop-label">ورود / ثبت‌نام</span>
+              <span className="mobile-label">ثبت‌نام</span>
             </AppLink>
           </div>
         </div>
@@ -205,7 +196,6 @@ export function SiteHeader() {
         today={clock.today}
         time={clock.time}
         markets={markets}
-        onTheme={toggleTheme}
       />
     </>
   )

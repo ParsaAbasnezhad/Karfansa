@@ -1,0 +1,3 @@
+<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><title>شرکت‌های حمل‌ونقل</title><body><h1>شرکت‌های حمل‌ونقل</h1>
+<form method="get"><input name="search" value="{{ request.GET.search }}" placeholder="جستجو"><select name="transport_type"><option value="">همه روش‌ها</option>{% for mode in modes %}<option value="{{ mode.code }}">{{ mode.name_fa }}</option>{% endfor %}</select><button>جستجو</button></form>
+{% for company in companies %}<article><h2><a href="{% url 'transportation:detail' company.slug %}">{{ company.name }}</a></h2><p>{{ company.description|truncatewords:25 }}</p></article>{% empty %}<p>شرکتی یافت نشد.</p>{% endfor %}</body></html>

@@ -8,6 +8,9 @@ describe('HomePage (mock API)', () => {
   it('renders every section from the API', async () => {
     vi.stubEnv('VITE_USE_MOCK', 'true')
     renderWithProviders(<HomePage />)
+    expect(
+      await screen.findByRole('heading', { name: /رشد ۲٫۳ درصدی اقتصاد ایران/ }),
+    ).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'شرکت‌های حمل و نقل' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'بازارهای مالی' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'اخبار شرکت‌ها' })).toBeInTheDocument()

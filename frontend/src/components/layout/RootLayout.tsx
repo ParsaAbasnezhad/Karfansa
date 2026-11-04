@@ -1,15 +1,18 @@
-import { Outlet, ScrollRestoration } from 'react-router-dom'
+import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
 import { SiteFooter } from './SiteFooter'
 import { SiteHeader } from './SiteHeader'
 
 export function RootLayout() {
+  const { pathname } = useLocation()
+  const isAuthPage = pathname === '/login'
+
   return (
     <>
-      <SiteHeader />
-      <main className="wrap" id="content">
+      {!isAuthPage && <SiteHeader />}
+      <main className={isAuthPage ? 'wrap auth-main' : 'wrap'} id="content">
         <Outlet />
       </main>
-      <SiteFooter />
+      {!isAuthPage && <SiteFooter />}
       <ScrollRestoration />
     </>
   )

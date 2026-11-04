@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
-import { AppLink } from '@/components/AppLink'
 import { formatNumber, formatShortDate } from '@/lib/format'
-import type { Slide } from '@/lib/types'
+import type { HomeSlide } from '@/lib/types'
 import { useSlides } from './data'
 import { Icon } from './icons'
 import { ErrorBox, Skeleton } from './parts'
 
-function SlideShow({ slides }: { slides: Slide[] }) {
+function SlideShow({ slides }: { slides: HomeSlide[] }) {
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)
   const count = slides.length
@@ -31,21 +30,18 @@ function SlideShow({ slides }: { slides: Slide[] }) {
         <article
           key={s.id}
           className={'slide' + (i === current ? ' on' : '')}
-          style={{ backgroundImage: `url(${s.image})` }}
+          style={{ backgroundImage: s.image ? `url(${s.image})` : undefined }}
           aria-hidden={i !== current}
           aria-label={`${formatNumber(i + 1)} از ${formatNumber(count)}`}
         >
-          <span className="tag">{s.category}</span>
-          <h2 className="st">
-            <AppLink href={s.url} tabIndex={i === current ? 0 : -1}>
-              {s.title}
-            </AppLink>
-          </h2>
-          <p>{s.excerpt}</p>
+          <h2 className="st">{s.title}</h2>
+          <p>{s.short_text}</p>
+          <details className="slide-details">
+            <summary>توضیحات بیشتر</summary>
+            <p>{s.description}</p>
+          </details>
           <div className="meta">
-            <span>{formatShortDate(s.published_at)}</span>
-            <span>·</span>
-            <span>{formatNumber(s.read_minutes)} دقیقه مطالعه</span>
+            <time dateTime={s.created_at}>{formatShortDate(s.created_at)}</time>
           </div>
         </article>
       ))}
@@ -77,7 +73,8 @@ function SlideShow({ slides }: { slides: Slide[] }) {
 /** Hero slider with the top stories. */
 export function NewsHero() {
   const { data, isError, refetch } = useSlides()
-  if (data) return <SlideShow slides={data.results} />
+  if (data?.results.length) return <SlideShow slides={data.results} />
+  if (data) return <div className="slider slide-empty">اسلاید فعالی برای نمایش وجود ندارد.</div>
   if (isError) return <ErrorBox onRetry={() => void refetch()} />
   return <Skeleton height={400} />
 }

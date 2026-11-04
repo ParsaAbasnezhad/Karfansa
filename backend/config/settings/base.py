@@ -29,6 +29,7 @@ INSTALLED_APPS = [
 
     # Internal Apps
     "apps.accounts",
+    "apps.home",
     "apps.core",
     "apps.advertising",
     "apps.geography",
@@ -125,6 +126,8 @@ USE_TZ = True
 # --- Static ---------------------------------------------------------------------------------
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # --- Celery ---------------------------------------------------------------------------------
 CELERY_BROKER_URL = f"{REDIS_URL}/0"
@@ -152,5 +155,3 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
 }
-
-

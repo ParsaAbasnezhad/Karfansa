@@ -112,6 +112,13 @@
   box-shadow: var(--shadow);
   isolation: isolate;
 }
+.slide-empty {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #d6dcf7;
+  text-align: center;
+}
 .slide {
   position: absolute;
   inset: 0;
@@ -154,9 +161,6 @@
   padding: 3px 14px;
   border-radius: 7px;
 }
-:root[data-theme='dark'] .slide .tag {
-  background: #2f5be0;
-}
 .slide .st {
   font-size: clamp(24px, 3.1vw, 36px);
   line-height: 1.6;
@@ -175,6 +179,17 @@
   color: #aab6ec;
   display: flex;
   gap: 8px;
+}
+.slide-details {
+  color: #d6dcf7;
+  font-size: 13px;
+}
+.slide-details summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.slide-details p {
+  margin-top: 8px;
 }
 .arrow {
   position: absolute;
@@ -312,16 +327,6 @@
   color: #fff;
   font-weight: 600;
 }
-:root[data-theme='dark'] .tab.on {
-  background: #2f5be0;
-  border-color: #2f5be0;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .tab.on {
-    background: #2f5be0;
-    border-color: #2f5be0;
-  }
-}
 .tab.on em {
   background: rgba(255, 255, 255, 0.25);
   color: #fff;
@@ -448,16 +453,6 @@
 .pill {
   background: var(--pb);
   color: var(--pc);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .pill {
-    background: rgba(255, 255, 255, 0.1);
-    color: #cfd9ff;
-  }
-}
-:root[data-theme='dark'] .pill {
-  background: rgba(255, 255, 255, 0.1);
-  color: #cfd9ff;
 }
 .ngrid {
   display: grid;
@@ -608,9 +603,6 @@
   padding: 1px 12px;
   border-radius: 6px;
 }
-:root[data-theme='dark'] .feat .imp {
-  color: #1b0507;
-}
 .kick {
   color: var(--red);
   font-size: 13px;
@@ -757,9 +749,6 @@
 .pop li:first-child::before {
   background: var(--blue);
 }
-:root[data-theme='dark'] .pop li:first-child::before {
-  background: #2f5be0;
-}
 .pop li:hover {
   color: var(--blue);
 }
@@ -807,9 +796,6 @@
   border-radius: 7px;
   font-size: 12.5px;
   font-weight: 600;
-}
-:root[data-theme='dark'] .ahero .tag {
-  background: #2f5be0;
 }
 .ahero h3 {
   font-size: clamp(22px, 2.6vw, 30px);
@@ -943,9 +929,6 @@
   font-weight: 700;
   font-size: 14px;
 }
-:root[data-theme='dark'] .pdf {
-  background: #2f5be0;
-}
 .pdf small {
   font-size: 9.5px;
   font-weight: 400;
@@ -1043,17 +1026,22 @@
 }
 @media (max-width: 640px) {
   .slider {
-    min-height: 310px;
+    height: clamp(228px, 64vw, 270px);
+    min-height: 0;
     border-radius: 14px;
   }
   .slide {
     justify-content: flex-end;
-    padding: 20px 20px 56px;
-    gap: 10px;
+    padding: 16px 16px 46px;
+    gap: 8px;
   }
   .slide .st {
-    font-size: 20px;
-    line-height: 1.85;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    font-size: clamp(18px, 5.2vw, 20px);
+    line-height: 1.65;
   }
   .slide p {
     display: none;
@@ -1063,8 +1051,8 @@
     display: none;
   }
   .dots {
-    right: 20px;
-    bottom: 20px;
+    right: 16px;
+    bottom: 16px;
   }
   .market .panel-head {
     padding: 16px 18px 10px;

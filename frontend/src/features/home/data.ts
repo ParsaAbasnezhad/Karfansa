@@ -9,10 +9,10 @@ import type {
   CompanyNewsItem,
   CountedListResponse,
   HeadlinesResponse,
+  HomeSlide,
   ListResponse,
   Market,
   Report,
-  Slide,
   TickerItem,
   TransportCompany,
   TransportFilter,
@@ -79,7 +79,7 @@ export const useTicker = () =>
 export const useSlides = () =>
   useQuery({
     queryKey: ['slides'],
-    queryFn: ({ signal }) => apiGet<ListResponse<Slide>>('/slides/', undefined, signal),
+    queryFn: ({ signal }) => apiGet<ListResponse<HomeSlide>>('/v1/home/slides/', undefined, signal),
   })
 
 export const useMarkets = () =>

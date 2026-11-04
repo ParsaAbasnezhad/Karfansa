@@ -1,0 +1,4 @@
+<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><title>مناطق جغرافیایی</title><body>
+<h1>کشورها</h1><ul>{% for country in countries %}<li>{{ country.name_fa }} ({{ country.iso2 }})</li>{% empty %}<li>موردی ثبت نشده است.</li>{% endfor %}</ul>
+<h2>استان‌ها</h2><ul>{% for province in provinces %}<li>{{ province.name_fa }} — {{ province.country.name_fa }}</li>{% empty %}<li>موردی ثبت نشده است.</li>{% endfor %}</ul>
+<h2>شهرها</h2><ul>{% for city in cities %}<li>{{ city.name_fa }} — {{ city.province.name_fa }}</li>{% empty %}<li>موردی ثبت نشده است.</li>{% endfor %}</ul></body></html>

@@ -35,11 +35,56 @@ describe('real API mode', () => {
   })
 
   it('sends the CSRF token from the cookie on POST', async () => {
+    document.cookie = 'csrftoken=; Max-Age=0; path=/'
     document.cookie = 'csrftoken=abc123'
     const fetchMock = useFetch({ json: async () => ({ ok: true }) })
     await apiPost('/newsletter/', { email: 'a@b.ir' })
     const init = fetchMock.mock.calls[0]![1] as RequestInit
     expect(init.method).toBe('POST')
     expect((init.headers as Record<string, string>)['X-CSRFToken']).toBe('abc123')
+  })
+
+  it('fetches a CSRF token before the first POST', async () => {
+    document.cookie = 'csrftoken=; Max-Age=0; path=/'
+    const fetchMock = vi.fn().mockImplementation(async (input: string) => {
+      if (input.endsWith('/v1/auth/csrf')) {
+        document.cookie = 'csrftoken=fresh-token; path=/'
+        return { ok: true, status: 200, json: async () => ({ message: 'fresh-token' }) }
+      }
+      return { ok: true, status: 201, json: async () => ({ message: 'created' }) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+
+    await apiPost('/v1/auth/register', { email: 'user@example.com' })
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/v1/auth/csrf',
+      '/api/v1/auth/register',
+    ])
+    expect((fetchMock.mock.calls[1]![1] as RequestInit).headers).toMatchObject({
+      'X-CSRFToken': 'fresh-token',
+    })
+  })
+
+  it('shows API error messages instead of replacing them with a generic message', async () => {
+    useFetch({
+      ok: false,
+      status: 409,
+      json: async () => ({
+        error: { code: 'email_exists', message: 'این ایمیل قبلاً ثبت شده است.' },
+      }),
+    })
+    await expect(apiPost('/v1/auth/register', {})).rejects.toMatchObject({
+      message: 'این ایمیل قبلاً ثبت شده است.',
+    })
+  })
+
+  it('uses API mode by default in development so auth requests reach Django', async () => {
+    vi.stubEnv('VITE_USE_MOCK', '')
+    const fetchMock = useFetch({ json: async () => ({ message: 'ok' }) })
+    vi.stubEnv('VITE_USE_MOCK', '')
+    await apiPost('/v1/auth/register', { email: 'user@example.com' })
+    expect(String(fetchMock.mock.calls[0]![0])).toBe('/api/v1/auth/register')
   })
 })

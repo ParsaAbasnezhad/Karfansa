@@ -1,0 +1,3 @@
+<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><title>شرکت‌ها</title><body><h1>شرکت‌ها</h1>
+<form method="get"><input name="search" value="{{ filters.search }}" placeholder="جستجو"><select name="industry"><option value="">همه صنایع</option>{% for industry in industries %}<option value="{{ industry.slug }}">{{ industry.name_fa }}</option>{% endfor %}</select><button>جستجو</button></form>
+{% for org in organizations %}<article><h2><a href="{% url 'organizations:detail' org.slug %}">{{ org.name }}</a></h2><p>{{ org.description|truncatewords:25 }}</p></article>{% empty %}<p>شرکتی یافت نشد.</p>{% endfor %}</body></html>

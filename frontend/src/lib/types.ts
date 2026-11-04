@@ -18,6 +18,15 @@ export interface Slide {
   url: string
 }
 
+export interface HomeSlide {
+  id: number
+  title: string
+  short_text: string
+  description: string
+  image: string | null
+  created_at: string
+}
+
 export interface Market {
   id: string
   title: string

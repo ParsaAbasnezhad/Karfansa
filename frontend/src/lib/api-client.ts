@@ -8,7 +8,8 @@ export class ApiError extends Error {
   readonly body: unknown
 
   constructor(status: number, body?: unknown) {
-    super(`API error ${status}`)
+    const envelope = body as { error?: { message?: string } } | null
+    super(envelope?.error?.message ?? `درخواست انجام نشد (${status})`)
     this.name = 'ApiError'
     this.status = status
     this.body = body
@@ -19,8 +20,17 @@ export type QueryParams = Record<string, string | number | boolean | undefined |
 
 const apiBase = (): string => String(import.meta.env.VITE_API_BASE ?? '/api').replace(/\/$/, '')
 
-export const isMockMode = (): boolean =>
-  String(import.meta.env.VITE_USE_MOCK ?? (import.meta.env.DEV ? 'true' : 'false')) === 'true'
+function fallbackMessage(status: number, body: unknown): string {
+  const envelope = body as { error?: { message?: string } } | null
+  if (envelope?.error?.message) return envelope.error.message
+  if (status === 404) return 'مسیر API پیدا نشد. نشانی یا نسخهٔ API را بررسی کنید.'
+  if (status === 403) return 'درخواست از نظر امنیتی رد شد. صفحه را تازه‌سازی و دوباره تلاش کنید.'
+  if (status === 429) return 'تعداد درخواست‌ها زیاد است. کمی بعد دوباره تلاش کنید.'
+  if (status >= 500) return 'سرویس موقتاً در دسترس نیست. تنظیمات یا وضعیت سرور را بررسی کنید.'
+  return `درخواست انجام نشد (${status}). اطلاعات واردشده را بررسی کنید.`
+}
+
+export const isMockMode = (): boolean => String(import.meta.env.VITE_USE_MOCK || 'false') === 'true'
 
 export function toQueryString(params?: QueryParams): string {
   const search = new URLSearchParams()
@@ -37,6 +47,40 @@ function csrfToken(): string {
   return match?.[1] ? decodeURIComponent(match[1]) : ''
 }
 
+let csrfRequest: Promise<string> | null = null
+
+async function getCsrfToken(): Promise<string> {
+  const existingToken = csrfToken()
+  if (existingToken) return existingToken
+
+  if (!csrfRequest) {
+    csrfRequest = (async () => {
+      const res = await fetch(`${apiBase()}/v1/auth/csrf`, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      })
+      let data: unknown = null
+      try {
+        data = await res.json()
+      } catch {
+        // empty or non-JSON body
+      }
+      if (!res.ok)
+        throw new ApiError(
+          res.status,
+          data ?? { error: { message: fallbackMessage(res.status, data) } },
+        )
+
+      const token = csrfToken() || (data as { message?: string } | null)?.message || ''
+      if (!token) throw new Error('CSRF token was not returned by the API.')
+      return token
+    })().finally(() => {
+      csrfRequest = null
+    })
+  }
+  return csrfRequest
+}
+
 export async function apiGet<T>(
   path: string,
   params?: QueryParams,
@@ -51,8 +95,13 @@ export async function apiGet<T>(
     credentials: 'same-origin',
     signal,
   })
-  if (!res.ok) throw new ApiError(res.status)
-  return (await res.json()) as T
+  const data = await res.json().catch(() => null)
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data ?? { error: { message: fallbackMessage(res.status, data) } },
+    )
+  return data as T
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
@@ -60,12 +109,13 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     const { mockPost } = await import('./mock-api')
     return mockPost<T>(path, body)
   }
+  const token = await getCsrfToken()
   const res = await fetch(`${apiBase()}${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'X-CSRFToken': csrfToken(),
+      'X-CSRFToken': token,
     },
     credentials: 'same-origin',
     body: JSON.stringify(body),
@@ -76,6 +126,10 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   } catch {
     // empty or non-JSON body
   }
-  if (!res.ok) throw new ApiError(res.status, data)
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data ?? { error: { message: fallbackMessage(res.status, data) } },
+    )
   return data as T
 }

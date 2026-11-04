@@ -3,6 +3,7 @@ import { RootLayout } from '@/components/layout/RootLayout'
 import { HomePage } from '@/features/home/HomePage'
 import { NotFoundPage } from '@/features/search/NotFoundPage'
 import { SearchPage } from '@/features/search/SearchPage'
+import { AuthPage } from '@/features/auth/AuthPage'
 
 export const routes = [
   {
@@ -11,6 +12,7 @@ export const routes = [
     children: [
       { index: true, element: <HomePage /> },
       { path: 'search', element: <SearchPage /> },
+      { path: 'login', element: <AuthPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -59,7 +59,16 @@ function search(query: string): SearchResponse {
 
 const routes: Record<string, (p: QueryParams) => unknown> = {
   '/ticker/': () => ({ results: data.ticker }),
-  '/slides/': () => ({ results: data.slides }),
+  '/v1/home/slides/': () => ({
+    results: data.slides.map((slide) => ({
+      id: slide.id,
+      title: slide.title,
+      short_text: slide.excerpt,
+      description: slide.excerpt,
+      image: slide.image,
+      created_at: slide.published_at,
+    })),
+  }),
   '/markets/': () => ({ results: data.markets }),
   '/transport-companies/': (p) => {
     const type = str(p.type, 'all')
@@ -103,6 +112,21 @@ export function mockGet<T>(path: string, params: QueryParams = {}): Promise<T> {
 }
 
 export function mockPost<T>(path: string, body: unknown): Promise<T> {
+  if (path === '/v1/auth/register') {
+    const payload = body as { email?: string; phone?: string; password?: string }
+    if (!payload.email || !payload.phone || !payload.password) {
+      return Promise.reject(
+        new ApiError(400, { error: { message: 'ایمیل، تلفن و گذرواژه الزامی هستند.' } }),
+      )
+    }
+    return Promise.resolve({ message: 'حساب ساخته شد.' } as T)
+  }
+  if (path === '/v1/auth/password-login') {
+    return Promise.resolve({ email: (body as { email?: string }).email, phone: '' } as T)
+  }
+  if (path === '/v1/auth/password-reset' || path === '/v1/auth/password-reset/confirm') {
+    return Promise.resolve({ message: 'درخواست ثبت شد.' } as T)
+  }
   if (path === '/newsletter/') {
     const email = (body as { email?: string } | null)?.email ?? ''
     if (!/^\S+@\S+\.\S+$/.test(email)) {
