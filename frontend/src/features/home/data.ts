@@ -116,7 +116,7 @@ export const useCompanyNews = (category: CompanyFilter) =>
 export const useHeadlines = () =>
   useQuery({
     queryKey: ['headlines'],
-    queryFn: ({ signal }) => apiGet<HeadlinesResponse>('/headlines/', undefined, signal),
+    queryFn: ({ signal }) => apiGet<HeadlinesResponse>('/v1/news/headlines/', undefined, signal),
   })
 
 export const useAnalysis = (kind: AnalysisKind) =>

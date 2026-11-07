@@ -133,3 +133,24 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     )
   return data as T
 }
+
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  const token = await getCsrfToken()
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-CSRFToken': token,
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => null)
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data ?? { error: { message: fallbackMessage(res.status, data) } },
+    )
+  return data as T
+}

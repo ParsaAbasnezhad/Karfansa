@@ -11,6 +11,8 @@ from apps.accounts.schemas import (
     PasswordLoginIn,
     PasswordResetConfirmIn,
     PasswordResetIn,
+    ProfileOut,
+    ProfileUpdateIn,
     RegisterIn,
     UserOut,
     VerifyIn,
@@ -23,6 +25,8 @@ from apps.accounts.services import (
     send_password_reset,
     verify_login_code,
 )
+from apps.core.errors import ApiError
+from apps.geography.models import City, Province
 
 router = Router()
 
@@ -79,12 +83,66 @@ def verify_code(request: HttpRequest, payload: VerifyIn) -> UserOut:
     return UserOut(email=user.email, phone=user.phone)
 
 
-@router.get("/me", response={200: UserOut, 401: MessageOut})
-def me(request: HttpRequest) -> Status[UserOut | dict[str, str]]:
+@router.get("/me", response={200: ProfileOut, 401: MessageOut})
+def me(request: HttpRequest) -> Status[ProfileOut | dict[str, str]]:
     if not request.user.is_authenticated:
         return Status(401, {"message": "وارد حساب کاربری نشده‌اید."})
     user = request.user
-    return Status(200, UserOut(email=user.email, phone=user.phone))
+    return Status(
+        200,
+        ProfileOut(
+            email=user.email,
+            phone=user.phone,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            date_joined=user.date_joined,
+            province_id=user.province_id,
+            province_name=user.province.name_fa if user.province_id else None,
+            city_id=user.city_id,
+            city_name=user.city.name_fa if user.city_id else None,
+        ),
+    )
+
+
+@router.patch("/me", response={200: ProfileOut, 401: MessageOut})
+@decorate_view(csrf_protect)
+def update_profile(
+    request: HttpRequest,
+    payload: ProfileUpdateIn,
+) -> Status[ProfileOut | dict[str, str]]:
+    if not request.user.is_authenticated:
+        return Status(401, {"message": "وارد حساب کاربری نشده‌اید."})
+    user = request.user
+    province = Province.objects.filter(
+        pk=payload.province_id,
+        country__iso2="IR",
+    ).first()
+    if province is None:
+        raise ApiError("استان انتخاب‌شده معتبر نیست.")
+    city = City.objects.filter(pk=payload.city_id, province=province).first()
+    if city is None:
+        raise ApiError("شهر انتخاب‌شده با استان انتخابی مطابقت ندارد.")
+    user.first_name = payload.first_name.strip()
+    user.last_name = payload.last_name.strip()
+    if not user.first_name or not user.last_name:
+        raise ApiError("نام و نام خانوادگی را کامل وارد کنید.")
+    user.province = province
+    user.city = city
+    user.save(update_fields=["first_name", "last_name", "province", "city"])
+    return Status(
+        200,
+        ProfileOut(
+            email=user.email,
+            phone=user.phone,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            date_joined=user.date_joined,
+            province_id=user.province_id,
+            province_name=province.name_fa,
+            city_id=user.city_id,
+            city_name=city.name_fa,
+        ),
+    )
 
 
 @router.post("/logout", response=MessageOut)

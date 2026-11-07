@@ -2,6 +2,8 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 
+from apps.geography.models import City, Province
+
 
 class UserManager(BaseUserManager["User"]):
     def create_user(self, email: str, password: str | None = None, **extra_fields: object) -> "User":
@@ -25,6 +27,22 @@ class UserManager(BaseUserManager["User"]):
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=32, unique=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    province = models.ForeignKey(
+        Province,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="resident_users",
+    )
+    city = models.ForeignKey(
+        City,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="resident_users",
+    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)

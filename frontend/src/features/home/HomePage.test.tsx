@@ -8,13 +8,12 @@ describe('HomePage (mock API)', () => {
   it('renders every section from the API', async () => {
     vi.stubEnv('VITE_USE_MOCK', 'true')
     renderWithProviders(<HomePage />)
-    expect(
-      await screen.findByRole('heading', { name: /رشد ۲٫۳ درصدی اقتصاد ایران/ }),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('مهم', { exact: true })).toBeVisible()
     expect(await screen.findByRole('heading', { name: 'شرکت‌های حمل و نقل' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'بازارهای مالی' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'اخبار شرکت‌ها' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'تحلیل و گزارش' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'تیتر اخبار مهم ایران' })).toBeInTheDocument()
     await waitFor(() => expect(screen.getAllByRole('article').length).toBeGreaterThan(5))
   })
 

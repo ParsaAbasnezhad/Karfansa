@@ -1,4 +1,5 @@
-from .industry import Industry
+from .industry import Industry, IndustryCategory
 from .organization import Organization, OrganizationType
+from .product import Product
 
-__all__ = ["Industry", "Organization", "OrganizationType"]
+__all__ = ["Industry", "IndustryCategory", "Organization", "OrganizationType", "Product"]

@@ -10,7 +10,11 @@ from ninja import NinjaAPI
 from apps.accounts.api import router as accounts_router
 from apps.core.api import router as core_router
 from apps.core.errors import register_exception_handlers
+from apps.geography.api import router as geography_router
 from apps.home.api import router as home_router
+from apps.market.api import router as market_router
+from apps.news.api import router as news_router
+from apps.trade.api import router as trade_router
 
 api = NinjaAPI(
     title="Karfansa API",
@@ -24,4 +28,8 @@ register_exception_handlers(api)
 
 api.add_router("/health", core_router, tags=["system"])
 api.add_router("/auth", accounts_router, tags=["authentication"])
+api.add_router("/geography", geography_router, tags=["geography"])
 api.add_router("/home", home_router, tags=["homepage"])
+api.add_router("/news", news_router, tags=["news"])
+api.add_router("/market", market_router, tags=["market"])
+api.add_router("/trade", trade_router, tags=["trade opportunities"])

@@ -5,7 +5,7 @@ import { useHeadlines } from './data'
 import { Icon } from './icons'
 import { ErrorBox, SectionHead, Skeleton } from './parts'
 
-/** Featured story, latest headlines and most-read list. */
+/** Featured story and latest approved RSS headlines. */
 export function HeadlinesSection() {
   const { data, isError, refetch } = useHeadlines()
 
@@ -16,42 +16,61 @@ export function HeadlinesSection() {
         title="تیتر اخبار مهم ایران"
         sub="مهم‌ترین رویدادهای اقتصادی کشور در یک نگاه"
       >
-        <AppLink className="link" href={URLS.archive}>
+        <AppLink className="link" href={URLS.allNews}>
           <Icon name="arrow-l" />
-          آرشیو اخبار
+          همهٔ خبرها
         </AppLink>
       </SectionHead>
       {isError && !data ? (
         <ErrorBox onRetry={() => void refetch()} />
       ) : !data ? (
         <Skeleton height={420} />
-      ) : (
+      ) : data.featured ? (
         <div className="hgrid">
           <article className="feat">
-            <AppLink className="ph" href={data.featured.url} style={{ display: 'block' }}>
-              <img src={data.featured.image} alt="" />
-              {data.featured.is_important && <span className="imp">مهم</span>}
-            </AppLink>
+            <a
+              className={'ph' + (!data.featured.image_url ? ' ph-empty' : '')}
+              href={data.featured.original_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'block' }}
+            >
+              {data.featured.image_url ? (
+                <img src={data.featured.image_url} alt="" />
+              ) : (
+                <Icon name="news" />
+              )}
+              <span className="imp">مهم</span>
+            </a>
             <div className="kick" style={{ marginTop: 16 }}>
-              {data.featured.category}
+              {data.featured.topic}
             </div>
             <h3>
-              <AppLink href={data.featured.url}>{data.featured.title}</AppLink>
+              <a href={data.featured.original_url} target="_blank" rel="noopener noreferrer">
+                {data.featured.title}
+              </a>
             </h3>
-            <p>{data.featured.excerpt}</p>
+            <p>{data.featured.summary}</p>
             <div className="when">
               <Icon name="clock" />
-              {whenLabel(data.featured.published_at)}
+              {whenLabel(data.featured.published_at ?? data.featured.fetched_at)}
+              <span> · {data.featured.source_name}</span>
             </div>
             <div className="minis">
               {data.minis.map((m) => (
-                <AppLink className="mini" href={m.url} key={m.id}>
-                  <img src={m.image} alt="" />
+                <a
+                  className="mini"
+                  href={m.original_url}
+                  key={m.id}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {m.image_url ? <img src={m.image_url} alt="" /> : <span className="mini-empty" />}
                   <div>
-                    <span className="kick">{m.category}</span>
+                    <span className="kick">{m.topic}</span>
                     <b>{m.title}</b>
                   </div>
-                </AppLink>
+                </a>
               ))}
             </div>
           </article>
@@ -61,27 +80,22 @@ export function HeadlinesSection() {
             <ul>
               {data.latest.map((l) => (
                 <li key={l.id}>
-                  <span className="kick">{l.category}</span>
-                  <time dateTime={l.published_at}>{formatClock(l.published_at)}</time>
+                  <span className="kick">{l.topic}</span>
+                  <time dateTime={l.published_at ?? l.fetched_at}>
+                    {formatClock(l.published_at ?? l.fetched_at)}
+                  </time>
                   <b>
-                    <AppLink href={l.url}>{l.title}</AppLink>
+                    <a href={l.original_url} target="_blank" rel="noopener noreferrer">
+                      {l.title}
+                    </a>
                   </b>
                 </li>
               ))}
             </ul>
           </div>
-
-          <aside className="pop">
-            <h4>پربازدیدترین‌ها</h4>
-            <ol>
-              {data.popular.map((p) => (
-                <li key={p.id}>
-                  <AppLink href={p.url}>{p.title}</AppLink>
-                </li>
-              ))}
-            </ol>
-          </aside>
         </div>
+      ) : (
+        <div className="empty-note">هنوز خبر تأییدشده‌ای برای نمایش دریافت نشده است.</div>
       )}
     </section>
   )

@@ -28,8 +28,10 @@ export const NAV: NavItem[] = [
   { href: '/news/', label: 'اخبار اقتصادی', icon: 'news' },
   { href: '/companies/', label: 'شرکت‌ها', icon: 'building' },
   { href: '/markets/', label: 'بازارها', icon: 'trend', live: true },
+  { href: '/provinces/', label: 'استان‌ها', icon: 'pin' },
   { href: '/bourse/', label: 'بورس', icon: 'bars' },
   { href: '/industries/', label: 'مناطق و صنایع', icon: 'factory' },
+  { href: '/trade/', label: 'فرصت‌های تجاری', icon: 'building' },
   { href: '/analysis/', label: 'تحلیل و گزارش', icon: 'file' },
   { href: '/tech/', label: 'فناوری و نوآوری', icon: 'bolt' },
 ]
@@ -68,9 +70,11 @@ export const DRAWER_LINKS: LinkItem[] = [
 export const FOOTER_SECTIONS: LinkItem[] = [
   { href: '/news/', label: 'اخبار اقتصادی' },
   { href: '/companies/', label: 'شرکت‌ها' },
+  { href: '/provinces/', label: 'استان‌های ایران' },
   { href: '/markets/', label: 'بازارها' },
   { href: '/bourse/', label: 'بورس' },
   { href: '/industries/', label: 'مناطق و صنایع' },
+  { href: '/trade/', label: 'فرصت‌های تجاری و صادرات' },
   { href: '/analysis/', label: 'تحلیل و گزارش' },
   { href: '/transport/', label: 'حمل و نقل' },
   { href: '/tech/', label: 'فناوری و نوآوری' },

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiGet, apiPost, toQueryString } from './api-client'
+import { ApiError, apiGet, apiPatch, apiPost, toQueryString } from './api-client'
 
 describe('toQueryString', () => {
   it('skips empty values and encodes the rest', () => {
@@ -42,6 +42,15 @@ describe('real API mode', () => {
     const init = fetchMock.mock.calls[0]![1] as RequestInit
     expect(init.method).toBe('POST')
     expect((init.headers as Record<string, string>)['X-CSRFToken']).toBe('abc123')
+  })
+
+  it('sends authenticated profile changes as a CSRF-protected PATCH', async () => {
+    document.cookie = 'csrftoken=patch-token'
+    const fetchMock = useFetch({ json: async () => ({ first_name: 'سارا' }) })
+    await apiPatch('/v1/auth/me', { first_name: 'سارا', last_name: 'احمدی' })
+    const init = fetchMock.mock.calls[0]![1] as RequestInit
+    expect(init.method).toBe('PATCH')
+    expect((init.headers as Record<string, string>)['X-CSRFToken']).toBe('patch-token')
   })
 
   it('fetches a CSRF token before the first POST', async () => {

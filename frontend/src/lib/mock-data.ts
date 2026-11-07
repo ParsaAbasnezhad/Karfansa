@@ -4,7 +4,6 @@ import type {
   Analyst,
   CompanyNewsItem,
   Counts,
-  HeadlinesResponse,
   Market,
   Report,
   Slide,
@@ -396,7 +395,23 @@ export const companyNews: CompanyNewsItem[] = [
 ]
 export const companyNewsCounts: Counts = { all: 24, sup: 7, pro: 6, exp: 4, bor: 5, srv: 2 }
 
-export const headlines: HeadlinesResponse = {
+interface MockHeadlinesResponse {
+  featured: {
+    id: number
+    category: string
+    title: string
+    excerpt: string
+    image: string
+    published_at: string
+    is_important: boolean
+    url: string
+  }
+  minis: { id: number; category: string; title: string; image: string; url: string }[]
+  latest: { id: number; category: string; title: string; published_at: string; url: string }[]
+  popular: { id: number; title: string; url: string }[]
+}
+
+export const headlines: MockHeadlinesResponse = {
   featured: {
     id: 20,
     category: 'اقتصاد کلان',

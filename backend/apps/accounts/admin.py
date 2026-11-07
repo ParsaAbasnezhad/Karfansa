@@ -22,15 +22,23 @@ class AccountAdmin(UserAdmin):
     add_form = AccountCreationForm
     form = AccountChangeForm
     model = User
-    list_display = ("email", "phone", "is_staff", "is_active", "date_joined")
+    list_display = (
+        "email",
+        "first_name",
+        "last_name",
+        "phone",
+        "is_staff",
+        "is_active",
+        "date_joined",
+    )
     list_filter = ("is_staff", "is_superuser", "is_active", "groups")
-    search_fields = ("email", "phone")
+    search_fields = ("email", "first_name", "last_name", "phone")
     ordering = ("email",)
     readonly_fields = ("last_login", "date_joined")
     filter_horizontal = ("groups", "user_permissions")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("اطلاعات تماس", {"fields": ("phone",)}),
+        ("اطلاعات هویتی و تماس", {"fields": ("first_name", "last_name", "phone")}),
         (
             "دسترسی‌ها",
             {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")},

@@ -33,8 +33,11 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.advertising",
     "apps.geography",
+    "apps.news",
+    "apps.market",
     "apps.organization_news",
     "apps.organizations",
+    "apps.trade",
     "apps.transportation",
 ]
 
@@ -141,6 +144,16 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_SOFT_TIME_LIMIT = 240
 CELERY_TASK_TIME_LIMIT = 300
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BEAT_SCHEDULE = {
+    "fetch-rss-news-every-15-minutes": {
+        "task": "apps.news.fetch_rss_news",
+        "schedule": 900.0,
+    },
+    "refresh-market-data-every-minute": {
+        "task": "apps.market.refresh_quotes",
+        "schedule": 60.0,
+    },
+}
 
 # --- Logging --------------------------------------------------------------------------------
 LOG_LEVEL: str = env("DJANGO_LOG_LEVEL", default="INFO")

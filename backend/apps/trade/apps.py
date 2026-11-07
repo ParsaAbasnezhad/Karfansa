@@ -1,0 +1,8 @@
+from django.apps import AppConfig
+
+
+class TradeConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.trade"
+    label = "trade"
+    verbose_name = "فرصت‌های تجاری"

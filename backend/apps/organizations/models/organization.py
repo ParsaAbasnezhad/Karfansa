@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.conf import settings
 from django.db import models
 
 from apps.core.models import UUIDTimeStampedModel
@@ -55,6 +56,13 @@ class Organization(UUIDTimeStampedModel):
     industry = models.ForeignKey(
         Industry, null=True, blank=True, on_delete=models.PROTECT, related_name="organizations"
     )
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="organizations",
+        verbose_name="کاربران مجاز شرکت",
+        help_text="کاربرانی که می‌توانند از طرف این شرکت فرصت تجاری ثبت کنند.",
+    )
 
     country = models.ForeignKey(
         Country, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
@@ -84,7 +92,7 @@ class Organization(UUIDTimeStampedModel):
     class Meta:
         ordering = ["name"]
         verbose_name = "شرکت"
-        verbose_name_plural = "شرکت‌ها"
+        verbose_name_plural = "شرکت‌ها"  # noqa: RUF001
         constraints = [
             models.UniqueConstraint(
                 fields=["national_id"],

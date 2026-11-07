@@ -1,7 +1,8 @@
 import { AppLink } from '@/components/AppLink'
 import { formatChange, formatNumber } from '@/lib/format'
 import { URLS } from '@/lib/site'
-import { useMarkets } from './data'
+import { getMarketData } from '@/lib/market-api'
+import { useQuery } from '@tanstack/react-query'
 import { Icon } from './icons'
 import { ErrorBox, Skeleton } from './parts'
 
@@ -36,7 +37,52 @@ function Sparkline({ data, down }: { data?: number[]; down: boolean }) {
 
 /** Live-market panel: dollar, gold, TEDPIX, Brent. */
 export function MarketsStrip() {
-  const { data, isError, refetch } = useMarkets()
+  const { data: overview, isError, refetch } = useQuery({
+    queryKey: ['market-overview'],
+    queryFn: ({ signal }) =>
+      getMarketData<{
+        results: Array<{
+          category: string
+          symbol: string
+          name: string
+          value: string
+          currency: string
+          unit: string
+          change_percent: string | null
+          source: string
+          is_featured: boolean
+          history: Array<{ value: string }>
+        }>
+      }>('/v1/market/overview/', undefined, signal),
+    refetchInterval: 60_000,
+  })
+  const marketLabels: Record<string, string> = { exchange: 'ارز', gold: 'طلا', stock: 'بورس تهران', oil: 'نفت و کالا' }
+  const categories = ['exchange', 'gold', 'stock', 'oil']
+  const selectedQuotes = categories.flatMap((category) => {
+    const items = overview?.results.filter((quote) => quote.category === category) ?? []
+    const selected = items.find((quote) => quote.is_featured) ?? items[0]
+    return selected ? [selected] : []
+  })
+  const data = overview
+    ? {
+        results: selectedQuotes.map((quote) => ({
+          id: `${quote.category}-${quote.symbol}`,
+          title: quote.name,
+          subtitle: `${marketLabels[quote.category] ?? quote.category} · ${quote.unit || quote.currency}`,
+          icon:
+            quote.category === 'gold'
+              ? 'coins'
+              : quote.category === 'stock'
+                ? 'bars'
+                : quote.category === 'oil'
+                  ? 'drop'
+                  : 'dollar',
+          value: Number(quote.value),
+          change: Number(quote.change_percent ?? 0),
+          history: quote.history.map((point) => Number(point.value)),
+        })),
+      }
+    : undefined
   if (isError && !data) return <ErrorBox onRetry={() => void refetch()} />
   if (!data) return <Skeleton height={400} />
 
@@ -48,7 +94,7 @@ export function MarketsStrip() {
         <h2>بازارهای مالی</h2>
         <span className="live">
           <i />
-          زنده
+          قیمت‌ها
         </span>
       </div>
       <ul className="mk">
@@ -61,7 +107,7 @@ export function MarketsStrip() {
               <b>{m.title}</b>
               <small>{m.subtitle}</small>
             </div>
-            <Sparkline data={m.spark} down={m.change < 0} />
+            <Sparkline data={m.history} down={m.change < 0} />
             <div className="val">
               <b>{formatNumber(m.value)}</b>
               <span className={'chg' + (m.change < 0 ? ' down' : '')}>
@@ -71,6 +117,11 @@ export function MarketsStrip() {
           </li>
         ))}
       </ul>
+      <p className="market-data-note">
+        {overview?.results.some((quote) => quote.source === 'نمونه')
+          ? 'دادهٔ نمونه؛ تا زمان اتصال API بازار'
+          : 'نمایش نرخ‌ها بر اساس آخرین داده دریافتی'}
+      </p>
       <AppLink className="more" href={URLS.markets}>
         <Icon name="arrow-l" />
         مشاهده کامل بازارها

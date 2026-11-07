@@ -81,19 +81,9 @@ export interface CountedListResponse<T> extends ListResponse<T> {
 }
 
 export interface HeadlinesResponse {
-  featured: {
-    id: number
-    category: string
-    title: string
-    excerpt: string
-    image: string
-    published_at: string
-    is_important: boolean
-    url: string
-  }
-  minis: { id: number; category: string; title: string; image: string; url: string }[]
-  latest: { id: number; category: string; title: string; published_at: string; url: string }[]
-  popular: { id: number; title: string; url: string }[]
+  featured: RSSNewsItem | null
+  minis: RSSNewsItem[]
+  latest: RSSNewsItem[]
 }
 
 export type AnalysisKind = 'all' | 'report' | 'analysis' | 'note'
@@ -153,6 +143,28 @@ export interface SearchResponse {
   query: string
   count: number
   results: SearchResult[]
+}
+
+export interface RSSNewsItem {
+  id: number
+  title: string
+  summary: string
+  source_name: string
+  topic: string
+  original_url: string
+  image_url: string
+  published_at: string | null
+  fetched_at: string
+  score: number
+}
+
+export interface NewsListResponse {
+  results: RSSNewsItem[]
+  topics: string[]
+  count: number
+  page: number
+  page_size: number
+  total_pages: number
 }
 
 export interface HealthResponse {

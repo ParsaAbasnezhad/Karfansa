@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
+import { useAuth } from '@/features/auth/useAuth'
 import { useMarkets, useTicker } from '@/features/home/data'
 import { Icon } from '@/features/home/icons'
 import { SearchForm } from '@/features/home/SearchForm'
@@ -13,6 +14,7 @@ import { MobileDrawer } from './MobileDrawer'
 export function SiteHeader() {
   const clock = useTehranClock()
   const { pathname } = useLocation()
+  const { data: user } = useAuth()
   const markets = useMarkets().data?.results
   const ticker = useTicker().data?.results ?? []
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -119,11 +121,18 @@ export function SiteHeader() {
               <Icon name="bell" />
               <span className="dot" />
             </button>
-            <AppLink className="btn login" href={URLS.login}>
-              <Icon name="user" />
-              <span className="desktop-label">ورود / ثبت‌نام</span>
-              <span className="mobile-label">ثبت‌نام</span>
-            </AppLink>
+            {user ? (
+              <AppLink className="btn login" href="/account/">
+                <Icon name="user" />
+                <span>پنل کاربری</span>
+              </AppLink>
+            ) : (
+              <AppLink className="btn login" href={URLS.login}>
+                <Icon name="user" />
+                <span className="desktop-label">ورود / ثبت‌نام</span>
+                <span className="mobile-label">ثبت‌نام</span>
+              </AppLink>
+            )}
           </div>
         </div>
       </header>
@@ -196,6 +205,7 @@ export function SiteHeader() {
         today={clock.today}
         time={clock.time}
         markets={markets}
+        authenticated={Boolean(user)}
       />
     </>
   )

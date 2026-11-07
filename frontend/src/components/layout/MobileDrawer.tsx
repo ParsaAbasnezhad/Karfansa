@@ -14,9 +14,10 @@ interface Props {
   today: string
   time: string
   markets?: Market[]
+  authenticated: boolean
 }
 
-export function MobileDrawer({ open, onClose, today, time, markets }: Props) {
+export function MobileDrawer({ open, onClose, today, time, markets, authenticated }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null)
   const asideRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
@@ -134,10 +135,17 @@ export function MobileDrawer({ open, onClose, today, time, markets }: Props) {
         </div>
 
         <div className="dfoot">
-          <AppLink className="btn" href={URLS.login} onClick={onClose}>
-            <Icon name="user" />
-            ورود / ثبت‌نام
-          </AppLink>
+          {authenticated ? (
+            <AppLink className="btn" href="/account/" onClick={onClose}>
+              <Icon name="user" />
+              پنل کاربری
+            </AppLink>
+          ) : (
+            <AppLink className="btn" href={URLS.login} onClick={onClose}>
+              <Icon name="user" />
+              ورود / ثبت‌نام
+            </AppLink>
+          )}
           <div className="row2">
             <div className="dsoc">
               {SOCIAL.slice(0, 3).map((s) => (
