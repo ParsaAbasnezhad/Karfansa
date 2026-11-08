@@ -75,6 +75,31 @@ class TradeOpportunityPageOut(Schema):
     total_pages: int
 
 
+class TradeSearchInterpretationOut(Schema):
+    product: str
+    province: str
+    city: str
+    category: str
+    opportunity_type: str
+    quantity: Decimal | None
+    quantity_unit: str
+
+
+class TradeOpportunitySearchResultOut(TradeOpportunityOut):
+    match_score: int
+    has_verified_contact: bool
+
+
+class TradeOpportunitySearchPageOut(Schema):
+    results: list[TradeOpportunitySearchResultOut]
+    count: int
+    page: int
+    page_size: int
+    total_pages: int
+    applied_filters: dict[str, str]
+    interpreted: TradeSearchInterpretationOut
+
+
 class TradeProvinceOptionOut(Schema):
     id: int
     slug: str
@@ -88,6 +113,11 @@ class TradeCatalogOptionOut(Schema):
     name_en: str
 
 
+class TradeIndustryOptionOut(TradeCatalogOptionOut):
+    category: str
+    category_display: str
+
+
 class TradeProductOptionOut(TradeCatalogOptionOut):
     industry_slugs: list[str]
 
@@ -95,7 +125,7 @@ class TradeProductOptionOut(TradeCatalogOptionOut):
 class TradeOptionsOut(Schema):
     provinces: list[TradeProvinceOptionOut]
     products: list[TradeProductOptionOut]
-    industries: list[TradeCatalogOptionOut]
+    industries: list[TradeIndustryOptionOut]
     companies: list[TradeCompanyOut]
     opportunity_types: list[dict[str, str]]
 

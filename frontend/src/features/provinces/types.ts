@@ -52,6 +52,36 @@ export type ProvinceIndustry = {
   companies: Array<{ slug: string; name: string }>
 }
 
+export type ProvinceStatistic = {
+  id: number
+  province_slug: string
+  province_name_fa: string
+  indicator: string
+  indicator_display: string
+  category: string
+  category_display: string
+  value: string | null
+  value_text: string
+  item_label: string
+  unit: string
+  statistical_year: number
+  period: string
+  period_display: string
+  period_number: number | null
+  source: string
+  source_url: string
+  source_published_at: string | null
+  collected_at: string | null
+  notes: string
+}
+
+export type StatisticIndicator = {
+  value: string
+  label: string
+  category: string
+  category_display: string
+}
+
 export type ProvinceDetail = ProvinceSummary & {
   short_description: string
   description: string
@@ -67,4 +97,5 @@ export type ProvinceDetail = ProvinceSummary & {
   capital: ProvinceCity | null
   cities: ProvinceCity[]
   industries: ProvinceIndustry[]
+  statistics: ProvinceStatistic[]
 }

@@ -1,3 +1,5 @@
+from datetime import date
+from decimal import Decimal
 from math import ceil
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -7,20 +9,29 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from ninja import Query, Router, Status
 from ninja.decorators import decorate_view
+from ninja.errors import HttpError
 
 from apps.core.errors import ApiError
 from apps.geography.models import City, Province
-from apps.organizations.models import Industry, Organization, Product
+from apps.organizations.models import Industry, IndustryCategory, Organization, Product
 
 from . import selectors
 from .models import OpportunityReviewStatus, OpportunityType, TradeOpportunity
 from .schemas import (
+    TradeIndustryOptionOut,
     TradeOpportunityCreateIn,
     TradeOpportunityOut,
     TradeOpportunityPageOut,
+    TradeOpportunitySearchPageOut,
     TradeOptionsOut,
     TradeProductOptionOut,
     TradeSubmissionOut,
+)
+from .search import (
+    SearchInterpretation,
+    has_verified_contact,
+    interpret_search_query,
+    opportunity_search_score,
 )
 
 router = Router()
@@ -98,15 +109,38 @@ def opportunity_options(request: HttpRequest) -> dict[str, object]:
                 )
             )
         ],
-        "industries": Industry.objects.filter(is_published=True).values(
-            "id", "slug", "name_fa", "name_en"
-        ),
+        "industries": [
+            TradeIndustryOptionOut(
+                id=industry.pk,
+                slug=industry.slug,
+                name_fa=industry.name_fa,
+                name_en=industry.name_en,
+                category=industry.category,
+                category_display=industry.get_category_display(),
+            )
+            for industry in Industry.objects.filter(is_published=True)
+        ],
         "companies": [
             {"id": item.pk, "slug": item.slug, "name": item.name} for item in companies
         ],
         "opportunity_types": [
             {"value": value, "label": label} for value, label in OpportunityType.choices
         ],
+    }
+
+
+def search_opportunity_data(item: TradeOpportunity) -> dict[str, object]:
+    data = opportunity_data(item)
+    company = item.company
+    return {
+        **data,
+        "company": (
+            {"id": company.pk, "slug": company.slug, "name": company.name}
+            if company and company.is_active and company.is_verified
+            else None
+        ),
+        "match_score": int(getattr(item, "_search_score", 0)),
+        "has_verified_contact": has_verified_contact(company),
     }
 
 
@@ -142,6 +176,105 @@ def list_opportunities(
         "page": page,
         "page_size": page_size,
         "total_pages": ceil(count / page_size),
+    }
+
+
+@router.get(
+    "/opportunities/search/",
+    response=TradeOpportunitySearchPageOut,
+    operation_id="trade_opportunities_search",
+)
+def search_opportunities(
+    request: HttpRequest,
+    q: str = Query("", max_length=200),
+    province: str = "",
+    city: str = "",
+    category: str = "",
+    opportunity_type: OpportunityType | None = None,
+    product: str = "",
+    status: str = Query("active", pattern="^(active|expiring)$"),
+    min_quantity: Decimal | None = Query(None, ge=0),  # noqa: B008
+    max_quantity: Decimal | None = Query(None, ge=0),  # noqa: B008
+    volume_unit: str = "",
+    date_from: date | None = None,
+    date_to: date | None = None,
+    has_contact: bool = False,
+    ordering: str = Query(
+        "relevance", pattern="^(relevance|newest|oldest|quantity)$"
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=50),
+) -> dict[str, object]:
+    if category and category not in {value for value, _ in IndustryCategory.choices}:
+        raise HttpError(422, "Invalid category filter")
+    if min_quantity is not None and max_quantity is not None and min_quantity > max_quantity:
+        raise HttpError(422, "min_quantity must not exceed max_quantity")
+    if date_from and date_to and date_from > date_to:
+        raise HttpError(422, "date_from must not be later than date_to")
+    if len(city) > 100 or len(province) > 100 or len(product) > 120 or len(volume_unit) > 60:
+        raise HttpError(422, "A search filter is too long")
+
+    interpretation = (
+        interpret_search_query(q.strip()) if q.strip() else SearchInterpretation(terms=())
+    )
+    opportunities = opportunity_search_score(
+        query=q.strip(),
+        interpretation=interpretation,
+        province=province.strip(),
+        city=city.strip(),
+        category=category,
+        opportunity_type=opportunity_type or "",
+        product=product.strip(),
+        status=status,
+        min_quantity=min_quantity,
+        max_quantity=max_quantity,
+        volume_unit=volume_unit.strip(),
+        date_from=date_from,
+        date_to=date_to,
+        has_contact=has_contact,
+        ordering=ordering,
+    )
+    count = opportunities.count()
+    start = (page - 1) * page_size
+    applied_filters = {
+        key: str(value)
+        for key, value in {
+            "q": q.strip(),
+            "province": province.strip(),
+            "city": city.strip(),
+            "category": category,
+            "opportunity_type": opportunity_type or "",
+            "product": product.strip(),
+            "status": status,
+            "min_quantity": min_quantity,
+            "max_quantity": max_quantity,
+            "volume_unit": volume_unit.strip(),
+            "date_from": date_from,
+            "date_to": date_to,
+            "has_contact": has_contact,
+            "ordering": ordering,
+        }.items()
+        if value not in ("", None, False)
+    }
+    return {
+        "results": [
+            search_opportunity_data(item)
+            for item in opportunities[start : start + page_size]
+        ],
+        "count": count,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": ceil(count / page_size),
+        "applied_filters": applied_filters,
+        "interpreted": {
+            "product": interpretation.product,
+            "province": interpretation.province,
+            "city": interpretation.city,
+            "category": interpretation.category,
+            "opportunity_type": interpretation.opportunity_type,
+            "quantity": interpretation.quantity,
+            "quantity_unit": interpretation.quantity_unit,
+        },
     }
 
 

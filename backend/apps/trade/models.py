@@ -211,6 +211,7 @@ class TradeOpportunity(models.Model):
                 name="trade_public_date_idx",
             ),
             models.Index(fields=["province", "opportunity_type"], name="trade_prov_type_idx"),
+            models.Index(fields=["required_volume"], name="trade_volume_idx"),
         ]
 
     def __str__(self) -> str:

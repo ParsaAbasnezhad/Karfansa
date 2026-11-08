@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { apiGet } from '@/lib/api-client'
 import { formatNumber } from '@/lib/format'
 import { useQuery } from '@tanstack/react-query'
+import { EconomicStatistics } from './EconomicStatistics'
 import type { ProvinceDetail } from './types'
 import './provinces.css'
 
@@ -143,6 +144,12 @@ export function ProvinceDetailPage() {
           <p className="province-muted">اطلاعات اقتصادی معتبر هنوز ثبت نشده است.</p>
         )}
       </section>
+
+      <EconomicStatistics
+        provinceSlug={data.slug}
+        provinceName={data.name_fa}
+        statistics={data.statistics}
+      />
 
       <section className="province-industries" aria-labelledby="province-industries-title">
         <div className="province-cities-heading">

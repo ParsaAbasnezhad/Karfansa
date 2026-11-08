@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useProvinceCities } from '@/features/account/geography'
@@ -7,7 +7,7 @@ import { ApiError, apiGet, apiPost } from '@/lib/api-client'
 import { formatNumber, formatShortDate } from '@/lib/format'
 import type {
   TradeOpportunity,
-  TradeOpportunityPage,
+  TradeOpportunitySearchPage,
   TradeOpportunitySubmission,
   TradeOptions,
   TradeOpportunityType,
@@ -16,33 +16,60 @@ import './trade.css'
 
 type Filters = {
   province: string
+  city: string
   product: string
-  industry: string
+  category: string
   opportunity_type: string
   q: string
   ordering: string
+  status: string
+  date_from: string
+  date_to: string
+  has_contact: boolean
 }
 
 const initialFilters: Filters = {
   province: '',
+  city: '',
   product: '',
-  industry: '',
+  category: '',
   opportunity_type: '',
   q: '',
-  ordering: 'newest',
+  ordering: 'relevance',
+  status: 'active',
+  date_from: '',
+  date_to: '',
+  has_contact: false,
 }
+
+const searchSuggestions = [
+  'نیاز به خرید گندم',
+  'خریدار عمده خرما',
+  'فرصت صادرات محصولات کشاورزی',
+  'سرمایه‌گذاری در صنعت فولاد',
+]
 
 function formatPersianDate(value: string | null) {
   return value ? formatShortDate(value) : 'تاریخ ثبت نشده'
 }
 
-function OpportunityCard({ item }: { item: TradeOpportunity }) {
+function OpportunityCard({
+  item,
+}: {
+  item: TradeOpportunity & {
+    match_score: number
+    has_verified_contact: boolean
+  }
+}) {
   return (
     <article className="trade-opportunity-card">
       <div className="trade-card-topline">
         <span className={`trade-type-badge trade-type-${item.opportunity_type}`}>
           {item.opportunity_type_display}
         </span>
+        {item.has_verified_contact && (
+          <span className="trade-contact-badge">راه ارتباطی تأییدشده</span>
+        )}
         <Link className="trade-province" to={`/provinces/${item.province_slug}/`}>
           <span aria-hidden="true">⌖</span>
           {item.province_name_fa}
@@ -54,10 +81,16 @@ function OpportunityCard({ item }: { item: TradeOpportunity }) {
       {(item.product_name_fa || item.industry_name_fa) && (
         <div className="trade-taxonomy">
           {item.product_name_fa && (
-            <span><small>محصول</small>{item.product_name_fa}</span>
+            <span>
+              <small>محصول</small>
+              {item.product_name_fa}
+            </span>
           )}
           {item.industry_name_fa && (
-            <span><small>صنعت</small>{item.industry_name_fa}</span>
+            <span>
+              <small>صنعت</small>
+              {item.industry_name_fa}
+            </span>
           )}
         </div>
       )}
@@ -71,7 +104,9 @@ function OpportunityCard({ item }: { item: TradeOpportunity }) {
         {item.required_volume !== null && (
           <div>
             <dt>حجم / ظرفیت موردنیاز</dt>
-            <dd>{formatNumber(Number(item.required_volume))} {item.volume_unit}</dd>
+            <dd>
+              {formatNumber(Number(item.required_volume))} {item.volume_unit}
+            </dd>
           </div>
         )}
         {item.min_value !== null && item.max_value !== null && (
@@ -91,6 +126,7 @@ function OpportunityCard({ item }: { item: TradeOpportunity }) {
         )}
       </dl>
       <footer className="trade-card-footer">
+        <span className="trade-match-score">امتیاز ارتباط: {formatNumber(item.match_score)}</span>
         <div className="trade-card-dates">
           <span>انتشار: {formatPersianDate(item.published_at)}</span>
           <span>
@@ -187,9 +223,13 @@ function SubmissionForm({
         <label>
           نوع فرصت
           <select name="opportunity_type" required defaultValue="">
-            <option value="" disabled>انتخاب کنید</option>
+            <option value="" disabled>
+              انتخاب کنید
+            </option>
             {options.opportunity_types.map((type) => (
-              <option key={type.value} value={type.value}>{type.label}</option>
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
             ))}
           </select>
         </label>
@@ -201,18 +241,29 @@ function SubmissionForm({
             value={selectedProvince}
             onChange={(event) => setSelectedProvince(event.target.value)}
           >
-            <option value="" disabled>انتخاب کنید</option>
+            <option value="" disabled>
+              انتخاب کنید
+            </option>
             {options.provinces.map((province) => (
-              <option key={province.id} value={province.id}>{province.name_fa}</option>
+              <option key={province.id} value={province.id}>
+                {province.name_fa}
+              </option>
             ))}
           </select>
         </label>
         <label>
           شهر
-          <select key={selectedProvince} name="city_id" defaultValue="" disabled={!selectedProvince}>
+          <select
+            key={selectedProvince}
+            name="city_id"
+            defaultValue=""
+            disabled={!selectedProvince}
+          >
             <option value="">بدون انتخاب</option>
             {(cities.data ?? []).map((city) => (
-              <option key={city.id} value={city.id}>{city.name_fa}</option>
+              <option key={city.id} value={city.id}>
+                {city.name_fa}
+              </option>
             ))}
           </select>
         </label>
@@ -223,14 +274,17 @@ function SubmissionForm({
             defaultValue=""
             onChange={(event) => {
               setIndustrySlug(
-                options.industries.find((industry) => String(industry.id) === event.target.value)?.slug ?? '',
+                options.industries.find((industry) => String(industry.id) === event.target.value)
+                  ?.slug ?? '',
               )
               setSelectedProduct('')
             }}
           >
             <option value="">بدون انتخاب</option>
             {options.industries.map((industry) => (
-              <option key={industry.id} value={industry.id}>{industry.name_fa}</option>
+              <option key={industry.id} value={industry.id}>
+                {industry.name_fa}
+              </option>
             ))}
           </select>
         </label>
@@ -243,7 +297,9 @@ function SubmissionForm({
           >
             <option value="">بدون انتخاب</option>
             {products.map((product) => (
-              <option key={product.id} value={product.id}>{product.name_fa}</option>
+              <option key={product.id} value={product.id}>
+                {product.name_fa}
+              </option>
             ))}
           </select>
         </label>
@@ -256,7 +312,9 @@ function SubmissionForm({
           <select name="company_id" defaultValue="">
             <option value="">بدون اتصال به شرکت</option>
             {options.companies.map((company) => (
-              <option key={company.id} value={company.id}>{company.name}</option>
+              <option key={company.id} value={company.id}>
+                {company.name}
+              </option>
             ))}
           </select>
         </label>
@@ -290,20 +348,34 @@ function SubmissionForm({
         </label>
         <label>
           منبع فرصت
-          <input name="source" maxLength={300} required placeholder="گزارش، فراخوان یا اطلاعات شرکت" />
+          <input
+            name="source"
+            maxLength={300}
+            required
+            placeholder="گزارش، فراخوان یا اطلاعات شرکت"
+          />
         </label>
         <label>
           پیوند منبع
           <input name="source_url" type="url" placeholder="https://" dir="ltr" />
         </label>
       </div>
-      {(formError || error) && <p className="trade-form-error" role="alert">{formError || error}</p>}
-      {submitted && <p className="trade-form-success" role="status">{submitted}</p>}
+      {(formError || error) && (
+        <p className="trade-form-error" role="alert">
+          {formError || error}
+        </p>
+      )}
+      {submitted && (
+        <p className="trade-form-success" role="status">
+          {submitted}
+        </p>
+      )}
       <button className="trade-submit-button" type="submit" disabled={isPending}>
         {isPending ? 'در حال ثبت…' : 'ارسال برای بررسی مدیر'}
       </button>
       <p className="trade-form-note">
-        فرصت تازه تا زمان بررسی و تأیید مدیر منتشر نمی‌شود؛ اطلاعات تأییدنشده به‌عنوان فرصت واقعی نمایش داده نخواهد شد.
+        فرصت تازه تا زمان بررسی و تأیید مدیر منتشر نمی‌شود؛ اطلاعات تأییدنشده به‌عنوان فرصت واقعی
+        نمایش داده نخواهد شد.
       </p>
     </form>
   )
@@ -317,22 +389,39 @@ export function TradeOpportunitiesPage() {
   const [searchInput, setSearchInput] = useState('')
   const [submissionError, setSubmissionError] = useState('')
   const [submissionMessage, setSubmissionMessage] = useState('')
-
   const options = useQuery({
     queryKey: ['trade-options', Boolean(auth.data)],
     queryFn: ({ signal }) => apiGet<TradeOptions>('/v1/trade/options/', undefined, signal),
   })
+  const selectedProvinceId =
+    options.data?.provinces.find((province) => province.slug === filters.province)?.id.toString() ??
+    ''
+  const cities = useProvinceCities(selectedProvinceId)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPage(1)
+      setFilters((current) => ({ ...current, q: searchInput.trim() }))
+    }, 350)
+    return () => window.clearTimeout(timer)
+  }, [searchInput])
+
   const opportunities = useQuery({
-    queryKey: ['trade-opportunities', filters, page],
+    queryKey: ['trade-opportunities-search', filters, page],
     queryFn: ({ signal }) =>
-      apiGet<TradeOpportunityPage>(
-        '/v1/trade/opportunities/',
+      apiGet<TradeOpportunitySearchPage>(
+        '/v1/trade/opportunities/search/',
         {
           province: filters.province || undefined,
+          city: filters.city || undefined,
           product: filters.product || undefined,
-          industry: filters.industry || undefined,
+          category: filters.category || undefined,
           opportunity_type: filters.opportunity_type || undefined,
           q: filters.q || undefined,
+          status: filters.status,
+          date_from: filters.date_from || undefined,
+          date_to: filters.date_to || undefined,
+          has_contact: filters.has_contact ? 'true' : undefined,
           ordering: filters.ordering,
           page: String(page),
         },
@@ -365,8 +454,20 @@ export function TradeOpportunitiesPage() {
 
   const updateFilter = (key: keyof Filters, value: string) => {
     setPage(1)
-    setFilters((current) => ({ ...current, [key]: value }))
+    setFilters((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === 'province' ? { city: '' } : {}),
+    }))
   }
+  const categories = useMemo(
+    () =>
+      (options.data?.industries ?? []).filter(
+        (industry, index, list) =>
+          list.findIndex((entry) => entry.category === industry.category) === index,
+      ),
+    [options.data?.industries],
+  )
   const isLoggedOut = auth.error instanceof ApiError && auth.error.status === 401
 
   return (
@@ -377,7 +478,9 @@ export function TradeOpportunitiesPage() {
           <h1>فرصت‌های تجارت و صادرات</h1>
           <p>فرصت‌های واقعی خرید، فروش و همکاری را بر اساس اطلاعات بررسی‌شده پیدا کنید.</p>
           <div className="trade-hero-tags">
-            <span>صادرات و واردات</span><span>بازارهای هدف</span><span>فرصت‌های تأییدشده</span>
+            <span>صادرات و واردات</span>
+            <span>بازارهای هدف</span>
+            <span>فرصت‌های تأییدشده</span>
           </div>
         </div>
         <div className="trade-hero-art" aria-hidden="true">
@@ -387,127 +490,237 @@ export function TradeOpportunitiesPage() {
         </div>
       </header>
 
-      <section className="trade-filter-panel" aria-label="فیلتر و جستجوی فرصت‌ها">
-        <div className="trade-filter-heading">
-          <strong>فرصت مناسب کسب‌وکارتان را پیدا کنید</strong>
-          <span>فقط فرصت‌های فعال و تأییدشده نمایش داده می‌شوند.</span>
-        </div>
-        <form
-          className="trade-filters"
-          onSubmit={(event) => {
-            event.preventDefault()
-            updateFilter('q', searchInput.trim())
-          }}
-        >
-          <label className="trade-search">
-            جستجوی متنی
-            <input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="عنوان، محصول، بازار هدف…"
-            />
-          </label>
-          <label>
-            استان
-            <select value={filters.province} onChange={(event) => updateFilter('province', event.target.value)}>
-              <option value="">همهٔ استان‌ها</option>
-              {(options.data?.provinces ?? []).map((province) => (
-                <option key={province.id} value={province.slug}>{province.name_fa}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            محصول
-            <select value={filters.product} onChange={(event) => updateFilter('product', event.target.value)}>
-              <option value="">همهٔ محصولات</option>
-              {(options.data?.products ?? []).map((product) => (
-                <option key={product.id} value={product.slug}>{product.name_fa}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            صنعت
-            <select value={filters.industry} onChange={(event) => updateFilter('industry', event.target.value)}>
-              <option value="">همهٔ صنایع</option>
-              {(options.data?.industries ?? []).map((industry) => (
-                <option key={industry.id} value={industry.slug}>{industry.name_fa}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            نوع فرصت
-            <select
-              value={filters.opportunity_type}
-              onChange={(event) => updateFilter('opportunity_type', event.target.value)}
-            >
-              <option value="">همهٔ انواع</option>
-              {(options.data?.opportunity_types ?? []).map((type) => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            مرتب‌سازی
-            <select value={filters.ordering} onChange={(event) => updateFilter('ordering', event.target.value)}>
-              <option value="newest">جدیدترین</option>
-              <option value="relevance">مرتبط‌ترین</option>
-            </select>
-          </label>
-          <button type="submit" className="trade-search-button">جستجو</button>
-        </form>
-      </section>
-
-      <section className="trade-results" aria-label="فرصت‌های فعال">
-        <div className="trade-section-heading">
-          <div><span>فرصت‌های بررسی‌شده</span><h2>فرصت‌های فعال</h2></div>
-          {opportunities.data && <span>{formatNumber(opportunities.data.count)} فرصت</span>}
-        </div>
-        {opportunities.isPending ? (
-          <p className="trade-state">در حال دریافت فرصت‌های تجاری…</p>
-        ) : opportunities.isError ? (
-          <div className="trade-state" role="alert">
-            دریافت فرصت‌ها ممکن نشد.
-            <button type="button" onClick={() => void opportunities.refetch()}>تلاش دوباره</button>
+      <div className="trade-discovery-layout">
+        <section className="trade-filter-panel" aria-label="فیلتر و جستجوی فرصت‌ها">
+          <div className="trade-filter-heading">
+            <strong>فرصت مناسب کسب‌وکارتان را پیدا کنید</strong>
+            <span>فقط فرصت‌های فعال و تأییدشده نمایش داده می‌شوند.</span>
           </div>
-        ) : opportunities.data.results.length ? (
-          <>
-            <div className="trade-opportunity-grid">
-              {opportunities.data.results.map((item) => <OpportunityCard key={item.id} item={item} />)}
+          <form
+            className="trade-filters"
+            onSubmit={(event) => {
+              event.preventDefault()
+              updateFilter('q', searchInput.trim())
+            }}
+          >
+            <label className="trade-search">
+              جست‌وجوی هوشمند
+              <input
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="مثلاً نیاز به خرید ۵۰۰ تن گندم در استان فارس"
+                aria-label="عبارت جست‌وجوی فرصت‌های اقتصادی"
+              />
+            </label>
+            <div className="trade-search-suggestions" aria-label="پیشنهاد جست‌وجو">
+              {searchSuggestions.map((suggestion) => (
+                <button type="button" key={suggestion} onClick={() => setSearchInput(suggestion)}>
+                  {suggestion}
+                </button>
+              ))}
             </div>
-            {opportunities.data.total_pages > 1 && (
-              <nav className="trade-pagination" aria-label="صفحه‌های فرصت‌ها">
-                <button type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
-                  صفحهٔ قبل
-                </button>
-                <span>صفحهٔ {formatNumber(page)} از {formatNumber(opportunities.data.total_pages)}</span>
-                <button
-                  type="button"
-                  disabled={page >= opportunities.data.total_pages}
-                  onClick={() => setPage((current) => current + 1)}
-                >
-                  صفحهٔ بعد
-                </button>
-              </nav>
-            )}
-          </>
-        ) : (
-          <p className="trade-state">فرصت فعالی با این مشخصات پیدا نشد. فیلترها را تغییر دهید یا بعداً بازگردید.</p>
-        )}
-      </section>
+            <label>
+              استان
+              <select
+                value={filters.province}
+                onChange={(event) => updateFilter('province', event.target.value)}
+              >
+                <option value="">همهٔ استان‌ها</option>
+                {(options.data?.provinces ?? []).map((province) => (
+                  <option key={province.id} value={province.slug}>
+                    {province.name_fa}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              شهرستان
+              <select
+                value={filters.city}
+                onChange={(event) => updateFilter('city', event.target.value)}
+                disabled={!filters.province}
+              >
+                <option value="">همهٔ شهرستان‌ها</option>
+                {(cities.data ?? []).map((city) => (
+                  <option key={city.id} value={city.id}>
+                    {city.name_fa}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              محصول
+              <select
+                value={filters.product}
+                onChange={(event) => updateFilter('product', event.target.value)}
+              >
+                <option value="">همهٔ محصولات</option>
+                {(options.data?.products ?? []).map((product) => (
+                  <option key={product.id} value={product.slug}>
+                    {product.name_fa}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              حوزه اقتصادی
+              <select
+                value={filters.category}
+                onChange={(event) => updateFilter('category', event.target.value)}
+              >
+                <option value="">همهٔ حوزه‌ها</option>
+                {categories.map((industry) => (
+                  <option key={industry.category} value={industry.category}>
+                    {industry.category_display}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              نوع فرصت
+              <select
+                value={filters.opportunity_type}
+                onChange={(event) => updateFilter('opportunity_type', event.target.value)}
+              >
+                <option value="">همهٔ انواع</option>
+                {(options.data?.opportunity_types ?? []).map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              مرتب‌سازی
+              <select
+                value={filters.ordering}
+                onChange={(event) => updateFilter('ordering', event.target.value)}
+              >
+                <option value="relevance">مرتبط‌ترین</option>
+                <option value="newest">جدیدترین</option>
+                <option value="oldest">قدیمی‌ترین</option>
+                <option value="quantity">بیشترین مقدار</option>
+              </select>
+            </label>
+            <label>
+              وضعیت فرصت
+              <select
+                value={filters.status}
+                onChange={(event) => updateFilter('status', event.target.value)}
+              >
+                <option value="active">فعال</option>
+                <option value="expiring">در آستانهٔ انقضا</option>
+              </select>
+            </label>
+            <label>
+              انتشار از
+              <input
+                type="date"
+                value={filters.date_from}
+                onChange={(event) => updateFilter('date_from', event.target.value)}
+              />
+            </label>
+            <label>
+              انتشار تا
+              <input
+                type="date"
+                value={filters.date_to}
+                onChange={(event) => updateFilter('date_to', event.target.value)}
+              />
+            </label>
+            <label className="trade-contact-filter">
+              <input
+                type="checkbox"
+                checked={filters.has_contact}
+                onChange={(event) => {
+                  setPage(1)
+                  setFilters((current) => ({ ...current, has_contact: event.target.checked }))
+                }}
+              />
+              راه ارتباطی تأییدشده
+            </label>
+            <button type="submit" className="trade-search-button">
+              جستجو
+            </button>
+          </form>
+        </section>
+
+        <section className="trade-results" aria-label="فرصت‌های فعال">
+          <div className="trade-section-heading">
+            <div>
+              <span>فرصت‌های بررسی‌شده</span>
+              <h2>فرصت‌های فعال</h2>
+            </div>
+            {opportunities.data && <span>{formatNumber(opportunities.data.count)} فرصت</span>}
+          </div>
+          {opportunities.isPending ? (
+            <p className="trade-state">در حال دریافت فرصت‌های تجاری…</p>
+          ) : opportunities.isError ? (
+            <div className="trade-state" role="alert">
+              دریافت فرصت‌ها ممکن نشد.
+              <button type="button" onClick={() => void opportunities.refetch()}>
+                تلاش دوباره
+              </button>
+            </div>
+          ) : opportunities.data.results.length ? (
+            <>
+              <div className="trade-opportunity-grid">
+                {opportunities.data.results.map((item) => (
+                  <OpportunityCard key={item.id} item={item} />
+                ))}
+              </div>
+              {opportunities.data.total_pages > 1 && (
+                <nav className="trade-pagination" aria-label="صفحه‌های فرصت‌ها">
+                  <button
+                    type="button"
+                    disabled={page <= 1}
+                    onClick={() => setPage((current) => current - 1)}
+                  >
+                    صفحهٔ قبل
+                  </button>
+                  <span>
+                    صفحهٔ {formatNumber(page)} از {formatNumber(opportunities.data.total_pages)}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={page >= opportunities.data.total_pages}
+                    onClick={() => setPage((current) => current + 1)}
+                  >
+                    صفحهٔ بعد
+                  </button>
+                </nav>
+              )}
+            </>
+          ) : (
+            <p className="trade-state">
+              فرصت فعالی با این مشخصات پیدا نشد. فیلترها را تغییر دهید یا بعداً بازگردید.
+            </p>
+          )}
+        </section>
+      </div>
 
       <section className="trade-submit-section" aria-labelledby="trade-submit-title">
         <div className="trade-submit-copy">
           <span>همکاری شفاف و قابل پیگیری</span>
           <h2 id="trade-submit-title">یک فرصت تجاری سراغ دارید؟</h2>
-          <p>اطلاعات و منبع را ارسال کنید. تیم کارفنسا آن را بررسی می‌کند و تنها پس از تأیید منتشر خواهد شد.</p>
+          <p>
+            اطلاعات و منبع را ارسال کنید. تیم کارفنسا آن را بررسی می‌کند و تنها پس از تأیید منتشر
+            خواهد شد.
+          </p>
           {!auth.data && !auth.isPending && isLoggedOut && (
-            <Link to="/login/" className="trade-login-link">ورود برای ثبت فرصت</Link>
+            <Link to="/login/" className="trade-login-link">
+              ورود برای ثبت فرصت
+            </Link>
           )}
           {!auth.data && !auth.isPending && auth.isError && !isLoggedOut && (
-            <p className="trade-form-error" role="alert">وضعیت حساب دریافت نشد؛ برای ثبت فرصت، اتصال سرویس حساب را بررسی کنید.</p>
+            <p className="trade-form-error" role="alert">
+              وضعیت حساب دریافت نشد؛ برای ثبت فرصت، اتصال سرویس حساب را بررسی کنید.
+            </p>
           )}
           {!auth.data && !auth.isPending && !auth.isError && (
-            <Link to="/login/" className="trade-login-link">برای ثبت فرصت وارد حساب شوید</Link>
+            <Link to="/login/" className="trade-login-link">
+              برای ثبت فرصت وارد حساب شوید
+            </Link>
           )}
           {auth.isPending && <span className="trade-auth-loading">در حال بررسی حساب کاربری…</span>}
         </div>
@@ -517,7 +730,9 @@ export function TradeOpportunitiesPage() {
             {options.isPending ? (
               <p className="trade-state">در حال دریافت گزینه‌های فرم…</p>
             ) : options.isError || !options.data ? (
-              <p className="trade-form-error" role="alert">گزینه‌های فرم دریافت نشد. صفحه را تازه‌سازی کنید.</p>
+              <p className="trade-form-error" role="alert">
+                گزینه‌های فرم دریافت نشد. صفحه را تازه‌سازی کنید.
+              </p>
             ) : (
               <SubmissionForm
                 options={options.data}
@@ -538,18 +753,30 @@ export function TradeOpportunitiesPage() {
       {auth.data && (
         <section className="trade-my-submissions" aria-labelledby="trade-my-title">
           <div className="trade-section-heading">
-            <div><span>پیگیری درخواست‌ها</span><h2 id="trade-my-title">فرصت‌های ثبت‌شدهٔ من</h2></div>
+            <div>
+              <span>پیگیری درخواست‌ها</span>
+              <h2 id="trade-my-title">فرصت‌های ثبت‌شدهٔ من</h2>
+            </div>
           </div>
           {submissions.isError ? (
-            <p className="trade-form-error" role="alert">درخواست‌های شما دریافت نشد.</p>
+            <p className="trade-form-error" role="alert">
+              درخواست‌های شما دریافت نشد.
+            </p>
           ) : submissions.isPending ? (
             <p className="trade-state">در حال دریافت درخواست‌ها…</p>
           ) : submissions.data.length ? (
             <div className="trade-my-list">
               {submissions.data.map((item) => (
                 <article key={item.id}>
-                  <div><strong>{item.title}</strong><span>{item.province_name_fa} · {item.opportunity_type_display}</span></div>
-                  <span className={`trade-review-status status-${item.review_status}`}>{item.review_status_display}</span>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>
+                      {item.province_name_fa} · {item.opportunity_type_display}
+                    </span>
+                  </div>
+                  <span className={`trade-review-status status-${item.review_status}`}>
+                    {item.review_status_display}
+                  </span>
                 </article>
               ))}
             </div>

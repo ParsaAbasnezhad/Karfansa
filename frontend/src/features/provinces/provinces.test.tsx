@@ -59,40 +59,31 @@ describe('province pages', () => {
     vi.stubEnv('VITE_USE_MOCK', 'false')
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
+      vi.fn().mockImplementation(async (input: string) => ({
         ok: true,
         status: 200,
-        json: async () => ({
-          id: 1,
-          slug: 'tehran',
-          name_fa: 'تهران',
-          name_en: 'Tehran',
-          is_published: true,
-          short_description: '',
-          description: '',
-          economic_description: '',
-          area_sq_km: null,
-          population: null,
-          latitude: null,
-          longitude: null,
-          featured_image: null,
-          map_image: null,
-          created_at: '2026-01-01T00:00:00Z',
-          updated_at: '2026-01-01T00:00:00Z',
-          capital: {
+        json: async () => {
+          if (input.includes('/statistics/indicators/')) return []
+          if (input.includes('/statistics/')) return []
+          if (input.includes('/provinces/?')) return []
+          return {
             id: 1,
-            province_id: 1,
-            slug: 'تهران',
+            slug: 'tehran',
             name_fa: 'تهران',
-            name_en: '',
-            population: null,
+            name_en: 'Tehran',
+            is_published: true,
+            short_description: '',
             description: '',
-            is_county_center: false,
+            economic_description: '',
+            area_sq_km: null,
+            population: null,
             latitude: null,
             longitude: null,
-          },
-          cities: [
-            {
+            featured_image: null,
+            map_image: null,
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-01T00:00:00Z',
+            capital: {
               id: 1,
               province_id: 1,
               slug: 'تهران',
@@ -104,45 +95,60 @@ describe('province pages', () => {
               latitude: null,
               longitude: null,
             },
-          ],
-          industries: [
-            {
-              id: 1,
-              province_id: 1,
-              province_slug: 'tehran',
-              province_name_fa: 'تهران',
-              industry_id: 1,
-              industry_slug: 'food',
-              industry_name_fa: 'صنایع غذایی',
-              industry_name_en: 'Food',
-              category: 'food',
-              category_display: 'صنایع غذایی',
-              industry_description: '',
-              image: null,
-              description: 'توضیحات صنعت در استان',
-              activity_level: 'high',
-              activity_level_display: 'بالا',
-              production_capacity: '12',
-              production_capacity_unit: 'تن',
-              competitive_advantage: 'مزیت محلی',
-              source: 'گزارش رسمی',
-              source_url: 'https://example.com/source',
-              updated_year: 1404,
-              active_cities: [],
-              products: [
-                {
-                  id: 1,
-                  slug: 'food-product',
-                  name_fa: 'محصول غذایی',
-                  name_en: 'Food product',
-                  description: '',
-                },
-              ],
-              companies: [{ slug: 'food-company', name: 'شرکت غذایی' }],
-            },
-          ],
-        }),
-      }),
+            cities: [
+              {
+                id: 1,
+                province_id: 1,
+                slug: 'تهران',
+                name_fa: 'تهران',
+                name_en: '',
+                population: null,
+                description: '',
+                is_county_center: false,
+                latitude: null,
+                longitude: null,
+              },
+            ],
+            industries: [
+              {
+                id: 1,
+                province_id: 1,
+                province_slug: 'tehran',
+                province_name_fa: 'تهران',
+                industry_id: 1,
+                industry_slug: 'food',
+                industry_name_fa: 'صنایع غذایی',
+                industry_name_en: 'Food',
+                category: 'food',
+                category_display: 'صنایع غذایی',
+                industry_description: '',
+                image: null,
+                description: 'توضیحات صنعت در استان',
+                activity_level: 'high',
+                activity_level_display: 'بالا',
+                production_capacity: '12',
+                production_capacity_unit: 'تن',
+                competitive_advantage: 'مزیت محلی',
+                source: 'گزارش رسمی',
+                source_url: 'https://example.com/source',
+                updated_year: 1404,
+                active_cities: [],
+                products: [
+                  {
+                    id: 1,
+                    slug: 'food-product',
+                    name_fa: 'محصول غذایی',
+                    name_en: 'Food product',
+                    description: '',
+                  },
+                ],
+                companies: [{ slug: 'food-company', name: 'شرکت غذایی' }],
+              },
+            ],
+            statistics: [],
+          }
+        },
+      })),
     )
 
     renderWithProviders(
@@ -165,6 +171,147 @@ describe('province pages', () => {
     expect(screen.getByText('گزارش رسمی')).toBeInTheDocument()
     expect(screen.getByText('Tehran', { selector: '.province-name-en' })).toBeInTheDocument()
     expect(screen.getByText('شناسنامهٔ استان')).toBeInTheDocument()
+  })
+
+  it('charts documented statistics and only compares matching units and periods', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    const tehranStatistics = [
+      {
+        id: 1,
+        province_slug: 'tehran',
+        province_name_fa: 'تهران',
+        indicator: 'export_value',
+        indicator_display: 'ارزش صادرات استان',
+        category: 'foreign_trade',
+        category_display: 'تجارت خارجی',
+        value: '12.5',
+        value_text: '',
+        item_label: '',
+        unit: 'میلیون دلار',
+        statistical_year: 1402,
+        period: 'annual',
+        period_display: 'سالانه',
+        period_number: null,
+        source: 'گمرک جمهوری اسلامی ایران',
+        source_url: 'https://example.com/tehran-export',
+        source_published_at: '2024-01-01',
+        collected_at: '2024-02-01',
+        notes: '',
+      },
+      {
+        id: 2,
+        province_slug: 'tehran',
+        province_name_fa: 'تهران',
+        indicator: 'export_value',
+        indicator_display: 'ارزش صادرات استان',
+        category: 'foreign_trade',
+        category_display: 'تجارت خارجی',
+        value: '18.5',
+        value_text: '',
+        item_label: '',
+        unit: 'میلیون دلار',
+        statistical_year: 1403,
+        period: 'annual',
+        period_display: 'سالانه',
+        period_number: null,
+        source: 'گمرک جمهوری اسلامی ایران',
+        source_url: 'https://example.com/tehran-export',
+        source_published_at: '2025-01-01',
+        collected_at: '2025-02-01',
+        notes: '',
+      },
+    ]
+    const fetchMock = vi.fn().mockImplementation(async (input: string) => {
+      let payload: unknown = {}
+      if (input.includes('/statistics/indicators/')) {
+        payload = [
+          {
+            value: 'export_value',
+            label: 'ارزش صادرات استان',
+            category: 'foreign_trade',
+            category_display: 'تجارت خارجی',
+          },
+        ]
+      } else if (input.includes('/statistics/?')) {
+        payload = [
+          {
+            ...tehranStatistics[1],
+            id: 3,
+            province_slug: 'isfahan',
+            province_name_fa: 'اصفهان',
+            value: '8.5',
+          },
+          {
+            ...tehranStatistics[1],
+            id: 4,
+            province_slug: 'isfahan',
+            province_name_fa: 'اصفهان',
+            unit: 'تن',
+            value: '999',
+          },
+        ]
+      } else if (input.includes('/provinces/?country=IR')) {
+        payload = [
+          {
+            id: 1,
+            slug: 'tehran',
+            name_fa: 'تهران',
+            name_en: 'Tehran',
+            is_published: true,
+          },
+          {
+            id: 2,
+            slug: 'isfahan',
+            name_fa: 'اصفهان',
+            name_en: 'Isfahan',
+            is_published: true,
+          },
+        ]
+      } else {
+        payload = {
+          id: 1,
+          slug: 'tehran',
+          name_fa: 'تهران',
+          name_en: 'Tehran',
+          is_published: true,
+          short_description: '',
+          description: '',
+          economic_description: '',
+          area_sq_km: null,
+          population: null,
+          latitude: null,
+          longitude: null,
+          featured_image: null,
+          map_image: null,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+          capital: null,
+          cities: [],
+          industries: [],
+          statistics: tehranStatistics,
+        }
+      }
+      return { ok: true, status: 200, json: async () => payload }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/provinces/:slug/" element={<ProvinceDetailPage />} />
+      </Routes>,
+      { route: '/provinces/tehran/' },
+    )
+
+    expect(await screen.findAllByText('گمرک جمهوری اسلامی ایران')).toHaveLength(2)
+    await userEvent.selectOptions(screen.getByLabelText('سال آماری'), '1403')
+    await userEvent.selectOptions(screen.getByLabelText('استان برای مقایسه'), 'isfahan')
+
+    expect(await screen.findByText('۸٫۵')).toBeInTheDocument()
+    expect(screen.queryByText('999')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'نمودار روند تغییرات شاخص‌های ثبت‌شده' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/مشاهدهٔ منبع/)).toBeInTheDocument()
   })
 
   it('filters published industries by selected category and province', async () => {

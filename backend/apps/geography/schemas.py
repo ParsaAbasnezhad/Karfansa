@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from ninja import Schema
@@ -82,6 +82,36 @@ class ProvinceIndustryOut(Schema):
     companies: list[IndustryCompanyOut]
 
 
+class ProvinceStatisticsOut(Schema):
+    id: int
+    province_slug: str
+    province_name_fa: str
+    indicator: str
+    indicator_display: str
+    category: str
+    category_display: str
+    value: Decimal | None
+    value_text: str
+    item_label: str
+    unit: str
+    statistical_year: int
+    period: str
+    period_display: str
+    period_number: int | None
+    source: str
+    source_url: str
+    source_published_at: date | None
+    collected_at: date | None
+    notes: str
+
+
+class StatisticIndicatorOut(Schema):
+    value: str
+    label: str
+    category: str
+    category_display: str
+
+
 class ProvinceDetailOut(ProvinceOut):
     short_description: str
     description: str
@@ -97,3 +127,4 @@ class ProvinceDetailOut(ProvinceOut):
     capital: CityOut | None
     cities: list[CityOut]
     industries: list[ProvinceIndustryOut]
+    statistics: list[ProvinceStatisticsOut]

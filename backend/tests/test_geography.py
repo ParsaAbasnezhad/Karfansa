@@ -3,7 +3,13 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import Client
 
-from apps.geography.models import Country, Province, ProvinceCity, ProvinceIndustry
+from apps.geography.models import (
+    Country,
+    Province,
+    ProvinceCity,
+    ProvinceIndustry,
+    ProvinceStatistics,
+)
 from apps.organizations.models import Industry, IndustryCategory, Organization, Product
 
 
@@ -35,6 +41,7 @@ def test_province_detail_exposes_city_directory_and_optional_statistics() -> Non
     assert payload["area_sq_km"] is None
     assert payload["cities"]
     assert all(city["province_id"] == province.pk for city in payload["cities"])
+    assert payload["statistics"] == []
 
 
 @pytest.mark.django_db
@@ -165,3 +172,83 @@ def test_production_capacity_requires_a_unit_source_and_update_year() -> None:
             production_capacity_unit="تن در سال",
             updated_year=1404,
         )
+
+
+@pytest.mark.django_db
+def test_public_province_statistics_are_verified_and_filterable() -> None:
+    tehran = Province.objects.get(slug="tehran")
+    alborz = Province.objects.get(slug="alborz")
+    tehran_record = ProvinceStatistics.objects.create(
+        province=tehran,
+        indicator=ProvinceStatistics.Indicator.EXPORT_VALUE,
+        category=ProvinceStatistics.Category.FOREIGN_TRADE,
+        value="123.45",
+        unit="میلیون دلار",
+        statistical_year=1403,
+        period=ProvinceStatistics.Period.ANNUAL,
+        source="گمرک جمهوری اسلامی ایران",
+        source_url="https://example.com/customs-report",
+        validation_status=ProvinceStatistics.ValidationStatus.VALIDATED,
+    )
+    ProvinceStatistics.objects.create(
+        province=alborz,
+        indicator=ProvinceStatistics.Indicator.EXPORT_VALUE,
+        category=ProvinceStatistics.Category.FOREIGN_TRADE,
+        value="67.89",
+        unit="میلیون دلار",
+        statistical_year=1403,
+        period=ProvinceStatistics.Period.ANNUAL,
+        source="گمرک جمهوری اسلامی ایران",
+        validation_status=ProvinceStatistics.ValidationStatus.VALIDATED,
+    )
+    ProvinceStatistics.objects.create(
+        province=tehran,
+        indicator=ProvinceStatistics.Indicator.EXPORT_VALUE,
+        category=ProvinceStatistics.Category.FOREIGN_TRADE,
+        value="999",
+        item_label="در انتظار بررسی",
+        unit="میلیون دلار",
+        statistical_year=1403,
+        period=ProvinceStatistics.Period.ANNUAL,
+        source="منبع بررسی‌نشده",
+    )
+
+    response = Client().get(
+        "/api/v1/geography/statistics/?indicator=export_value&year=1403&period=annual"
+    )
+    indicator_options = Client().get("/api/v1/geography/statistics/indicators/")
+    invalid_filter = Client().get("/api/v1/geography/statistics/?indicator=unknown")
+    detail = Client().get(f"/api/v1/geography/provinces/{tehran.slug}/").json()
+
+    assert response.status_code == 200
+    assert indicator_options.status_code == 200
+    assert len(indicator_options.json()) == 12
+    assert invalid_filter.status_code == 422
+    records = response.json()
+    assert {record["province_slug"] for record in records} == {"tehran", "alborz"}
+    assert all(record["unit"] == "میلیون دلار" for record in records)
+    assert len(detail["statistics"]) == 1
+    assert detail["statistics"][0]["id"] == tehran_record.pk
+    assert detail["statistics"][0]["source"] == "گمرک جمهوری اسلامی ایران"
+
+
+@pytest.mark.django_db
+def test_statistic_validation_requires_matching_category_and_period_number() -> None:
+    province = Province.objects.get(slug="tehran")
+    statistic = ProvinceStatistics(
+        province=province,
+        indicator=ProvinceStatistics.Indicator.INDUSTRIAL_PRODUCTION_GROWTH,
+        category=ProvinceStatistics.Category.FOREIGN_TRADE,
+        value="2.5",
+        unit="درصد",
+        statistical_year=1403,
+        period=ProvinceStatistics.Period.QUARTERLY,
+        period_number=5,
+        source="مرکز آمار ایران",
+        validation_status=ProvinceStatistics.ValidationStatus.VALIDATED,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        statistic.full_clean()
+    assert "category" in exc_info.value.message_dict
+    assert "period_number" in exc_info.value.message_dict

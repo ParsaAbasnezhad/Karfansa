@@ -27,3 +27,14 @@ reference the shared Organizations industry catalog. Only published catalog
 industries with published province profiles appear in the public API and
 province pages. Production capacity, source citation, and update year remain
 empty until entered by an editor with a verifiable source.
+
+Province economic statistics are also managed from the Geography admin.
+Records are private until their validation status is set to verified, and
+verified records require a source name, measurement unit, statistical year,
+and value or item label. Editors should cite primary official publications
+such as the Islamic Republic of Iran Customs Administration, Statistical
+Center of Iran, Ministry of Industry, Mine and Trade, or relevant agricultural
+authorities. No economic-statistics data is preloaded or inferred; unpublished
+years and values remain absent. The public statistics API and provincial
+charts expose only verified records, and comparison results require the same
+indicator, unit, statistical period and period number.

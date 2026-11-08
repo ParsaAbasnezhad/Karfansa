@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .forms import ProvinceIndustryForm
-from .models import City, Country, Province, ProvinceIndustry
+from .models import City, Country, Province, ProvinceIndustry, ProvinceStatistics
 
 
 class ProvinceIndustryInline(admin.TabularInline):
@@ -66,6 +66,57 @@ class ProvinceIndustryAdmin(admin.ModelAdmin):
     autocomplete_fields = ("province", "industry", "active_cities")
     list_select_related = ("province", "industry")
     filter_horizontal = ("active_cities",)
+
+
+@admin.register(ProvinceStatistics)
+class ProvinceStatisticsAdmin(admin.ModelAdmin):
+    list_display = (
+        "province",
+        "get_indicator_display",
+        "statistical_year",
+        "period",
+        "period_number",
+        "value",
+        "item_label",
+        "unit",
+        "validation_status",
+    )
+    list_filter = (
+        "category",
+        "indicator",
+        "period",
+        "statistical_year",
+        "validation_status",
+        "province__country",
+    )
+    search_fields = ("province__name_fa", "source", "item_label", "value_text", "notes")
+    autocomplete_fields = ("province",)
+    list_select_related = ("province",)
+    ordering = ("-statistical_year", "indicator", "province__name_fa")
+    fieldsets = (
+        ("شاخص آماری", {"fields": ("province", "indicator", "category")}),
+        ("مقدار و دوره", {
+            "fields": (
+                "value",
+                "value_text",
+                "item_label",
+                "unit",
+                "statistical_year",
+                "period",
+                "period_number",
+            )
+        }),
+        ("منبع و اعتبارسنجی", {
+            "fields": (
+                "source",
+                "source_url",
+                "source_published_at",
+                "collected_at",
+                "notes",
+                "validation_status",
+            )
+        }),
+    )
 
 
 @admin.register(City)

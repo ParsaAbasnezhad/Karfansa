@@ -581,6 +581,53 @@
     max-width: 200px;
   }
 }
+@media (max-width: 760px) {
+  .industries-filters {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .industries-filter-controls {
+    width: 100%;
+  }
+  .industries-filter-controls label {
+    min-width: 0;
+    flex: 1 1 180px;
+  }
+  .industries-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .industry-card-topline,
+  .industry-source {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .industry-category {
+    max-width: 100%;
+  }
+}
+@media (max-width: 520px) {
+  .industries-page {
+    margin: 20px auto 48px;
+    padding-inline: 14px;
+  }
+  .industries-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .industries-results-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .industries-filter-controls label {
+    flex-basis: 100%;
+  }
+  .industries-clear {
+    align-self: stretch;
+  }
+  .industry-product-list {
+    grid-template-columns: 1fr;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .industries-page *,
   .industries-page *::before,

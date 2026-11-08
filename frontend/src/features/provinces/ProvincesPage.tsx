@@ -90,19 +90,19 @@ export function ProvincesPage() {
               >
                 <defs>
                   <linearGradient id="iran-map-fill" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#d8eee2" />
-                    <stop offset="100%" stopColor="#b5dccc" />
+                    <stop offset="0%" stopColor="#a0e0ef" />
+                    <stop offset="100%" stopColor="#60c1e5" />
                   </linearGradient>
                   <linearGradient id="iran-map-active" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#1c987f" />
-                    <stop offset="100%" stopColor="#0d665e" />
+                    <stop offset="0%" stopColor="#60c1e5" />
+                    <stop offset="100%" stopColor="#005a9c" />
                   </linearGradient>
                   <filter id="iran-map-shadow" x="-20%" y="-20%" width="140%" height="140%">
                     <feDropShadow
                       dx="0"
                       dy="2"
                       stdDeviation="2.5"
-                      floodColor="#174a3d"
+                      floodColor="#005a9c"
                       floodOpacity=".14"
                     />
                   </filter>

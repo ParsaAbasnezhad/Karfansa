@@ -1,11 +1,5 @@
 export type TradeOpportunityType =
-  | 'export'
-  | 'import'
-  | 'raw-materials'
-  | 'bulk-buy'
-  | 'bulk-sell'
-  | 'partnership'
-  | 'investment'
+  'export' | 'import' | 'raw-materials' | 'bulk-buy' | 'bulk-sell' | 'partnership' | 'investment'
 
 export type TradeOpportunity = {
   id: number
@@ -48,6 +42,25 @@ export type TradeOpportunityPage = {
   total_pages: number
 }
 
+export type TradeOpportunitySearchResult = TradeOpportunity & {
+  match_score: number
+  has_verified_contact: boolean
+}
+
+export type TradeOpportunitySearchPage = Omit<TradeOpportunityPage, 'results'> & {
+  results: TradeOpportunitySearchResult[]
+  applied_filters: Record<string, string>
+  interpreted: {
+    product: string
+    province: string
+    city: string
+    category: string
+    opportunity_type: string
+    quantity: string | null
+    quantity_unit: string
+  }
+}
+
 export type TradeOptions = {
   provinces: Array<{ id: number; slug: string; name_fa: string }>
   products: Array<{
@@ -57,7 +70,14 @@ export type TradeOptions = {
     name_en: string
     industry_slugs: string[]
   }>
-  industries: Array<{ id: number; slug: string; name_fa: string; name_en: string }>
+  industries: Array<{
+    id: number
+    slug: string
+    name_fa: string
+    name_en: string
+    category: string
+    category_display: string
+  }>
   companies: Array<{ id: string; slug: string; name: string }>
   opportunity_types: Array<{ value: TradeOpportunityType; label: string }>
 }
