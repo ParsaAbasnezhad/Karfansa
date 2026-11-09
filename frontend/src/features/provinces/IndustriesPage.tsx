@@ -4,6 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api-client'
 import { formatNumber } from '@/lib/format'
 import type { ProvinceSummary, ProvinceIndustry } from './types'
+import {
+  IndustryAdvantageIcon,
+  IndustryCategoryIcon,
+  IndustryEmptyArt,
+  IndustryHeroArt,
+} from './IndustryArt'
 import './industries.css'
 
 const categories = [
@@ -19,6 +25,8 @@ const categories = [
   ['handicrafts', 'صنایع دستی'],
   ['technology', 'فناوری و صنایع دانش‌بنیان'],
 ]
+
+const categorySlug = (label?: string | null) => categories.find(([, name]) => name === label)?.[0]
 
 export function IndustriesPage() {
   const [provinceSlug, setProvinceSlug] = useState('')
@@ -55,10 +63,8 @@ export function IndustriesPage() {
             <span>اطلاعات مبتنی بر منبع</span>
           </div>
         </div>
-        <div className="industries-hero-art" aria-hidden="true">
-          <span className="industries-hero-ring industries-hero-ring-one" />
-          <span className="industries-hero-ring industries-hero-ring-two" />
-          <span className="industries-hero-mark">تولید</span>
+        <div className="industries-hero-art">
+          <IndustryHeroArt />
         </div>
       </header>
 
@@ -144,7 +150,9 @@ export function IndustriesPage() {
                     className="industry-card-image industry-card-image-placeholder"
                     aria-hidden="true"
                   >
-                    <span>{item.category_display?.slice(0, 1) || 'ص'}</span>
+                    <span>
+                      <IndustryCategoryIcon category={categorySlug(item.category_display)} />
+                    </span>
                   </div>
                 )}
                 <div className="industry-card-body">
@@ -192,6 +200,7 @@ export function IndustriesPage() {
                   </dl>
                   {item.competitive_advantage && (
                     <div className="industry-advantage">
+                      <IndustryAdvantageIcon />
                       <span>مزیت رقابتی استان</span>
                       <p>{item.competitive_advantage}</p>
                     </div>
@@ -249,7 +258,10 @@ export function IndustriesPage() {
           </div>
         </section>
       ) : (
-        <p className="industries-state">برای این فیلتر هنوز صنعت منتشرشده‌ای ثبت نشده است.</p>
+        <div className="industries-state">
+          <IndustryEmptyArt />
+          برای این فیلتر هنوز صنعت منتشرشده‌ای ثبت نشده است.
+        </div>
       )}
     </main>
   )

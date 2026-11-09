@@ -1,0 +1,1315 @@
+/* ==========================================================================
+   Province detail page — Karfensa
+   Import AFTER provinces.css (tokens live there).
+   Layout: photo hero → section chips → [identity | economy card] →
+   about/economy text → statistics → industries → map + cities.
+   ========================================================================== */
+
+.province-detail {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.province-detail > * {
+  margin: 0;
+}
+
+.province-detail > :empty {
+  display: none;
+}
+
+.province-detail [id] {
+  scroll-margin-top: 96px;
+}
+
+html:has(.province-detail) {
+  scroll-behavior: smooth;
+}
+
+.province-icon {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+}
+
+/* ---------- Hero ---------- */
+
+.province-detail-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  overflow: hidden;
+  min-height: clamp(236px, 26vw, 268px);
+  padding: clamp(16px, 2.4vw, 24px) clamp(20px, 3.4vw, 44px) clamp(18px, 2.6vw, 26px);
+  border-radius: 24px;
+  background: linear-gradient(120deg, #06263f, #005a9c);
+  color: #fff;
+  box-shadow: var(--p-shadow-md);
+}
+
+.province-featured-image {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.province-detail-hero::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(
+    270deg,
+    rgb(4 41 94 / 0.94) 0%,
+    rgb(5 56 121 / 0.84) 34%,
+    rgb(5 56 121 / 0.2) 68%,
+    rgb(5 56 121 / 0) 100%
+  );
+  content: '';
+}
+
+.province-detail-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 560px;
+}
+
+.province-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: rgb(255 255 255 / 0.78);
+  font-size: 12px;
+}
+
+.province-breadcrumb a {
+  transition: color 0.2s ease;
+}
+
+.province-breadcrumb a:hover {
+  color: #fff;
+}
+
+.province-breadcrumb [aria-current='page'] {
+  color: #fff;
+  font-weight: 700;
+}
+
+.province-detail-hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.4vw, 48px);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.province-name-en {
+  display: block;
+  margin: 2px 0 0;
+  color: var(--p-sky);
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: 600;
+  direction: ltr;
+  text-align: right;
+}
+
+.province-detail-hero-copy > p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  max-width: 52ch;
+  margin: 10px 0 0;
+  overflow: hidden;
+  color: #e4f3fb;
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.province-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 0;
+  margin-top: auto;
+  padding-top: 16px;
+  color: #e4f3fb;
+  font-size: 12px;
+}
+
+.province-detail-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.province-detail-meta span + span {
+  margin-inline-start: 16px;
+  padding-inline-start: 16px;
+  border-inline-start: 1px solid rgb(255 255 255 / 0.28);
+}
+
+.province-detail-meta .province-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--p-sky);
+}
+
+.province-capital {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  align-self: center;
+  min-width: 230px;
+  margin-inline: auto clamp(0px, 11vw, 180px);
+  padding: 14px 20px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 18px;
+  background: rgb(8 44 104 / 0.6);
+  box-shadow: 0 12px 30px rgb(2 20 50 / 0.25);
+  backdrop-filter: blur(10px);
+}
+
+.province-capital-text {
+  display: grid;
+  gap: 2px;
+}
+
+.province-capital-text > span {
+  color: #cfe3f5;
+  font-size: 12px;
+}
+
+.province-capital-text strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.province-capital-text strong .province-icon {
+  color: var(--p-sky);
+}
+
+.province-capital-text small {
+  color: var(--p-ice);
+  font-size: 11px;
+  direction: ltr;
+  text-align: right;
+}
+
+.province-shape {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.province-shape path {
+  vector-effect: non-scaling-stroke;
+}
+
+.province-capital .province-shape {
+  width: 58px;
+  height: 58px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.6px;
+  stroke-linejoin: round;
+}
+
+/* ---------- Section chips ---------- */
+
+.province-quicknav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.province-quicknav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--p-shadow-sm);
+  color: var(--p-ink);
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.province-quicknav a:hover {
+  border-color: var(--p-sky);
+  color: var(--p-primary);
+}
+
+.province-quicknav .province-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--p-primary);
+}
+
+/* ---------- Identity + economy summary ---------- */
+
+.province-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: 14px;
+}
+
+.province-content-card {
+  padding: clamp(16px, 2.2vw, 22px);
+  border: 1px solid var(--p-line);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: var(--p-shadow-sm);
+}
+
+.province-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.province-section-heading h2,
+.province-cities-heading h2 {
+  margin: 0;
+  font-size: clamp(17px, 1.8vw, 20px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.province-heading-icon {
+  display: grid;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: #e8f1fc;
+  color: var(--p-primary);
+}
+
+.province-heading-icon .province-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.province-overview-body {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.province-overview-shape {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: #eaf2fc;
+}
+
+.province-overview-shape .province-shape {
+  max-height: 150px;
+  fill: var(--p-primary);
+  stroke: none;
+}
+
+.province-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.province-stat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f1f6fc;
+}
+
+.province-stat-label,
+.province-muted {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--p-muted);
+  font-size: 11px;
+}
+
+.province-stat-label .province-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--p-primary);
+}
+
+.province-stat strong {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.province-economy-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  padding: clamp(16px, 2.2vw, 22px);
+  border-radius: 22px;
+  background: linear-gradient(150deg, #0a2f6e 0%, #0b4a9a 100%);
+  color: #fff;
+  box-shadow: var(--p-shadow-md);
+}
+
+.province-economy-card::after {
+  position: absolute;
+  z-index: -1;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  width: 62%;
+  height: 74px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgb(96 193 229 / 0.5) 0 6px,
+    transparent 6px 14px
+  );
+  content: '';
+  mask-image: linear-gradient(to top left, #000 10%, transparent 75%);
+  pointer-events: none;
+}
+
+.province-economy-card .province-section-heading {
+  margin-bottom: 0;
+}
+
+.province-economy-card .province-heading-icon {
+  background: rgb(255 255 255 / 0.12);
+  color: var(--p-sky);
+}
+
+.province-economy-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.province-economy-figures > div {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding-inline: 8px;
+  text-align: center;
+}
+
+.province-economy-figures > div + div {
+  border-inline-start: 1px solid rgb(255 255 255 / 0.16);
+}
+
+.province-economy-figures .province-icon {
+  width: 26px;
+  height: 26px;
+  margin-bottom: 4px;
+  color: #f3c25b;
+}
+
+.province-economy-figures > div:nth-child(2) .province-icon {
+  color: var(--p-sky);
+}
+
+.province-economy-figures dt {
+  color: #cfe3f5;
+  font-size: 11px;
+}
+
+.province-economy-figures dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.province-economy-card > p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  margin: 0;
+  overflow: hidden;
+  color: #d6e6f7;
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+.province-economy-link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-end;
+  gap: 8px;
+  margin-top: auto;
+  padding: 9px 16px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 0.2s ease;
+}
+
+.province-economy-link:hover {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.province-economy-link .province-icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---------- About + economy text ---------- */
+
+.province-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.province-pair > :only-child {
+  grid-column: 1 / -1;
+}
+
+.province-content-card > p {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--p-body);
+  font-size: 13.5px;
+  line-height: 2.05;
+  white-space: pre-line;
+}
+
+/* ---------- Economic statistics ---------- */
+
+.province-economic-statistics {
+  display: grid;
+  gap: 18px;
+}
+
+.province-economic-statistics .province-section-heading {
+  margin-bottom: 0;
+}
+
+.province-economic-statistics .province-section-heading > p {
+  max-width: 70ch;
+  margin: 8px 0 0;
+  color: var(--p-muted);
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+.province-stat-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+  background: var(--p-wash);
+}
+
+.province-stat-filters label,
+.province-stat-comparison label {
+  display: grid;
+  gap: 7px;
+  color: #356986;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.province-stat-filters select,
+.province-stat-comparison select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #cfe3ed;
+  border-radius: 11px;
+  background: #fff;
+  color: var(--p-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.province-stat-filters select:focus,
+.province-stat-comparison select:focus {
+  border-color: var(--p-sky);
+  outline: 3px solid rgb(96 193 229 / 0.28);
+}
+
+.province-stat-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.province-stat-chart-card,
+.province-stat-comparison {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.province-stat-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.province-stat-heading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.province-stat-heading strong {
+  font-size: 13px;
+}
+
+.province-stat-heading span {
+  color: var(--p-muted);
+  font-size: 10px;
+}
+
+.province-stat-chart-wrap {
+  overflow: auto hidden;
+  margin-top: 12px;
+}
+
+.province-stat-chart {
+  display: block;
+  width: 100%;
+  min-width: 420px;
+  height: auto;
+  overflow: visible;
+  font-family: inherit;
+  font-size: 10px;
+}
+
+.province-stat-axis {
+  stroke: #cfe3ed;
+  stroke-width: 1;
+}
+
+.province-stat-chart-label {
+  fill: var(--p-muted);
+  font-size: 9px;
+}
+
+.province-stat-comparison {
+  display: grid;
+  gap: 14px;
+}
+
+.province-stat-comparison .province-stat-heading {
+  align-items: flex-end;
+}
+
+.province-stat-comparison label {
+  width: min(250px, 48%);
+}
+
+.province-stat-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.province-stat-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  font-size: 12px;
+}
+
+.province-stat-table th,
+.province-stat-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e8f1f6;
+  white-space: nowrap;
+}
+
+.province-stat-table thead th {
+  background: var(--p-wash);
+  color: var(--p-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.province-stat-table tbody tr:hover {
+  background: var(--p-wash);
+}
+
+.province-stat-table th {
+  font-weight: 700;
+}
+
+.province-stat-table tbody th small {
+  display: block;
+  margin-top: 4px;
+  color: var(--p-muted);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.province-stat-records > h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.province-stat-record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.province-stat-record {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--p-line);
+  border-radius: 14px;
+  background: var(--p-wash);
+}
+
+.province-stat-record-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.province-stat-record-heading strong {
+  font-size: 12px;
+}
+
+.province-stat-record-heading span,
+.province-stat-record > small {
+  color: var(--p-muted);
+  font-size: 10px;
+}
+
+.province-stat-record > p {
+  margin: 10px 0;
+  color: var(--p-primary);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.province-stat-record footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--p-line);
+  font-size: 10px;
+}
+
+.province-stat-record footer a {
+  color: var(--p-primary);
+  font-weight: 700;
+}
+
+.province-stat-record > small {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.8;
+}
+
+/* ---------- Industries ---------- */
+
+.province-industries {
+  padding: clamp(16px, 2.2vw, 22px);
+  border: 1px solid var(--p-line);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--p-shadow-sm);
+}
+
+.province-cities-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.province-cities-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.province-heading-sub {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 12px;
+}
+
+.province-cities-heading > span {
+  flex: none;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #e8f1fc;
+  color: var(--p-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.province-industries > .province-cities-heading > a {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid #c5dbf3;
+  border-radius: 999px;
+  background: #f3f8fe;
+  color: var(--p-primary);
+  font-size: 12px;
+  font-weight: 800;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.province-industries > .province-cities-heading > a:hover {
+  background: var(--p-primary);
+  color: #fff;
+}
+
+.province-industries .province-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.province-industry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.province-industry-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--p-line);
+  border-radius: 18px;
+  background: #fff;
+  transition:
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.province-industry-card:hover {
+  border-color: var(--p-ice);
+  box-shadow: var(--p-shadow-md);
+}
+
+.province-industry-media {
+  position: relative;
+}
+
+.province-industry-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #eaf2fc;
+}
+
+.province-industry-media .province-industry-category {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-start: 10px;
+  background: rgb(255 255 255 / 0.94);
+  box-shadow: 0 4px 12px rgb(6 38 63 / 0.15);
+}
+
+.province-industry-category {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #e8f1fc;
+  color: var(--p-primary);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.province-industry-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 14px 16px 16px;
+}
+
+.province-industry-heading {
+  margin-bottom: 6px;
+}
+
+.province-industry-body h3 {
+  margin: 6px 0 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.province-industry-heading > .province-industry-category + h3 {
+  margin-top: 8px;
+}
+
+.province-industry-en {
+  color: var(--p-muted);
+  font-size: 11px;
+  direction: ltr;
+  text-align: right;
+}
+
+.province-industry-body > p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--p-body);
+  font-size: 12px;
+  line-height: 1.95;
+  white-space: pre-line;
+}
+
+.province-industry-facts,
+.province-city-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.province-industry-facts div,
+.province-city-facts div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f1f6fc;
+}
+
+.province-industry-facts dt,
+.province-city-facts dt {
+  color: var(--p-muted);
+  font-size: 10px;
+}
+
+.province-industry-facts dd,
+.province-city-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.province-industry-advantage {
+  padding: 10px 14px;
+  border-inline-start: 3px solid var(--p-amber);
+  border-radius: 6px 12px 12px 6px;
+  background: var(--p-amber-bg);
+}
+
+.province-industry-advantage strong,
+.province-industry-tags > strong {
+  font-size: 11.5px;
+}
+
+.province-industry-advantage p {
+  margin: 3px 0 0;
+  color: #6a5a3e;
+  font-size: 11.5px;
+  line-height: 1.85;
+}
+
+.province-industry-tags {
+  margin-top: 12px;
+}
+
+.province-industry-tags ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.province-industry-tags li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 10px;
+  border: 1px solid var(--p-line);
+  border-radius: 10px;
+  background: #f8fbfe;
+  color: var(--p-body);
+  font-size: 11px;
+}
+
+.province-industry-tags li small {
+  color: var(--p-muted);
+  font-size: 9px;
+}
+
+.province-industry-tags li.province-tag-detail {
+  min-width: 120px;
+  max-width: 100%;
+}
+
+.province-industry-tags li.province-tag-detail strong {
+  color: var(--p-ink);
+  font-size: 11px;
+}
+
+.province-industry-tags li.province-tag-detail span,
+.province-industry-tags li.province-tag-detail small {
+  color: var(--p-muted);
+  font-size: 10px;
+}
+
+.province-industry-source {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--p-line);
+  color: var(--p-muted);
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+.province-industry-tags + .province-industry-source,
+.province-industry-facts + .province-industry-source,
+.province-industry-advantage + .province-industry-source {
+  margin-top: 14px;
+}
+
+.province-industry-source a {
+  flex: none;
+  color: var(--p-primary);
+  font-weight: 800;
+}
+
+/* ---------- Map image + cities ---------- */
+
+.province-geo {
+  display: grid;
+  gap: 14px;
+}
+
+.province-geo > * {
+  margin: 0;
+}
+
+.province-geo.has-map {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: start;
+}
+
+.province-map img {
+  display: block;
+  max-width: 100%;
+  max-height: 380px;
+  margin: auto;
+  border-radius: 14px;
+  object-fit: contain;
+}
+
+.province-map figcaption {
+  margin-top: 10px;
+  color: var(--p-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.province-city-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.province-geo:not(.has-map) .province-city-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.province-city-list li {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--p-line);
+  border-radius: 14px;
+  background: #f8fbfe;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.province-city-list li:hover {
+  border-color: var(--p-sky);
+  background: #fff;
+}
+
+.province-city-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.province-city-name strong {
+  font-size: 14px;
+}
+
+.province-city-name > span {
+  color: var(--p-muted);
+  font-size: 10px;
+  direction: ltr;
+  text-align: right;
+}
+
+.province-city-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.province-city-badges span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e3eef9;
+  color: #3d6479;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.province-city-badges .province-city-capital {
+  background: var(--p-primary);
+  color: #fff;
+}
+
+.province-city-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--p-body);
+  font-size: 11px;
+  line-height: 1.85;
+}
+
+.province-city-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 8px 0 0;
+}
+
+.province-city-facts div {
+  padding: 6px 9px;
+  border: 1px solid #e6eff8;
+  background: #fff;
+}
+
+.province-city-facts dd {
+  font-size: 10px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1100px) {
+  .province-industry-grid,
+  .province-geo:not(.has-map) .province-city-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .province-geo.has-map .province-city-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .province-summary,
+  .province-pair,
+  .province-geo.has-map {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .province-stat-charts,
+  .province-stat-record-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .province-map img {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 760px) {
+  .province-detail-hero {
+    flex-direction: column;
+    gap: 18px;
+    min-height: 0;
+  }
+
+  .province-detail-hero::after {
+    background: linear-gradient(
+      180deg,
+      rgb(4 41 94 / 0.55) 0%,
+      rgb(5 56 121 / 0.9) 60%,
+      rgb(4 41 94 / 0.96) 100%
+    );
+  }
+
+  .province-capital {
+    align-self: stretch;
+    min-width: 0;
+    margin-inline: 0;
+    padding: 12px 16px;
+  }
+
+  .province-capital .province-shape {
+    width: 46px;
+    height: 46px;
+  }
+
+  .province-capital-text strong {
+    font-size: 19px;
+  }
+
+  .province-quicknav {
+    display: flex;
+    gap: 8px;
+    margin-inline: calc(clamp(14px, 3vw, 28px) * -1);
+    padding: 2px clamp(14px, 3vw, 28px) 6px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .province-quicknav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .province-quicknav a {
+    flex: none;
+    padding: 10px 14px;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .province-overview-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .province-overview-shape {
+    padding: 10px;
+  }
+
+  .province-overview-shape .province-shape {
+    max-height: 96px;
+  }
+
+  .province-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .province-industry-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .province-stat-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .province-stat-comparison .province-stat-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .province-stat-comparison label {
+    width: 100%;
+  }
+
+  .province-cities-heading {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 560px) {
+  .province-detail-hero,
+  .province-content-card,
+  .province-industries,
+  .province-economy-card {
+    border-radius: 18px;
+  }
+
+  .province-detail-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .province-detail-meta span + span {
+    margin-inline-start: 0;
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .province-city-list,
+  .province-geo:not(.has-map) .province-city-list,
+  .province-geo.has-map .province-city-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .province-industry-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .province-industry-facts div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .province-economy-figures dd {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.province-detail) {
+    scroll-behavior: auto;
+  }
+}

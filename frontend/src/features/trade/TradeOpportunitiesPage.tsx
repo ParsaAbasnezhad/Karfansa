@@ -5,6 +5,7 @@ import { useProvinceCities } from '@/features/account/geography'
 import { useAuth } from '@/features/auth/useAuth'
 import { ApiError, apiGet, apiPost } from '@/lib/api-client'
 import { formatNumber, formatShortDate } from '@/lib/format'
+import { TradeCtaArt, TradeEmptyArt, TradeHeroArt, TradeTypeIcon } from './TradeArt'
 import type {
   TradeOpportunity,
   TradeOpportunitySearchPage,
@@ -65,6 +66,7 @@ function OpportunityCard({
     <article className="trade-opportunity-card">
       <div className="trade-card-topline">
         <span className={`trade-type-badge trade-type-${item.opportunity_type}`}>
+          <TradeTypeIcon type={item.opportunity_type} />
           {item.opportunity_type_display}
         </span>
         {item.has_verified_contact && (
@@ -483,10 +485,8 @@ export function TradeOpportunitiesPage() {
             <span>فرصت‌های تأییدشده</span>
           </div>
         </div>
-        <div className="trade-hero-art" aria-hidden="true">
-          <span className="trade-hero-orbit trade-orbit-one" />
-          <span className="trade-hero-orbit trade-orbit-two" />
-          <span className="trade-hero-emblem">تجارت</span>
+        <div className="trade-hero-art">
+          <TradeHeroArt />
         </div>
       </header>
 
@@ -692,9 +692,10 @@ export function TradeOpportunitiesPage() {
               )}
             </>
           ) : (
-            <p className="trade-state">
+            <div className="trade-state">
+              <TradeEmptyArt />
               فرصت فعالی با این مشخصات پیدا نشد. فیلترها را تغییر دهید یا بعداً بازگردید.
-            </p>
+            </div>
           )}
         </section>
       </div>
@@ -723,6 +724,7 @@ export function TradeOpportunitiesPage() {
             </Link>
           )}
           {auth.isPending && <span className="trade-auth-loading">در حال بررسی حساب کاربری…</span>}
+          <TradeCtaArt />
         </div>
         {auth.data && (
           <details className="trade-submission">
