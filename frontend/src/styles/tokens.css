@@ -3,12 +3,17 @@
   --navy: #0b1655;
   --navy-2: #122072;
   --blue: #1d4ed8;
+  --blue-hover: #173fb5;
   --blue-soft: #e8eefc;
+  --blue-tint: #f4f7ff;
+  --teal: #0f766e;
+  --teal-soft: #e5f5f2;
   --bg: #f3f5fb;
   --surface: #ffffff;
   --surface-2: #f6f8fd;
   --line: #e3e8f3;
   --fg: #101a3d;
+  --fg-soft: #35456c;
   --muted: #6b7794;
   --red: #d6282f;
   --up: #13935b;

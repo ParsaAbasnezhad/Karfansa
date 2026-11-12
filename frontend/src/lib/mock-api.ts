@@ -226,6 +226,27 @@ export function mockGet<T>(path: string, params: QueryParams = {}): Promise<T> {
 }
 
 export function mockPost<T>(path: string, body: unknown): Promise<T> {
+  if (path === '/v1/contact/') {
+    const payload = body as {
+      name?: string
+      phone?: string
+      email?: string
+      subject?: string
+      message?: string
+    }
+    if (
+      !payload.name?.trim() ||
+      !payload.phone ||
+      !payload.email?.trim() ||
+      !payload.subject?.trim() ||
+      !payload.message?.trim()
+    ) {
+      return Promise.reject(
+        new ApiError(400, { error: { message: 'همهٔ فیلدهای فرم تماس الزامی هستند.' } }),
+      )
+    }
+    return Promise.resolve({ message: 'پیام شما با موفقیت ثبت شد.' } as T)
+  }
   if (path === '/v1/auth/register') {
     const payload = body as { email?: string; phone?: string; password?: string }
     if (!payload.email || !payload.phone || !payload.password) {

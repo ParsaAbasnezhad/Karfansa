@@ -1375,3 +1375,177 @@
 .status-chip.is-offline i {
   background: var(--down);
 }
+
+/* Search results and API state share the site-wide blue palette. */
+.searchpage {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 960px);
+  margin-inline: auto;
+  overflow: hidden;
+  padding: clamp(20px, 4vw, 36px);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.searchpage::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--blue), #718af0);
+  content: '';
+}
+.searchpage h1 {
+  margin: 0 0 14px;
+  font-size: clamp(21px, 3vw, 28px);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+.searchpage .sub {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  margin: 0 0 16px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-weight: 700;
+}
+.searchpage .results {
+  gap: 10px;
+  transition: opacity 180ms ease;
+}
+.searchpage .results li,
+.searchpage .results li:first-child {
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+.searchpage .results li:hover {
+  transform: translateY(-1px);
+  border-color: #c4d0f1;
+  background: var(--surface);
+}
+.searchpage .results .kick {
+  display: inline-flex;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 700;
+}
+.searchpage .results h3 {
+  margin: 7px 0 4px;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.searchpage .results p {
+  margin-bottom: 8px;
+}
+.searchpage .results time {
+  display: inline-flex;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.searchpage > .empty-note {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  line-height: 1.9;
+}
+
+/* A quiet, state-colored service indicator for the footer. */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.status-chip i {
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 0 3px var(--chip);
+}
+.status-chip.is-checking {
+  border-color: var(--blue-soft);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.status-chip.is-checking i {
+  background: var(--blue);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+  animation: status-pulse 1.6s ease-in-out infinite;
+}
+.status-chip.is-ok {
+  border-color: var(--up-bg);
+  background: var(--up-bg);
+  color: var(--up);
+}
+.status-chip.is-ok i {
+  box-shadow: 0 0 0 3px rgba(19, 147, 91, 0.12);
+}
+.status-chip.is-degraded {
+  border-color: #f3e2b5;
+  background: #fff8e8;
+  color: #916500;
+}
+.status-chip.is-degraded i {
+  background: #d99a00;
+  box-shadow: 0 0 0 3px rgba(217, 154, 0, 0.12);
+}
+.status-chip.is-offline {
+  border-color: var(--down-bg);
+  background: var(--down-bg);
+  color: var(--down);
+}
+.status-chip.is-offline i {
+  box-shadow: 0 0 0 3px rgba(214, 40, 47, 0.12);
+}
+@keyframes status-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (max-width: 640px) {
+  .searchpage {
+    padding: 22px 16px;
+    border-radius: 16px;
+  }
+  .searchpage .results li,
+  .searchpage .results li:first-child {
+    padding: 14px;
+  }
+  .status-chip {
+    white-space: normal;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .searchpage .results,
+  .searchpage .results li,
+  .status-chip i {
+    transition: none;
+    animation: none;
+  }
+  .searchpage .results li:hover {
+    transform: none;
+  }
+}

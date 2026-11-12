@@ -142,16 +142,16 @@ export function ProvinceDetailPage() {
   }, [province.data])
 
   if (province.isPending) {
-    return <main className="provinces-page provinces-state">در حال دریافت معرفی استان…</main>
+    return <div className="provinces-page provinces-state">در حال دریافت معرفی استان…</div>
   }
   if (province.isError || !province.data) {
     return (
-      <main className="provinces-page">
+      <div className="provinces-page">
         <div className="provinces-state" role="alert">
           معرفی استان دریافت نشد یا هنوز منتشر نشده است.
           <Link to="/provinces/">بازگشت به فهرست استان‌ها</Link>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -174,7 +174,7 @@ export function ProvinceDetailPage() {
   ].filter(Boolean) as { href: string; label: string; icon: IconName }[]
 
   return (
-    <main className="provinces-page province-detail" dir="rtl">
+    <div className="provinces-page province-detail" dir="rtl">
       <header className="province-detail-hero">
         {data.featured_image && (
           <img className="province-featured-image" src={data.featured_image} alt="" />
@@ -527,6 +527,6 @@ export function ProvinceDetailPage() {
           )}
         </section>
       </div>
-    </main>
+    </div>
   )
 }

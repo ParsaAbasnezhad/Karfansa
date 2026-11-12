@@ -1,32 +1,51 @@
+
 from datetime import timedelta
 
 from django.contrib import admin, messages
+from django.db import transaction
 from django.utils import timezone
+from django.utils.html import format_html
 
-from .models import OpportunityReviewStatus, TradeOpportunity
+from .models import (
+    OpportunityLevel,
+    OpportunityReviewStatus,
+    TradeOpportunity,
+)
 
 
 @admin.register(TradeOpportunity)
 class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+
+    # --------------------------------------------------
+    # List configuration
+    # --------------------------------------------------
+
     list_display = (
         "title",
         "opportunity_type",
+        "level_badge",
         "province",
         "product",
-        "industry",
-        "review_status",
-        "publication_state",
+        "review_badge",
+        "publication_badge",
         "relevance_score",
         "valid_until",
+        "created_at",
     )
+
+    list_display_links = ("title",)
+
     list_filter = (
+        "opportunity_level",
         "review_status",
         "is_published",
         "opportunity_type",
         "province",
-        "product",
         "industry",
+        "created_at",
+        "valid_until",
     )
+
     search_fields = (
         "title",
         "slug",
@@ -35,10 +54,35 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         "source",
         "company__name",
         "product__name_fa",
+        "service_listing__title",
+        "service_listing__seller__display_name",
         "industry__name_fa",
         "province__name_fa",
         "city__name_fa",
     )
+
+    list_select_related = (
+        "province",
+        "city",
+        "product",
+        "service_listing",
+        "industry",
+        "company",
+        "created_by",
+        "last_reviewed_by",
+    )
+
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 30
+    list_max_show_all = 100
+    show_full_result_count = False
+    save_on_top = True
+
+    # --------------------------------------------------
+    # Form configuration
+    # --------------------------------------------------
+
     autocomplete_fields = (
         "province",
         "city",
@@ -47,36 +91,76 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         "company",
         "created_by",
     )
-    list_select_related = ("province", "city", "product", "industry", "company")
-    date_hierarchy = "created_at"
-    ordering = ("-created_at",)
+
     readonly_fields = (
         "published_at",
         "last_reviewed_at",
         "last_reviewed_by",
+        "service_listing",
         "created_at",
         "updated_at",
     )
-    actions = ("approve_and_publish", "reject_and_unpublish", "expire_opportunities")
+
     fieldsets = (
-        ("اطلاعات فرصت", {"fields": ("title", "slug", "opportunity_type", "description")}),
-        ("موقعیت و ارتباطات", {"fields": ("province", "city", "product", "industry", "company")}),
         (
-            "بازار و ظرفیت",
+            "اطلاعات اصلی فرصت",
+            {
+                "fields": (
+                    "title",
+                    "slug",
+                    "opportunity_type",
+                    "opportunity_level",
+                    "description",
+                )
+            },
+        ),
+        (
+            "موقعیت جغرافیایی و ارتباطات",
+            {
+                "fields": (
+                    ("province", "city"),
+                    "product",
+                    "service_listing",
+                    "industry",
+                    "company",
+                )
+            },
+        ),
+        (
+            "بازار هدف و ظرفیت تجاری",
             {
                 "fields": (
                     "target_market",
-                    "required_volume",
-                    "volume_unit",
+                    ("required_volume", "volume_unit"),
                     ("min_value", "max_value", "currency"),
                 )
             },
         ),
-        ("منبع و اعتبار", {"fields": ("source", "source_url", "valid_until")}),
-        ("ثبت و بررسی", {"fields": ("created_by", "review_status", "relevance_score")}),
         (
-            "انتشار و سوابق",
+            "منبع و اعتبار فرصت",
             {
+                "fields": (
+                    "source",
+                    "source_url",
+                    "valid_until",
+                )
+            },
+        ),
+        (
+            "ارزیابی و بررسی مدیریتی",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "created_by",
+                    "review_status",
+                    "relevance_score",
+                ),
+            },
+        ),
+        (
+            "انتشار و سوابق مدیریتی",
+            {
+                "classes": ("collapse",),
                 "fields": (
                     "is_published",
                     "published_at",
@@ -84,56 +168,295 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                     "last_reviewed_by",
                     "created_at",
                     "updated_at",
-                )
+                ),
             },
         ),
     )
 
-    @admin.display(description="وضعیت انتشار")
-    def publication_state(self, opportunity: TradeOpportunity) -> str:
-        if opportunity.is_expired:
-            return "منقضی"
-        return "منتشرشده" if opportunity.is_published else "پیش‌نویس"
+    # --------------------------------------------------
+    # Admin actions
+    # --------------------------------------------------
 
-    def save_model(self, request, obj, form, change) -> None:  # type: ignore[no-untyped-def]
-        obj.last_reviewed_at = timezone.now()
-        obj.last_reviewed_by = request.user
+    actions = (
+        "approve_and_publish",
+        "approve_without_publishing",
+        "reject_and_unpublish",
+        "unpublish_opportunities",
+        "expire_opportunities",
+    )
+
+    # --------------------------------------------------
+    # Query optimization
+    # --------------------------------------------------
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+
+        return queryset.select_related(
+            "province",
+            "city",
+            "product",
+            "service_listing",
+            "industry",
+            "company",
+            "created_by",
+            "last_reviewed_by",
+        )
+
+    # --------------------------------------------------
+    # Visual status indicators
+    # --------------------------------------------------
+
+    @admin.display(description="سطح فرصت", ordering="opportunity_level")
+    def level_badge(self, obj: TradeOpportunity):
+        styles = {
+            OpportunityLevel.NORMAL: (
+                "فرصت عادی",
+                "#64748b",
+                "#f1f5f9",
+            ),
+            OpportunityLevel.IMPORTANT: (
+                "فرصت مهم",
+                "#2563eb",
+                "#dbeafe",
+            ),
+            OpportunityLevel.HIGH_PROFIT: (
+                "سودآوری بالا",
+                "#15803d",
+                "#dcfce7",
+            ),
+            OpportunityLevel.SPECIAL: (
+                "فرصت ویژه",
+                "#c2410c",
+                "#ffedd5",
+            ),
+            OpportunityLevel.STRATEGIC: (
+                "استراتژیک",
+                "#7e22ce",
+                "#f3e8ff",
+            ),
+        }
+
+        label, color, background = styles.get(
+            obj.opportunity_level,
+            ("نامشخص", "#64748b", "#f1f5f9"),
+        )
+
+        return format_html(
+            '<span style="background:{};color:{};'
+            'padding:4px 10px;border-radius:6px;'
+            'font-size:11px;font-weight:600;white-space:nowrap;">'
+            "{}</span>",
+            background,
+            color,
+            label,
+        )
+
+    @admin.display(description="وضعیت بررسی", ordering="review_status")
+    def review_badge(self, obj: TradeOpportunity):
+        styles = {
+            OpportunityReviewStatus.PENDING: (
+                "در انتظار بررسی",
+                "#92400e",
+                "#fef3c7",
+            ),
+            OpportunityReviewStatus.APPROVED: (
+                "تأییدشده",
+                "#15803d",
+                "#dcfce7",
+            ),
+            OpportunityReviewStatus.REJECTED: (
+                "ردشده",
+                "#b91c1c",
+                "#fee2e2",
+            ),
+        }
+
+        label, color, background = styles.get(
+            obj.review_status,
+            ("نامشخص", "#64748b", "#f1f5f9"),
+        )
+
+        return format_html(
+            '<span style="background:{};color:{};'
+            'padding:4px 10px;border-radius:6px;'
+            'font-size:11px;font-weight:600;">{}</span>',
+            background,
+            color,
+            label,
+        )
+
+    @admin.display(description="وضعیت انتشار")
+    def publication_badge(self, obj: TradeOpportunity):
+        if obj.is_expired:
+            label, color, background = (
+                "منقضی",
+                "#b91c1c",
+                "#fee2e2",
+            )
+        elif obj.is_published:
+            label, color, background = (
+                "منتشرشده",
+                "#15803d",
+                "#dcfce7",
+            )
+        else:
+            label, color, background = (
+                "پیش‌نویس",
+                "#64748b",
+                "#f1f5f9",
+            )
+
+        return format_html(
+            '<span style="background:{};color:{};'
+            'padding:4px 10px;border-radius:6px;'
+            'font-size:11px;font-weight:600;">{}</span>',
+            background,
+            color,
+            label,
+        )
+
+    # --------------------------------------------------
+    # Review tracking
+    # --------------------------------------------------
+
+    def save_model(self, request, obj, form, change):
+        review_fields = {
+            "review_status",
+            "is_published",
+            "opportunity_level",
+            "relevance_score",
+        }
+
+        if change and review_fields.intersection(form.changed_data):
+            obj.last_reviewed_at = timezone.now()
+            obj.last_reviewed_by = request.user
+
         super().save_model(request, obj, form, change)
 
-    @admin.action(description="تأیید و انتشار فرصت‌های انتخاب‌شده")
-    def approve_and_publish(self, request, queryset) -> None:  # type: ignore[no-untyped-def]
+    # --------------------------------------------------
+    # Approve and publish
+    # --------------------------------------------------
+
+    @admin.action(description="✓ تأیید و انتشار فرصت‌های انتخاب‌شده")
+    def approve_and_publish(self, request, queryset):
         published = expired = 0
-        for opportunity in queryset:
-            opportunity.review_status = OpportunityReviewStatus.APPROVED
-            opportunity.is_published = not opportunity.is_expired
-            opportunity.last_reviewed_at = timezone.now()
-            opportunity.last_reviewed_by = request.user
-            opportunity.save()
-            published += int(opportunity.is_published)
-            expired += int(opportunity.is_expired)
+
+        with transaction.atomic():
+            for opportunity in queryset:
+                opportunity.review_status = OpportunityReviewStatus.APPROVED
+                opportunity.is_published = not opportunity.is_expired
+                opportunity.last_reviewed_at = timezone.now()
+                opportunity.last_reviewed_by = request.user
+
+                opportunity.save()
+
+                published += int(opportunity.is_published)
+                expired += int(opportunity.is_expired)
+
         self.message_user(
             request,
-            f"{published} فرصت منتشر شد؛ {expired} فرصت منقضی تأیید شد اما منتشر نشد.",
+            f"{published} فرصت منتشر شد؛ "
+            f"{expired} فرصت منقضی تأیید شد اما منتشر نشد.",
             messages.SUCCESS,
         )
 
-    @admin.action(description="رد و لغو انتشار فرصت‌های انتخاب‌شده")
-    def reject_and_unpublish(self, request, queryset) -> None:  # type: ignore[no-untyped-def]
-        for opportunity in queryset:
-            opportunity.review_status = OpportunityReviewStatus.REJECTED
-            opportunity.is_published = False
-            opportunity.last_reviewed_at = timezone.now()
-            opportunity.last_reviewed_by = request.user
-            opportunity.save()
-        self.message_user(request, "فرصت‌های انتخاب‌شده رد و از انتشار خارج شدند.", messages.SUCCESS)
+    # --------------------------------------------------
+    # Approve without publishing
+    # --------------------------------------------------
 
-    @admin.action(description="منقضی‌کردن فرصت‌های انتخاب‌شده")
-    def expire_opportunities(self, request, queryset) -> None:  # type: ignore[no-untyped-def]
+    @admin.action(description="✓ تأیید بدون انتشار")
+    def approve_without_publishing(self, request, queryset):
+        updated = 0
+
+        with transaction.atomic():
+            for opportunity in queryset:
+                opportunity.review_status = OpportunityReviewStatus.APPROVED
+                opportunity.is_published = False
+                opportunity.last_reviewed_at = timezone.now()
+                opportunity.last_reviewed_by = request.user
+
+                opportunity.save()
+                updated += 1
+
+        self.message_user(
+            request,
+            f"{updated} فرصت تأیید شد و منتشر نشد.",
+            messages.SUCCESS,
+        )
+
+    # --------------------------------------------------
+    # Reject opportunities
+    # --------------------------------------------------
+
+    @admin.action(description="✕ رد و لغو انتشار")
+    def reject_and_unpublish(self, request, queryset):
+        updated = 0
+
+        with transaction.atomic():
+            for opportunity in queryset:
+                opportunity.review_status = OpportunityReviewStatus.REJECTED
+                opportunity.is_published = False
+                opportunity.last_reviewed_at = timezone.now()
+                opportunity.last_reviewed_by = request.user
+
+                opportunity.save()
+                updated += 1
+
+        self.message_user(
+            request,
+            f"{updated} فرصت رد و از انتشار خارج شد.",
+            messages.WARNING,
+        )
+
+    # --------------------------------------------------
+    # Unpublish opportunities
+    # --------------------------------------------------
+
+    @admin.action(description="مخفی‌کردن فرصت‌ها از سایت")
+    def unpublish_opportunities(self, request, queryset):
+        updated = 0
+
+        with transaction.atomic():
+            for opportunity in queryset:
+                opportunity.is_published = False
+                opportunity.save(update_fields=["is_published", "updated_at"])
+                updated += 1
+
+        self.message_user(
+            request,
+            f"{updated} فرصت از سایت مخفی شد.",
+            messages.SUCCESS,
+        )
+
+    # --------------------------------------------------
+    # Expire opportunities
+    # --------------------------------------------------
+
+    @admin.action(description="پایان اعتبار فرصت‌های انتخاب‌شده")
+    def expire_opportunities(self, request, queryset):
         yesterday = timezone.localdate() - timedelta(days=1)
-        for opportunity in queryset:
-            opportunity.valid_until = yesterday
-            opportunity.is_published = False
-            opportunity.last_reviewed_at = timezone.now()
-            opportunity.last_reviewed_by = request.user
-            opportunity.save()
-        self.message_user(request, "اعتبار فرصت‌های انتخاب‌شده پایان یافت.", messages.SUCCESS)
+        updated = 0
+
+        with transaction.atomic():
+            for opportunity in queryset:
+                opportunity.valid_until = yesterday
+                opportunity.is_published = False
+                opportunity.last_reviewed_at = timezone.now()
+                opportunity.last_reviewed_by = request.user
+
+                opportunity.save()
+                updated += 1
+
+        self.message_user(
+            request,
+            f"اعتبار {updated} فرصت پایان یافت و از انتشار خارج شد.",
+            messages.WARNING,
+        )
+
+    # --------------------------------------------------
+    # Admin permissions
+    # --------------------------------------------------
+
+    def has_delete_permission(self, request, obj=None):
+        return super().has_delete_permission(request, obj)

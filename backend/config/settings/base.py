@@ -29,6 +29,7 @@ INSTALLED_APPS = [
 
     # Internal Apps
     "apps.accounts",
+    "apps.contact",
     "apps.home",
     "apps.core",
     "apps.advertising",
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     "apps.organization_news",
     "apps.organizations",
     "apps.trade",
+    "apps.services",
     "apps.transportation",
 ]
 

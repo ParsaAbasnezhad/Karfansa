@@ -59,7 +59,7 @@ function StatisticTrend({ records }: { records: ProvinceStatistic[] }) {
   const min = Math.min(...allValues)
   const max = Math.max(...allValues)
   const range = max - min || Math.abs(max) || 1
-  const colors = ['#005a9c', '#60c1e5', '#3283b8', '#79cfe7', '#1d6fa5']
+  const colors = ['#1d4ed8', '#5074e7', '#7b94ec', '#122072', '#9bb7ff']
   const x = (index: number, length: number) => 48 + (index * 560) / Math.max(length - 1, 1)
   const y = (value: number) => 178 - ((value - min) / range) * 145
 

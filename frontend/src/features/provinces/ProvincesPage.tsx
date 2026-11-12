@@ -41,7 +41,7 @@ export function ProvincesPage() {
   const published = provinces.data?.filter((province) => province.is_published) ?? []
 
   return (
-    <main className="provinces-page" dir="rtl">
+    <div className="provinces-page" dir="rtl">
       <header className="provinces-hero">
         <div className="provinces-hero-copy">
           <span className="provinces-eyebrow">شناخت سرزمین ایران</span>
@@ -90,19 +90,19 @@ export function ProvincesPage() {
               >
                 <defs>
                   <linearGradient id="iran-map-fill" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#a0e0ef" />
-                    <stop offset="100%" stopColor="#60c1e5" />
+                    <stop offset="0%" stopColor="#dbe5ff" />
+                    <stop offset="100%" stopColor="#9bb7ff" />
                   </linearGradient>
                   <linearGradient id="iran-map-active" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#60c1e5" />
-                    <stop offset="100%" stopColor="#005a9c" />
+                    <stop offset="0%" stopColor="#9bb7ff" />
+                    <stop offset="100%" stopColor="#1d4ed8" />
                   </linearGradient>
                   <filter id="iran-map-shadow" x="-20%" y="-20%" width="140%" height="140%">
                     <feDropShadow
                       dx="0"
                       dy="2"
                       stdDeviation="2.5"
-                      floodColor="#005a9c"
+                      floodColor="#1d4ed8"
                       floodOpacity=".14"
                     />
                   </filter>
@@ -235,7 +235,7 @@ export function ProvincesPage() {
       ) : (
         <p className="provinces-state">هنوز استان منتشرشده‌ای در دسترس نیست.</p>
       )}
-    </main>
+    </div>
   )
 }
 

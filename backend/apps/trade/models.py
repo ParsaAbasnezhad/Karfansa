@@ -26,6 +26,13 @@ class OpportunityReviewStatus(models.TextChoices):
     REJECTED = "rejected", "ردشده"
 
 
+class OpportunityLevel(models.TextChoices):
+    NORMAL = "normal", "فرصت عادی"
+    IMPORTANT = "important", "فرصت مهم"
+    HIGH_PROFIT = "high-profit", "سودآوری بالا"
+    SPECIAL = "special", "فرصت ویژه"
+    STRATEGIC = "strategic", "فرصت استراتژیک"
+
 class TradeOpportunity(models.Model):
     title = models.CharField(max_length=250, verbose_name="عنوان فرصت")
     slug = models.SlugField(max_length=120, unique=True, blank=True, verbose_name="نامک")
@@ -51,6 +58,14 @@ class TradeOpportunity(models.Model):
         related_name="trade_opportunities",
         verbose_name="محصول مرتبط",
     )
+    service_listing = models.OneToOneField(
+        "services.ProductListing",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="trade_opportunity",
+        verbose_name="محصول بازار خدمات",
+    )
     industry = models.ForeignKey(
         Industry,
         null=True,
@@ -58,6 +73,13 @@ class TradeOpportunity(models.Model):
         on_delete=models.SET_NULL,
         related_name="trade_opportunities",
         verbose_name="صنعت مرتبط",
+    )
+    opportunity_level = models.CharField(
+        max_length=20,
+        choices=OpportunityLevel.choices,
+        default=OpportunityLevel.NORMAL,
+        db_index=True,
+        verbose_name="سطح اهمیت فرصت",
     )
     opportunity_type = models.CharField(
         max_length=20,
@@ -113,6 +135,7 @@ class TradeOpportunity(models.Model):
         verbose_name="منبع کشف یا ثبت فرصت",
         help_text="منبع باید هنگام بررسی مدیر ارزیابی شود؛ فرصت‌های ارسالی تا آن زمان عمومی نیستند.",
     )
+
     source_url = models.URLField(blank=True, verbose_name="نشانی منبع")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

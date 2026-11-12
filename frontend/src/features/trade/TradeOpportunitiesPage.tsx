@@ -80,9 +80,9 @@ function OpportunityCard({
       </div>
       <h2>{item.title}</h2>
       <p className="trade-description">{item.description}</p>
-      {(item.product_name_fa || item.industry_name_fa) && (
+      {((item.product_name_fa && !item.service_listing_slug) || item.industry_name_fa) && (
         <div className="trade-taxonomy">
-          {item.product_name_fa && (
+          {item.product_name_fa && !item.service_listing_slug && (
             <span>
               <small>محصول</small>
               {item.product_name_fa}
@@ -138,6 +138,11 @@ function OpportunityCard({
           </span>
         </div>
         <div className="trade-card-source">
+          {item.service_listing_slug && (
+            <Link to={`/services/listings/${encodeURIComponent(item.service_listing_slug)}`}>
+              مشاهدهٔ محصول در بازار محصولات <span aria-hidden="true">↗</span>
+            </Link>
+          )}
           <span>
             {item.last_reviewed_at
               ? `آخرین بررسی: ${formatPersianDate(item.last_reviewed_at)}`
@@ -473,7 +478,7 @@ export function TradeOpportunitiesPage() {
   const isLoggedOut = auth.error instanceof ApiError && auth.error.status === 401
 
   return (
-    <main className="trade-page" dir="rtl">
+    <div className="trade-page" dir="rtl">
       <header className="trade-hero">
         <div className="trade-hero-copy">
           <span>شبکهٔ فرصت‌های کارفنسا</span>
@@ -787,6 +792,6 @@ export function TradeOpportunitiesPage() {
           )}
         </section>
       )}
-    </main>
+    </div>
   )
 }

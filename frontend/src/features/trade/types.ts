@@ -10,6 +10,7 @@ export type TradeOpportunity = {
   city_name_fa: string | null
   product_slug: string | null
   product_name_fa: string | null
+  service_listing_slug: string | null
   industry_slug: string | null
   industry_name_fa: string | null
   opportunity_type: TradeOpportunityType

@@ -41,3 +41,22 @@ class Slide(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AboutPageContent(models.Model):
+    hero_title = models.CharField(max_length=200, verbose_name="عنوان اصلی")
+    hero_intro = models.TextField(verbose_name="معرفی کوتاه")
+    story_title = models.CharField(max_length=200, verbose_name="عنوان داستان")
+    story_body = models.TextField(verbose_name="متن داستان")
+    mission_title = models.CharField(max_length=200, verbose_name="عنوان مأموریت")
+    mission_body = models.TextField(verbose_name="متن مأموریت")
+    vision_title = models.CharField(max_length=200, verbose_name="عنوان چشم‌انداز")
+    vision_body = models.TextField(verbose_name="متن چشم‌انداز")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="آخرین ویرایش")
+
+    class Meta:
+        verbose_name = "محتوای صفحه درباره ما"
+        verbose_name_plural = "محتوای صفحه درباره ما"
+
+    def __str__(self):
+        return "محتوای صفحه درباره ما"

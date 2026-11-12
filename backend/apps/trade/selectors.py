@@ -19,13 +19,32 @@ def public_opportunities(
             review_status=OpportunityReviewStatus.APPROVED,
             is_published=True,
         )
+        .filter(
+            Q(service_listing__isnull=True)
+            | Q(
+                service_listing__status="approved",
+                service_listing__is_active=True,
+                service_listing__seller__is_public=True,
+            )
+        )
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=timezone.localdate()))
-        .select_related("province", "city", "product", "industry", "company")
+        .select_related(
+            "province",
+            "city",
+            "product",
+            "industry",
+            "company",
+            "service_listing",
+        )
     )
     if province:
         opportunities = opportunities.filter(province__slug=province)
     if product:
-        opportunities = opportunities.filter(product__slug=product)
+        opportunities = opportunities.filter(
+            Q(product__slug=product)
+            | Q(service_listing__slug=product)
+            | Q(service_listing__category__slug=product)
+        )
     if industry:
         opportunities = opportunities.filter(industry__slug=industry)
     if opportunity_type:

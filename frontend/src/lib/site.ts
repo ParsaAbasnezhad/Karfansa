@@ -4,12 +4,13 @@
 export const SITE = {
   name: 'کارفنسا',
   latin: 'KARFANSA',
-  tagline: 'مرجع خبری و تحلیلی اقتصاد ایران',
+  tagline: 'بازار و فرصت‌های تجاری ایران',
   about:
-    'کارفنسا، مرجع خبری و تحلیلی اقتصاد ایران؛ پوشش لحظه‌ای اخبار بازارها، شرکت‌ها و صنایع و ارائه گزارش‌های تخصصی کارشناسان اقتصادی.',
-  address: 'تهران، خیابان ولیعصر، ساختمان کارفنسا',
-  phone: '۰۲۱-۱۲۳۴۵۶۷۸',
-  email: 'info@karfansa.ir',
+    'کارفنسا ابزارهایی برای جست‌وجوی محصولات، پیگیری فرصت‌های تجاری و دسترسی به اطلاعات اقتصادی در اختیار فعالان کسب‌وکار قرار می‌دهد.',
+  address: '',
+  phone: '',
+  email: '',
+  hours: '',
 } as const
 
 export interface NavItem {
@@ -32,6 +33,7 @@ export const NAV: NavItem[] = [
   { href: '/bourse/', label: 'بورس', icon: 'bars' },
   { href: '/industries/', label: 'مناطق و صنایع', icon: 'factory' },
   { href: '/trade/', label: 'فرصت‌های تجاری', icon: 'building' },
+  { href: '/services/', label: 'بازار محصولات', icon: 'factory' },
   { href: '/analysis/', label: 'تحلیل و گزارش', icon: 'file' },
   { href: '/tech/', label: 'فناوری و نوآوری', icon: 'bolt' },
 ]
@@ -75,6 +77,7 @@ export const FOOTER_SECTIONS: LinkItem[] = [
   { href: '/bourse/', label: 'بورس' },
   { href: '/industries/', label: 'مناطق و صنایع' },
   { href: '/trade/', label: 'فرصت‌های تجاری و صادرات' },
+  { href: '/services/', label: 'بازار محصولات تولیدکنندگان' },
   { href: '/analysis/', label: 'تحلیل و گزارش' },
   { href: '/transport/', label: 'حمل و نقل' },
   { href: '/tech/', label: 'فناوری و نوآوری' },

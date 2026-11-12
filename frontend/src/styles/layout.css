@@ -426,7 +426,7 @@ main {
   flex-direction: column;
   gap: 24px;
 }
-footer {
+.site-footer {
   background: var(--surface-2);
   color: var(--muted);
   border-top: 4px solid var(--blue);
@@ -879,7 +879,7 @@ footer {
       transform: translateX(-50%);
     }
   }
-  footer .wrap {
+  .site-footer .wrap {
     padding-inline: max(16px, env(safe-area-inset-left, 0px));
   }
   .news {

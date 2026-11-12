@@ -346,10 +346,26 @@ def opportunity_search_score(
             is_published=True,
         )
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=timezone.localdate()))
-        .select_related("province", "city", "product", "industry", "company")
+        .filter(
+            Q(service_listing__isnull=True)
+            | Q(
+                service_listing__status="approved",
+                service_listing__is_active=True,
+                service_listing__seller__is_public=True,
+            )
+        )
+        .select_related(
+            "province",
+            "city",
+            "product",
+            "industry",
+            "company",
+            "service_listing",
+            "service_listing__category",
+        )
     )
-    if province:
-        queryset = queryset.filter(province__slug=province)
+    if province or interpretation.province:
+        queryset = queryset.filter(province__slug=province or interpretation.province)
     if city:
         queryset = queryset.filter(city_id=int(city)) if city.isdecimal() else queryset.filter(
             city__slug=city
@@ -361,7 +377,11 @@ def opportunity_search_score(
     if opportunity_type:
         queryset = queryset.filter(opportunity_type=opportunity_type)
     if product:
-        queryset = queryset.filter(product__slug=product)
+        queryset = queryset.filter(
+            Q(product__slug=product)
+            | Q(service_listing__slug=product)
+            | Q(service_listing__category__slug=product)
+        )
     if status == "expiring":
         from datetime import timedelta
 

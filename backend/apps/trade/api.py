@@ -40,6 +40,7 @@ router = Router()
 def opportunity_data(item: TradeOpportunity) -> dict[str, object]:
     city = item.city
     product = item.product
+    service_listing = item.service_listing
     industry = item.industry
     company = item.company
     return {
@@ -49,8 +50,13 @@ def opportunity_data(item: TradeOpportunity) -> dict[str, object]:
         "province_slug": item.province.slug,
         "province_name_fa": item.province.name_fa,
         "city_name_fa": city.name_fa if city else None,
-        "product_slug": product.slug if product else None,
-        "product_name_fa": product.name_fa if product else None,
+        "product_slug": (
+            service_listing.slug if service_listing else product.slug if product else None
+        ),
+        "product_name_fa": (
+            service_listing.title if service_listing else product.name_fa if product else None
+        ),
+        "service_listing_slug": service_listing.slug if service_listing else None,
         "industry_slug": industry.slug if industry else None,
         "industry_name_fa": industry.name_fa if industry else None,
         "opportunity_type": item.opportunity_type,

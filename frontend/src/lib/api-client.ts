@@ -154,3 +154,64 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
     )
   return data as T
 }
+
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const token = await getCsrfToken()
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-CSRFToken': token,
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => null)
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data ?? { error: { message: fallbackMessage(res.status, data) } },
+    )
+  return data as T
+}
+
+export async function apiUpload<T>(
+  path: string,
+  file: File,
+  fields: Record<string, string> = {},
+): Promise<T> {
+  const token = await getCsrfToken()
+  const form = new FormData()
+  form.set('file', file)
+  for (const [key, value] of Object.entries(fields)) form.set(key, value)
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'X-CSRFToken': token },
+    credentials: 'same-origin',
+    body: form,
+  })
+  const data = await res.json().catch(() => null)
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data ?? { error: { message: fallbackMessage(res.status, data) } },
+    )
+  return data as T
+}
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  const token = await getCsrfToken()
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'DELETE',
+    headers: { Accept: 'application/json', 'X-CSRFToken': token },
+    credentials: 'same-origin',
+  })
+  const data = await res.json().catch(() => null)
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data ?? { error: { message: fallbackMessage(res.status, data) } },
+    )
+  return data as T
+}

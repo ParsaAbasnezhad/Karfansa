@@ -5,17 +5,17 @@
    ========================================================================== */
 
 .provinces-page {
-  --p-deep: #06263f;
-  --p-primary: #005a9c;
-  --p-primary-2: #197eb2;
-  --p-sky: #60c1e5;
-  --p-ice: #a0e0ef;
-  --p-mist: #eef8fc;
-  --p-wash: #f6fbfd;
-  --p-ink: #10293b;
-  --p-body: #3f5b6e;
-  --p-muted: #5d7789;
-  --p-line: #d9e8f0;
+  --p-deep: var(--navy);
+  --p-primary: var(--blue);
+  --p-primary-2: #5074e7;
+  --p-sky: #9bb7ff;
+  --p-ice: #dbe5ff;
+  --p-mist: var(--blue-soft);
+  --p-wash: var(--blue-tint);
+  --p-ink: var(--fg);
+  --p-body: var(--fg-soft);
+  --p-muted: var(--muted);
+  --p-line: var(--line);
   --p-amber: #d9a441;
   --p-amber-bg: #fff8e8;
   --p-radius-lg: 28px;
@@ -544,7 +544,7 @@
 
 /* page background so white cards read as cards */
 body:has(.provinces-page) {
-  background: #eef4fb;
+  background: var(--bg);
 }
 
 /* ---------- Motion ---------- */
@@ -650,12 +650,12 @@ body:has(.provinces-page) {
 
 .provinces-hero {
   min-height: 0;
-  padding: 18px 22px;
-  border: 1px solid var(--p-line);
-  border-radius: 16px;
-  background: #fff;
-  color: var(--p-ink);
-  box-shadow: none;
+  padding: clamp(18px, 3vw, 26px) clamp(18px, 3.5vw, 32px);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 20px;
+  background: linear-gradient(120deg, var(--p-deep), var(--p-primary) 72%, var(--p-primary-2));
+  color: #fff;
+  box-shadow: var(--p-shadow-sm);
 }
 
 .provinces-hero::before,
@@ -664,7 +664,7 @@ body:has(.provinces-page) {
 }
 
 .provinces-hero .provinces-eyebrow {
-  color: var(--p-primary);
+  color: #dbe5ff;
 }
 
 .provinces-hero h1 {
@@ -674,7 +674,7 @@ body:has(.provinces-page) {
 }
 
 .provinces-hero p {
-  color: var(--p-muted);
+  color: rgb(255 255 255 / 0.82);
   font-size: 13px;
   line-height: 1.8;
 }
@@ -682,16 +682,16 @@ body:has(.provinces-page) {
 .provinces-hero-meta {
   gap: 8px;
   margin-top: 10px;
-  color: var(--p-muted);
+  color: #dbe5ff;
 }
 
 .provinces-hero-count {
   min-width: 28px;
   height: 28px;
-  border: 0;
+  border: 1px solid rgb(255 255 255 / 0.22);
   border-radius: 8px;
-  background: var(--p-mist);
-  color: var(--p-primary);
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
   box-shadow: none;
   backdrop-filter: none;
 }
@@ -789,7 +789,7 @@ body:has(.provinces-page) {
 
   .provinces-hero {
     padding: 14px 16px;
-    border-radius: 13px;
+    border-radius: 16px;
   }
 
   .provinces-hero h1 {

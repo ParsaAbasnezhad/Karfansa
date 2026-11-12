@@ -43,6 +43,7 @@ class TradeOpportunityOut(Schema):
     city_name_fa: str | None
     product_slug: str | None
     product_name_fa: str | None
+    service_listing_slug: str | None
     industry_slug: str | None
     industry_name_fa: str | None
     opportunity_type: str

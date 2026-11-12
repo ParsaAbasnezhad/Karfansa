@@ -30,7 +30,7 @@ function LinkList({ title, links }: { title: string; links: LinkItem[] }) {
 
 export function SiteFooter() {
   return (
-    <footer>
+    <footer className="site-footer">
       <div className="wrap">
         <NewsletterBand />
         <div className="fcols">
@@ -57,20 +57,28 @@ export function SiteFooter() {
           <div>
             <h5>تماس با ما</h5>
             <div className="contact">
-              <div className="it">
-                <Icon name="pin" />
-                <b>نشانی</b>
-                <span>{SITE.address}</span>
-              </div>
-              <div className="it">
-                <Icon name="phone" />
-                <b>تلفن</b>
-                <span className="ltr">{SITE.phone}</span>
-              </div>
+              {SITE.address && (
+                <div className="it">
+                  <Icon name="pin" />
+                  <b>نشانی</b>
+                  <span>{SITE.address}</span>
+                </div>
+              )}
+              {SITE.phone && (
+                <div className="it">
+                  <Icon name="phone" />
+                  <b>تلفن</b>
+                  <span className="ltr">{SITE.phone}</span>
+                </div>
+              )}
               <div className="it">
                 <Icon name="mail" />
-                <b>ایمیل</b>
-                <span className="ltr">{SITE.email}</span>
+                <b>{SITE.email ? 'ایمیل' : 'پیام'}</b>
+                {SITE.email ? (
+                  <span className="ltr">{SITE.email}</span>
+                ) : (
+                  <AppLink href="/contact/">فرم تماس</AppLink>
+                )}
               </div>
               <div className="trust">
                 <div>جایگاه نماد اعتماد</div>
