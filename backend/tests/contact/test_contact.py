@@ -9,6 +9,11 @@ from apps.contact.models import ContactMessage
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _clear_cache() -> None:
+    cache.clear()
+
+
 def test_contact_message_is_saved_for_admin_review(client: Client) -> None:
     response = client.post(
         "/api/v1/contact/",

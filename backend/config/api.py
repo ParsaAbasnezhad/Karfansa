@@ -16,6 +16,7 @@ from apps.home.api import router as home_router
 from apps.market.api import router as market_router
 from apps.news.api import router as news_router
 from apps.services.api import router as services_router
+from apps.support.api import router as support_router
 from apps.trade.api import router as trade_router
 
 api = NinjaAPI(
@@ -37,3 +38,4 @@ api.add_router("/news", news_router, tags=["news"])
 api.add_router("/market", market_router, tags=["market"])
 api.add_router("/trade", trade_router, tags=["trade opportunities"])
 api.add_router("/services", services_router, tags=["individual product marketplace"])
+api.add_router("/support", support_router, tags=["support"])

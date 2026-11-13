@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.organizations",
     "apps.trade",
     "apps.services",
+    "apps.support",
     "apps.transportation",
 ]
 
@@ -109,6 +110,7 @@ CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@karfansa.ir")
+SUPPORT_INBOX_EMAIL = env("SUPPORT_INBOX_EMAIL", default=DEFAULT_FROM_EMAIL)
 OTP_TTL_SECONDS = env.int("OTP_TTL_SECONDS", default=300)
 
 # Redis base URL without a database number. db 0: Celery broker, 1: cache, 2: Celery results.

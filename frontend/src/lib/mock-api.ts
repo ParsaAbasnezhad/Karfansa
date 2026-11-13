@@ -217,6 +217,14 @@ const routes: Record<string, (p: QueryParams) => unknown> = {
   '/analysts/': () => ({ results: data.analysts }),
   '/search/': (p) => search(str(p.q, '')),
   '/health/': () => ({ status: 'ok', time: new Date().toISOString() }),
+  '/v1/support/tickets/': () => ({
+    results: [],
+    count: 0,
+    page: 1,
+    page_size: 8,
+    total_pages: 0,
+    summary: { total: 0, open: 0, waiting_for_user: 0, answered: 0, unread: 0 },
+  }),
 }
 
 export function mockGet<T>(path: string, params: QueryParams = {}): Promise<T> {
@@ -226,6 +234,19 @@ export function mockGet<T>(path: string, params: QueryParams = {}): Promise<T> {
 }
 
 export function mockPost<T>(path: string, body: unknown): Promise<T> {
+  if (path === '/v1/support/tickets/' || path.startsWith('/v1/support/tickets/')) {
+    return Promise.resolve({
+      ticket_number: 'KF-20260101-ABC123',
+      access_token: null,
+      message: 'درخواست پشتیبانی ثبت شد.',
+      results: [],
+      count: 0,
+      page: 1,
+      page_size: 8,
+      total_pages: 0,
+      summary: { total: 0, open: 0, waiting_for_user: 0, answered: 0, unread: 0 },
+    } as T)
+  }
   if (path === '/v1/contact/') {
     const payload = body as {
       name?: string

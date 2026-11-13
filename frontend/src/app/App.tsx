@@ -10,6 +10,9 @@ import { AuthPage } from '@/features/auth/AuthPage'
 import { NewsPage } from '@/features/news/NewsPage'
 import { MarketsPage } from '@/features/markets/MarketsPage'
 import { AccountPage } from '@/features/account/AccountPage'
+import { GuestTrackPage } from '@/features/support/GuestTrackPage'
+import { SupportCenterPage } from '@/features/support/SupportCenterPage'
+import { TicketDetailPage } from '@/features/support/TicketDetailPage'
 import { ProvincesPage } from '@/features/provinces/ProvincesPage'
 import { ProvinceDetailPage } from '@/features/provinces/ProvinceDetailPage'
 import { IndustriesPage } from '@/features/provinces/IndustriesPage'
@@ -39,7 +42,8 @@ function AppRoutes() {
   const location = useLocation()
   const siteRef = useRef<HTMLDivElement>(null)
   const loginOpen = isLoginPath(location.pathname)
-  const background = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation
+  const background = (location.state as { backgroundLocation?: Location } | null)
+    ?.backgroundLocation
   const siteLocation = loginOpen ? (background ?? homeLocation) : location
 
   useEffect(() => {
@@ -78,6 +82,9 @@ function AppRoutes() {
             <Route path="services/dashboard" element={<ServicesDashboardPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/support" element={<SupportCenterPage />} />
+            <Route path="account/support/:ticketNumber" element={<TicketDetailPage />} />
+            <Route path="support/track" element={<GuestTrackPage />} />
             <Route path="login" element={null} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

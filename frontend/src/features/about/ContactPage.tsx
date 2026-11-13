@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Icon } from '@/features/home/icons'
 import { apiPost } from '@/lib/api-client'
 import { SITE, SOCIAL } from '@/lib/site'
+import { useAuth } from '@/features/auth/useAuth'
 import './about.css'
 
 const topics = [
@@ -29,7 +30,7 @@ const faqs = [
   {
     question: 'از کجا وضعیت پیامم را پیگیری کنم؟',
     answer:
-      'پس از ثبت موفق پیام، تأیید آن در همین صفحه نمایش داده می‌شود. در صورت نیاز به پیگیری، پیام دیگری با اشاره به موضوع درخواست قبلی ارسال کنید.',
+      'پس از ثبت موفق، شماره تیکت نمایش داده می‌شود. اگر وارد حساب شده باشید، پیگیری در پنل کاربری است؛ در غیر این صورت با کد پیگیری از صفحه پیگیری مهمان استفاده کنید.',
   },
 ]
 
@@ -42,7 +43,11 @@ type ContactPayload = {
   website: string
 }
 
-type ContactResponse = { message: string }
+type ContactResponse = {
+  message: string
+  ticket_number?: string | null
+  access_token?: string | null
+}
 type ContactField = keyof Omit<ContactPayload, 'website'>
 type ContactErrors = Partial<Record<ContactField, string>>
 
@@ -91,10 +96,21 @@ function validate(values: ContactPayload): ContactErrors {
 }
 
 export function ContactPage() {
+  const { data: user } = useAuth()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState<ContactErrors>({})
   const formRef = useRef<HTMLFormElement>(null)
   const requestInFlight = useRef(false)
+
+  useEffect(() => {
+    if (!user) return
+    setValues((current) => ({
+      ...current,
+      name: current.name || `${user.first_name} ${user.last_name}`.trim(),
+      email: current.email || user.email,
+      phone: current.phone || user.phone,
+    }))
+  }, [user])
 
   useEffect(() => {
     document.title = 'تماس با کارفنسا | راه‌های ارتباطی'
@@ -201,7 +217,12 @@ export function ContactPage() {
         <section className="contact-form-panel" aria-labelledby="contact-form-title">
           <span className="about-eyebrow">فرم ارتباط</span>
           <h2 id="contact-form-title">پیام خود را بنویسید</h2>
-          <p className="contact-form-intro">همهٔ فیلدها الزامی هستند.</p>
+          <p className="contact-form-intro">
+            همهٔ فیلدها الزامی هستند.
+            {user
+              ? ' چون وارد حساب شده‌اید، این درخواست در مرکز پشتیبانی پنل شما هم ذخیره می‌شود.'
+              : ' بدون ساخت حساب هم می‌توانید درخواست بفرستید و با کد پیگیری آن را دنبال کنید.'}
+          </p>
           <form ref={formRef} onSubmit={submit} noValidate>
             <div className="contact-form-grid">
               <ContactField
@@ -320,9 +341,32 @@ export function ContactPage() {
               </p>
             )}
             {mutation.isSuccess && (
-              <p className="contact-success" role="status" aria-live="polite">
-                {mutation.data.message}
-              </p>
+              <div className="contact-success" role="status" aria-live="polite">
+                <p>{mutation.data.message}</p>
+                {mutation.data.ticket_number && (
+                  <div className="contact-ticket-followup">
+                    <span>
+                      شماره تیکت: <code>{mutation.data.ticket_number}</code>
+                    </span>
+                    {mutation.data.access_token ? (
+                      <>
+                        <span>
+                          کد پیگیری: <code>{mutation.data.access_token}</code>
+                        </span>
+                        <Link
+                          to={`/support/track?ticket=${encodeURIComponent(mutation.data.ticket_number)}&token=${encodeURIComponent(mutation.data.access_token)}`}
+                        >
+                          پیگیری این درخواست
+                        </Link>
+                      </>
+                    ) : (
+                      <Link to={`/account/support/${mutation.data.ticket_number}`}>
+                        مشاهده در پنل پشتیبانی
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
             <button type="submit" className="contact-submit" disabled={mutation.isPending}>
               {mutation.isPending ? (

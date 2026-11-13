@@ -1,16 +1,16 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { useToast } from '@/components/toast-context'
 import { Icon } from '@/features/home/icons'
 import { formatShortDate } from '@/lib/format'
-import { apiPatch, apiPost, ApiError } from '@/lib/api-client'
+import { apiGet, apiPatch, apiPost, ApiError } from '@/lib/api-client'
 import { useIranProvinces, useProvinceCities } from './geography'
 import { useAuth, type AuthUser } from '@/features/auth/useAuth'
+import { emptySummary, type TicketPage } from '@/features/support/types'
 import './account.css'
-
-const ticketUrl = 'mailto:info@karfansa.ir?subject=درخواست پشتیبانی کارفنسا'
+import '@/features/support/support.css'
 
 function ActionCard({
   icon,
@@ -47,11 +47,17 @@ export function AccountPage() {
   const [profileError, setProfileError] = useState('')
   const [provinceSelection, setProvinceSelection] = useState<string>()
   const [citySelection, setCitySelection] = useState<string>()
-  const provinceId =
-    provinceSelection ?? (user?.province_id ? String(user.province_id) : '')
+  const provinceId = provinceSelection ?? (user?.province_id ? String(user.province_id) : '')
   const cityId = citySelection ?? (user?.city_id ? String(user.city_id) : '')
   const provinces = useIranProvinces()
   const cities = useProvinceCities(provinceId)
+  const tickets = useQuery({
+    queryKey: ['support-tickets', 'account-preview'],
+    queryFn: ({ signal }) => apiGet<TicketPage>('/v1/support/tickets/', { page_size: 4 }, signal),
+    enabled: Boolean(user),
+  })
+  const ticketSummary = tickets.data?.summary ?? emptySummary
+  const previewTickets = tickets.data?.results ?? []
 
   const saveProfile = useMutation({
     mutationFn: (
@@ -127,10 +133,7 @@ export function AccountPage() {
 
   const fullName = `${user.first_name} ${user.last_name}`.trim()
   const profileComplete = Boolean(
-    user.first_name.trim() &&
-      user.last_name.trim() &&
-      user.province_id &&
-      user.city_id,
+    user.first_name.trim() && user.last_name.trim() && user.province_id && user.city_id,
   )
 
   return (
@@ -346,24 +349,49 @@ export function AccountPage() {
             </span>
             <div>
               <h2 id="account-support-title">پشتیبانی کارفنسا</h2>
-              <p>برای راهنمایی یا پیگیری درخواست با ما در ارتباط باشید.</p>
+              <p>درخواست‌ها، پاسخ تیم پشتیبانی و وضعیت تیکت‌ها در پنل شما.</p>
             </div>
+            {ticketSummary.unread > 0 && (
+              <span className="account-unread-pill" aria-label="پاسخ خوانده‌نشده">
+                {ticketSummary.unread}
+              </span>
+            )}
           </div>
-          <div className="account-ticket-empty">
-            <span>
-              <Icon name="file" />
-            </span>
-            <b>درخواستی ثبت نشده است</b>
-            <small>برای شروع، تیکت تازه‌ای برای پشتیبانی ارسال کنید.</small>
-          </div>
+          {previewTickets.length === 0 ? (
+            <div className="account-ticket-empty">
+              <span>
+                <Icon name="file" />
+              </span>
+              <b>درخواستی ثبت نشده است</b>
+              <small>برای شروع، تیکت تازه‌ای برای پشتیبانی ارسال کنید.</small>
+            </div>
+          ) : (
+            <div>
+              {previewTickets.map((ticket) => (
+                <Link
+                  key={ticket.id}
+                  className="account-ticket-row"
+                  to={`/account/support/${ticket.ticket_number}`}
+                >
+                  <span>
+                    <b>{ticket.subject}</b>
+                    <small>
+                      {ticket.ticket_number} · {ticket.status_display}
+                    </small>
+                  </span>
+                  {ticket.has_unread && <span className="account-unread-pill">جدید</span>}
+                </Link>
+              ))}
+            </div>
+          )}
           <div className="account-support-actions">
-            <a className="account-primary-button" href={ticketUrl}>
+            <Link className="account-primary-button" to="/account/support?new=1">
               <Icon name="send" />
               ثبت تیکت جدید
-            </a>
-            <a className="account-secondary-button" href={ticketUrl}>
-              ارسال تیکت
-            </a>
+            </Link>
+            <Link className="account-secondary-button" to="/account/support">
+              همه درخواست‌ها
+            </Link>
           </div>
         </section>
       </div>

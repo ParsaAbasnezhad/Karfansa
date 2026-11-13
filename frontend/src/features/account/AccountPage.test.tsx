@@ -46,6 +46,20 @@ describe('AccountPage', () => {
           json: async () => [{ id: 1, name_fa: 'تهران' }],
         }
       }
+      if (url.includes('/v1/support/tickets')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            results: [],
+            count: 0,
+            page: 1,
+            page_size: 4,
+            total_pages: 0,
+            summary: { total: 0, open: 0, waiting_for_user: 0, answered: 0, unread: 0 },
+          }),
+        }
+      }
       if (url.includes('/v1/geography/cities/')) {
         return {
           ok: true,

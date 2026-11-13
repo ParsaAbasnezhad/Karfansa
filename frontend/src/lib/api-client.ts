@@ -176,6 +176,28 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   return data as T
 }
 
+export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
+  if (isMockMode()) {
+    const { mockPost } = await import('./mock-api')
+    const body = Object.fromEntries(form.entries())
+    return mockPost<T>(path, body)
+  }
+  const token = await getCsrfToken()
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'X-CSRFToken': token },
+    credentials: 'same-origin',
+    body: form,
+  })
+  const data = await res.json().catch(() => null)
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data ?? { error: { message: fallbackMessage(res.status, data) } },
+    )
+  return data as T
+}
+
 export async function apiUpload<T>(
   path: string,
   file: File,

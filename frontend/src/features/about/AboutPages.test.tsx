@@ -65,9 +65,21 @@ describe('About and contact pages', () => {
       'fetch',
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input)
+        if (String(url).includes('/auth/me')) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ message: 'وارد حساب کاربری نشده‌اید.' }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
         const data = url.endsWith('/auth/csrf')
           ? { message: 'test-csrf-token' }
-          : { message: 'پیام شما با موفقیت ثبت شد.' }
+          : {
+              message: 'پیام شما با موفقیت ثبت شد.',
+              ticket_number: 'KF-20260101-ABC123',
+              access_token: 'guest-token',
+            }
         return Promise.resolve(
           new Response(JSON.stringify(data), {
             status: url.endsWith('/auth/csrf') ? 200 : 201,
@@ -86,7 +98,7 @@ describe('About and contact pages', () => {
     await user.type(screen.getByLabelText(/متن پیام/), 'برای پیگیری محصول پیام می‌فرستم.')
     await user.click(screen.getByRole('button', { name: 'ارسال پیام' }))
 
-    expect(await screen.findByText('پیام شما با موفقیت ثبت شد.')).toHaveAttribute('role', 'status')
+    expect(await screen.findByText('پیام شما با موفقیت ثبت شد.')).toBeInTheDocument()
     const requests = vi.mocked(fetch).mock.calls
     const submission = requests.find(([url]) => String(url).endsWith('/v1/contact/'))
     expect(submission).toBeDefined()

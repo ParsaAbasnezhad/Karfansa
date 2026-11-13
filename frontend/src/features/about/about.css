@@ -1222,6 +1222,22 @@
   color: #17653f;
 }
 
+.contact-ticket-followup {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.contact-ticket-followup a {
+  color: #17653f;
+  font-weight: 800;
+}
+
+.contact-ticket-followup code {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 .contact-aside {
   padding: 25px 22px;
 }

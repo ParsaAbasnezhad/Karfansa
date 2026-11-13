@@ -43,3 +43,5 @@ class ContactMessageIn(Schema):
 
 class ContactMessageOut(Schema):
     message: str
+    ticket_number: str | None = None
+    access_token: str | None = None
