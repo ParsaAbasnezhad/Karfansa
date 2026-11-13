@@ -5,14 +5,14 @@
    ========================================================================== */
 
 .industries-page {
-  --industry-ink: #173a3b;
-  --industry-muted: #668080;
-  --industry-line: #e3ebe8;
-  --industry-soft: #f3f8f6;
-  --industry-green: #14796c;
-  --industry-green-dark: #0e5a50;
+  --industry-ink: var(--fg);
+  --industry-muted: var(--muted);
+  --industry-line: var(--line);
+  --industry-soft: var(--blue-soft);
+  --industry-green: var(--blue);
+  --industry-green-dark: var(--navy-2);
   --industry-gold: #c99a3b;
-  --industry-radius: 14px;
+  --industry-radius: 18px;
 
   width: min(1200px, 100%);
   margin: 24px auto 64px;
@@ -27,14 +27,32 @@
 /* ---------- Hero ---------- */
 
 .industries-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 22px 28px;
-  border: 1px solid var(--industry-line);
-  border-radius: var(--industry-radius);
-  background: #fff;
+  padding: clamp(22px, 4vw, 36px) clamp(20px, 4vw, 40px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 8% 120%, rgba(116, 145, 255, 0.34), transparent 48%),
+    radial-gradient(ellipse at 100% 0%, rgba(147, 197, 253, 0.2), transparent 42%),
+    linear-gradient(120deg, var(--navy) 0%, var(--blue) 72%, #5074e7 100%);
+  color: #fff;
+  box-shadow: 0 16px 38px rgba(15, 28, 90, 0.14);
+}
+
+.industries-hero::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px);
+  background-size: 21px 21px;
+  content: '';
+  mask-image: linear-gradient(to left, #000, transparent 68%);
 }
 
 .industries-hero-copy {
@@ -48,16 +66,22 @@
   font-weight: 800;
 }
 
+.industries-hero .industries-eyebrow,
+.industries-hero .industries-hero-copy > span {
+  color: #dbe5ff;
+}
+
 .industries-hero h1 {
   margin: 6px 0;
-  font-size: clamp(22px, 3vw, 28px);
+  color: #fff;
+  font-size: clamp(22px, 3vw, 30px);
   font-weight: 850;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .industries-hero p {
   margin: 0;
-  color: var(--industry-muted);
+  color: rgba(255, 255, 255, 0.84);
   font-size: 14px;
   line-height: 1.9;
 }
@@ -159,12 +183,12 @@
 }
 
 .industries-filter-controls select:hover {
-  border-color: #c6d8d2;
+  border-color: #c5d0ea;
 }
 
 .industries-filter-controls select:focus-visible {
   border-color: var(--industry-green);
-  box-shadow: 0 0 0 3px #14796c1a;
+  box-shadow: 0 0 0 4px var(--blue-soft);
   outline: 0;
 }
 
@@ -202,7 +226,7 @@
   gap: 6px;
   margin: 16px 0;
   padding: 28px 18px;
-  border: 1px dashed #c6d8d2;
+  border: 1px dashed var(--line);
   border-radius: var(--industry-radius);
   background: #fff;
   color: var(--industry-muted);
@@ -233,6 +257,7 @@
 .industries-empty-art {
   width: 96px;
   height: auto;
+  color: var(--industry-green);
 }
 
 /* ---------- Results ---------- */
@@ -295,7 +320,7 @@
   place-items: center;
   border-bottom: 1px solid var(--industry-line);
   background:
-    repeating-linear-gradient(135deg, transparent 0 10px, #14796c08 10px 11px),
+    repeating-linear-gradient(135deg, transparent 0 10px, rgba(29, 78, 216, 0.05) 10px 11px),
     var(--industry-soft);
 }
 

@@ -1,7 +1,9 @@
 import type { AnchorHTMLAttributes } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & { href: string }
+
+const loginPath = (href: string) => href.split(/[?#]/)[0].replace(/\/$/, '') === '/login'
 
 const isPlainAnchor = (href: string) =>
   /^(https?:)?\/\//.test(href) ||
@@ -11,6 +13,7 @@ const isPlainAnchor = (href: string) =>
 
 /** Internal paths go through React Router; files, media and external URLs stay normal links. */
 export function AppLink({ href, children, ...rest }: Props) {
+  const location = useLocation()
   if (isPlainAnchor(href)) {
     return (
       <a href={href} {...rest}>
@@ -18,9 +21,17 @@ export function AppLink({ href, children, ...rest }: Props) {
       </a>
     )
   }
+  const here = location.pathname.replace(/\/$/, '') || '/'
   return (
-    <Link to={href} {...rest}>
+    <Link
+      to={href}
+      {...rest}
+      state={
+        loginPath(href) && here !== '/login' ? { backgroundLocation: location } : undefined
+      }
+    >
       {children}
     </Link>
   )
 }
+

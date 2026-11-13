@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { AppLink } from '@/components/AppLink'
 import { useProvinceCities } from '@/features/account/geography'
 import { useAuth } from '@/features/auth/useAuth'
 import { ApiError, apiGet, apiPost } from '@/lib/api-client'
@@ -714,9 +715,9 @@ export function TradeOpportunitiesPage() {
             خواهد شد.
           </p>
           {!auth.data && !auth.isPending && isLoggedOut && (
-            <Link to="/login/" className="trade-login-link">
+            <AppLink href="/login/" className="trade-login-link">
               ورود برای ثبت فرصت
-            </Link>
+            </AppLink>
           )}
           {!auth.data && !auth.isPending && auth.isError && !isLoggedOut && (
             <p className="trade-form-error" role="alert">
@@ -724,9 +725,9 @@ export function TradeOpportunitiesPage() {
             </p>
           )}
           {!auth.data && !auth.isPending && !auth.isError && (
-            <Link to="/login/" className="trade-login-link">
+            <AppLink href="/login/" className="trade-login-link">
               برای ثبت فرصت وارد حساب شوید
-            </Link>
+            </AppLink>
           )}
           {auth.isPending && <span className="trade-auth-loading">در حال بررسی حساب کاربری…</span>}
           <TradeCtaArt />

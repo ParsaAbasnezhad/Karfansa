@@ -180,19 +180,31 @@ export function MarketsPage() {
                       </thead>
                       <tbody>
                         {items.map((quote) => (
-                          <tr key={quoteKey(quote)}>
-                            <td>{quote.symbol}</td>
-                            <td>{quote.name}</td>
-                            <td>
+                          <tr
+                            key={quoteKey(quote)}
+                            className={
+                              activeQuote && quoteKey(quote) === quoteKey(activeQuote)
+                                ? 'is-selected'
+                                : undefined
+                            }
+                          >
+                            <td data-label="نماد">{quote.symbol}</td>
+                            <td data-label="نام دارایی">{quote.name}</td>
+                            <td data-label="قیمت">
                               {number(quote.value)} {quote.currency}
                             </td>
-                            <td className={Number(quote.change_percent) < 0 ? 'negative' : 'positive'}>
+                            <td
+                              data-label="تغییر"
+                              className={Number(quote.change_percent) < 0 ? 'negative' : 'positive'}
+                            >
                               {quote.change_percent == null
                                 ? '—'
                                 : `${number(quote.change_percent)}٪`}
                             </td>
-                            <td>{quote.unit || '—'}</td>
-                            <td>{new Date(quote.observed_at).toLocaleString('fa-IR')}</td>
+                            <td data-label="واحد">{quote.unit || '—'}</td>
+                            <td data-label="آخرین زمان ثبت">
+                              {new Date(quote.observed_at).toLocaleString('fa-IR')}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

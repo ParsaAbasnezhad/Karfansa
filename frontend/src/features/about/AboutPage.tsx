@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AppLink } from '@/components/AppLink'
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { Icon } from '@/features/home/icons'
 import { apiGet } from '@/lib/api-client'
@@ -331,9 +332,9 @@ export function AboutPage() {
           <p>از جست‌وجوی محصولات شروع کنید یا فرصت تجاری خود را برای بررسی ثبت کنید.</p>
         </div>
         <div className="about-cta-actions">
-          <Link className="about-button about-button-white" to="/login/">
+          <AppLink className="about-button about-button-white" href="/login/">
             ورود به پلتفرم <Icon name="arrow-l" />
-          </Link>
+          </AppLink>
           <Link className="about-button about-button-outline" to="/services/listings/new">
             ثبت محصول <Icon name="factory" />
           </Link>

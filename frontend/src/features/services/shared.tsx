@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
+import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
 import { useIranProvinces, useProvinceCities } from '@/features/account/geography'
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, apiUpload } from '@/lib/api-client'
@@ -10,13 +11,17 @@ import { API, flattenCategories, messageFrom } from './services.utils'
 import './services.css'
 
 function ProductCard({ item }: { item: ProductListing }) {
+  const place = `${item.province_name}${item.city_name ? `، ${item.city_name}` : ''}`
   return (
     <article className="svc-product-card">
       <Link to={`/services/listings/${encodeURIComponent(item.slug)}`} className="svc-product-image">
         {item.images[0] ? (
           <img src={item.images[0].url} alt={item.images[0].alt_text || item.title} loading="lazy" />
         ) : (
-          <span aria-hidden="true">محصول کارفنسا</span>
+          <span aria-hidden="true">بدون تصویر</span>
+        )}
+        {item.images.length > 1 && (
+          <span className="svc-photo-count">{formatNumber(item.images.length)} تصویر</span>
         )}
       </Link>
       <div className="svc-product-copy">
@@ -24,21 +29,21 @@ function ProductCard({ item }: { item: ProductListing }) {
           <Link to={`/services/listings?category=${encodeURIComponent(item.category_slug)}`}>
             {item.category_name}
           </Link>
-          <span>{item.province_name}{item.city_name ? `، ${item.city_name}` : ''}</span>
         </div>
         <h2><Link to={`/services/listings/${encodeURIComponent(item.slug)}`}>{item.title}</Link></h2>
         <p>{item.description}</p>
+        <span className="svc-product-place">{place}</span>
+        <div className="svc-badges">
+          {item.is_domestic_available && <span>فروش داخلی</span>}
+          {item.is_export_available && <span>آماده صادرات</span>}
+        </div>
         <div className="svc-product-facts">
-          <span>موجودی: {formatNumber(Number(item.quantity))} {item.unit}</span>
+          <span>موجودی {formatNumber(Number(item.quantity))} {item.unit}</span>
           <strong>
             {item.price === null
               ? 'قیمت توافقی'
               : `${formatNumber(Number(item.price))} ${item.currency}`}
           </strong>
-        </div>
-        <div className="svc-badges">
-          {item.is_domestic_available && <span>فروش داخلی</span>}
-          {item.is_export_available && <span>آماده صادرات</span>}
         </div>
       </div>
     </article>
@@ -88,7 +93,7 @@ export function InquiryForm({ listing }: { listing: ProductListing }) {
     })
   }
   if (sent) return <p className="svc-success" role="status">درخواست شما برای فروشنده ارسال شد.</p>
-  if (!user) return <p className="svc-login-note"><Link to="/login">برای ارسال درخواست وارد حساب شوید.</Link></p>
+  if (!user) return <p className="svc-login-note"><AppLink href="/login">برای ارسال درخواست وارد حساب شوید.</AppLink></p>
   return (
     <form className="svc-inquiry-form" onSubmit={submit}>
       <h2>درخواست خرید</h2>
@@ -236,7 +241,7 @@ export function ListingForm({ listing }: { listing?: ProductListing }) {
     })
   }
 
-  if (!user) return <p className="svc-login-note"><Link to="/login">برای ثبت محصول وارد حساب شوید.</Link></p>
+  if (!user) return <p className="svc-login-note"><AppLink href="/login">برای ثبت محصول وارد حساب شوید.</AppLink></p>
   return (
     <form className="svc-form-card svc-listing-form" onSubmit={submit} key={listing?.id ?? 'new-listing'}>
       <h1>{listing ? 'ویرایش محصول' : 'ثبت محصول جدید'}</h1>

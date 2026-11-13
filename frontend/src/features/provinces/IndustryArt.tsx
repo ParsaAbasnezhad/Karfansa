@@ -13,17 +13,17 @@ export function IndustryHeroArt() {
       role="img"
       aria-label="نمادی از صنعت، تولید و رشد"
     >
-      <path d="M14 134h192" stroke="#8fc3b6" strokeWidth="1.5" />
+      <path d="M14 134h192" stroke="#c9d7ff" strokeWidth="1.5" />
       {/* کارخانه */}
-      <path d="M30 134V74l30 18V74l30 18V74l30 18v42" stroke="#14796c" strokeWidth="2" />
-      <path d="M30 134h90" stroke="#14796c" strokeWidth="2" />
+      <path d="M30 134V74l30 18V74l30 18V74l30 18v42" stroke="#e8eeff" strokeWidth="2" />
+      <path d="M30 134h90" stroke="#e8eeff" strokeWidth="2" />
       <rect
         x="46"
         y="108"
         width="12"
         height="14"
         rx="2"
-        stroke="#14796c"
+        stroke="#dbe5ff"
         strokeOpacity="0.55"
         strokeWidth="1.5"
       />
@@ -33,7 +33,7 @@ export function IndustryHeroArt() {
         width="12"
         height="14"
         rx="2"
-        stroke="#14796c"
+        stroke="#dbe5ff"
         strokeOpacity="0.55"
         strokeWidth="1.5"
       />
@@ -43,20 +43,20 @@ export function IndustryHeroArt() {
         width="12"
         height="14"
         rx="2"
-        stroke="#14796c"
+        stroke="#dbe5ff"
         strokeOpacity="0.55"
         strokeWidth="1.5"
       />
       {/* دودکش‌ها */}
-      <path d="M40 74V46h12v28M96 74V54h12v20" stroke="#14796c" strokeWidth="2" />
+      <path d="M40 74V46h12v28M96 74V54h12v20" stroke="#dbe5ff" strokeWidth="2" />
       <path
         d="M46 38c-4-6 4-8 0-14M102 46c-4-6 4-8 0-14"
-        stroke="#14796c"
+        stroke="#dbe5ff"
         strokeOpacity="0.4"
         strokeWidth="1.5"
       />
       {/* چرخ‌دنده */}
-      <g transform="translate(160 62)" stroke="#14796c" strokeWidth="2">
+      <g transform="translate(160 62)" stroke="#dbe5ff" strokeWidth="2">
         <circle r="10" />
         <circle r="26" strokeOpacity="0.75" />
         <path d="M0 -34v8M0 26v8M-34 0h8M26 0h8M-24 -24l6 6M18 18l6 6M-24 24l6 -6M18 -18l6 -6" />
@@ -175,7 +175,7 @@ export function IndustryEmptyArt() {
       className="industries-empty-art"
       viewBox="0 0 120 90"
       fill="none"
-      stroke="#14796c"
+      stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"

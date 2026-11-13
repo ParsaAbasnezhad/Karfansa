@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
 import { ApiError, apiGet, apiPost } from '@/lib/api-client'
 import { formatNumber } from '@/lib/format'
@@ -36,7 +37,7 @@ export function ServicesDashboardPage() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['services'] }),
   })
 
-  if (!user) return <div className="svc-page" dir="rtl"><section className="svc-form-card"><h1>پنل فروشنده</h1><p><Link to="/login">برای مدیریت محصولات وارد حساب شوید.</Link></p></section></div>
+  if (!user) return <div className="svc-page" dir="rtl"><section className="svc-form-card"><h1>پنل فروشنده</h1><p><AppLink href="/login">برای مدیریت محصولات وارد حساب شوید.</AppLink></p></section></div>
   if (profile.isPending) return <div className="svc-page" dir="rtl"><Loading /></div>
   if (profile.isError && profile.error instanceof ApiError && profile.error.status === 404) {
     return <div className="svc-page" dir="rtl"><SellerProfileForm /></div>

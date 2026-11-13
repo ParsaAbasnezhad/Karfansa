@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { AppLink } from '@/components/AppLink'
 import { useToast } from '@/components/toast-context'
 import { Icon } from '@/features/home/icons'
 import { formatShortDate } from '@/lib/format'
@@ -116,9 +117,9 @@ export function AccountPage() {
               : 'اطلاعات حساب کاربری دریافت نشد.'}
         </p>
         {signedOut && (
-          <Link className="account-primary-button" to="/login/">
+          <AppLink className="account-primary-button" href="/login/">
             ورود به حساب
-          </Link>
+          </AppLink>
         )}
       </section>
     )

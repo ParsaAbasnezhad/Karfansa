@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Logo } from '@/components/layout/Logo'
 import { apiPost } from '@/lib/api-client'
 import './auth.css'
 import './auth-responsive.css'
@@ -9,6 +10,8 @@ type Mode = 'login' | 'register'
 type Step = 'details' | 'reset' | 'reset-code'
 
 export function AuthPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [mode, setMode] = useState<Mode>('login')
   const [step, setStep] = useState<Step>('details')
   const [email, setEmail] = useState('')
@@ -84,6 +87,23 @@ export function AuthPage() {
     }
   }
 
+  const close = () => {
+    const state = location.state as { backgroundLocation?: unknown } | null
+    if (state?.backgroundLocation) navigate(-1)
+    else navigate('/')
+  }
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      const state = location.state as { backgroundLocation?: unknown } | null
+      if (state?.backgroundLocation) navigate(-1)
+      else navigate('/')
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [location, navigate])
+
   const title =
     step === 'reset'
       ? 'بازیابی گذرواژه'
@@ -94,17 +114,27 @@ export function AuthPage() {
           : 'حساب خود را بسازید'
 
   return (
-    <section className={`auth-page auth-page--${mode} auth-page--${step}`}>
+    <div
+      className="auth-overlay"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) close()
+      }}
+    >
+    <section
+      className={`auth-page auth-page--${mode} auth-page--${step}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+    >
       <div className="auth-card">
-        <Link className="auth-back" to="/">
-          بازگشت به صفحهٔ اصلی
-        </Link>
+        <button type="button" className="auth-back" onClick={close}>
+          بستن
+        </button>
         <div className="auth-brand">
-          <span className="auth-mark">K</span>
-          <span>کارفنسا</span>
+          <Logo />
         </div>
         <p className="auth-eyebrow">حساب کاربری کارفنسا</p>
-        <h1 key={title} className="auth-title">
+        <h1 id="auth-title" key={title} className="auth-title">
           {title}
         </h1>
         <p className="auth-intro">
@@ -285,5 +315,6 @@ export function AuthPage() {
         </div>
       </aside>
     </section>
+    </div>
   )
 }
