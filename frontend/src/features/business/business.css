@@ -1,0 +1,206 @@
+.biz-page {
+  width: min(1080px, 100%);
+  margin: clamp(16px, 3vw, 40px) auto 64px;
+  padding-inline: max(16px, env(safe-area-inset-left));
+  color: var(--fg);
+  line-height: 1.8;
+}
+
+.biz-page * {
+  box-sizing: border-box;
+}
+
+.biz-kicker {
+  margin: 0;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.biz-heading h1 {
+  margin: 0.2rem 0;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.biz-steps {
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  margin: 0 0 16px;
+  list-style: none;
+}
+
+.biz-steps li {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: var(--blue-tint, #eef3ff);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.biz-steps li[aria-current='step'] {
+  background: var(--navy-2, #123);
+  color: white;
+}
+
+.biz-card,
+.biz-choice-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(15, 28, 90, 0.06);
+}
+
+.biz-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.biz-choice-card {
+  text-align: right;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.biz-choice-card:hover {
+  transform: translateY(-2px);
+}
+
+.biz-choice-card strong,
+.biz-choice-card span {
+  display: block;
+}
+
+.biz-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.biz-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.biz-page input,
+.biz-page select,
+.biz-page textarea {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+
+.biz-button,
+.biz-actions a,
+.biz-switcher a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blue);
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.biz-button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.biz-error {
+  color: #9f1239;
+}
+
+.biz-status.is-verified {
+  color: #047857;
+}
+
+.biz-status.is-suspended,
+.biz-status.is-rejected {
+  color: #9f1239;
+}
+
+.biz-switcher,
+.biz-actions,
+.biz-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.biz-switcher button {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 14px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.biz-switcher button.is-active {
+  border-color: var(--blue);
+}
+
+.biz-switcher small,
+.biz-list small {
+  display: block;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.biz-stats article {
+  min-width: 140px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--blue-tint, #eef3ff);
+}
+
+.biz-stats strong {
+  display: block;
+  font-size: 1.4rem;
+}
+
+.biz-list {
+  padding: 0;
+  list-style: none;
+}
+
+.biz-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.biz-footnote {
+  margin-top: 18px;
+}
+
+.biz-page :focus-visible {
+  outline: 3px solid rgba(29, 78, 216, 0.45);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .biz-choice,
+  .biz-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .biz-page *,
+  .biz-page *::before,
+  .biz-page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

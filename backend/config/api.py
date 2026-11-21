@@ -14,7 +14,7 @@ from apps.core.errors import register_exception_handlers
 from apps.geography.api import router as geography_router
 from apps.home.api import router as home_router
 from apps.market.api import router as market_router
-from apps.news.api import router as news_router
+from apps.organizations.business_api import router as business_router
 from apps.services.api import router as services_router
 from apps.support.api import router as support_router
 from apps.trade.api import router as trade_router
@@ -31,10 +31,10 @@ register_exception_handlers(api)
 
 api.add_router("/health", core_router, tags=["system"])
 api.add_router("/auth", accounts_router, tags=["authentication"])
+api.add_router("/business", business_router, tags=["business accounts"])
 api.add_router("/contact", contact_router, tags=["contact"])
 api.add_router("/geography", geography_router, tags=["geography"])
 api.add_router("/home", home_router, tags=["homepage"])
-api.add_router("/news", news_router, tags=["news"])
 api.add_router("/market", market_router, tags=["market"])
 api.add_router("/trade", trade_router, tags=["trade opportunities"])
 api.add_router("/services", services_router, tags=["individual product marketplace"])

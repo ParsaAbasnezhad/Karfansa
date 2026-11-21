@@ -1,6 +1,8 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 
+from apps.organizations.business import staff_decide_individual
+
 from .integrations import sync_product_opportunity
 from .models import (
     ListingImage,
@@ -24,11 +26,35 @@ class ProductSpecificationInline(admin.TabularInline):  # type: ignore[type-arg]
 
 @admin.register(SellerProfile)
 class SellerProfileAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
-    list_display = ("display_name", "user", "province", "city", "is_public")
-    list_filter = ("is_public", "province")
-    search_fields = ("display_name", "user__email", "user__phone")
+    list_display = ("display_name", "user", "province", "city", "is_public", "verification_status")
+    list_filter = ("is_public", "province", "verification_status")
+    search_fields = ("display_name", "user__email", "user__phone", "professional_title")
+    readonly_fields = ("submitted_at", "reviewed_at", "reviewed_by", "created_at", "updated_at")
+    actions = ("approve_profiles", "reject_profiles", "suspend_profiles")
     autocomplete_fields = ("user", "province", "city")
     list_select_related = ("user", "province", "city")
+
+    @admin.action(description="تأیید پروفایل‌های فردی")
+    def approve_profiles(self, request, queryset) -> None:  # type: ignore[no-untyped-def]
+        self._decide(request, queryset, "verified")
+
+    @admin.action(description="رد پروفایل‌های فردی")
+    def reject_profiles(self, request, queryset) -> None:  # type: ignore[no-untyped-def]
+        self._decide(request, queryset, "rejected", "اطلاعات ارسال‌شده قابل تأیید نیست.")
+
+    @admin.action(description="تعلیق پروفایل‌های فردی")
+    def suspend_profiles(self, request, queryset) -> None:  # type: ignore[no-untyped-def]
+        self._decide(request, queryset, "suspended")
+
+    def _decide(self, request, queryset, status: str, reason: str = "") -> None:  # type: ignore[no-untyped-def]
+        changed = 0
+        for profile in queryset:
+            try:
+                staff_decide_individual(request.user, profile, status, reason)
+            except ValidationError:
+                continue
+            changed += 1
+        self.message_user(request, f"{changed} پروفایل به‌روزرسانی شد.", messages.SUCCESS)
 
 
 @admin.register(ServiceCategory)
@@ -45,6 +71,8 @@ class ProductListingAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = (
         "title",
         "seller",
+        "organization",
+        "listing_kind",
         "category",
         "province",
         "status",
@@ -53,7 +81,7 @@ class ProductListingAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     )
     list_filter = ("status", "is_active", "sale_mode", "category", "province")
     search_fields = ("title", "description", "seller__display_name", "seller__user__email")
-    autocomplete_fields = ("seller", "category", "province", "city", "reviewed_by")
+    autocomplete_fields = ("seller", "organization", "category", "province", "city", "reviewed_by")
     list_select_related = ("seller", "category", "province", "city")
     readonly_fields = (
         "status",
@@ -69,7 +97,20 @@ class ProductListingAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     inlines = [ListingImageInline, ProductSpecificationInline]
     actions = ("approve_listings", "reject_listings", "archive_listings")
     fieldsets = (
-        ("محصول", {"fields": ("seller", "category", "title", "slug", "description")}),
+        (
+            "محصول",
+            {
+                "fields": (
+                    "seller",
+                    "organization",
+                    "listing_kind",
+                    "category",
+                    "title",
+                    "slug",
+                    "description",
+                )
+            },
+        ),
         ("موقعیت و فروش", {"fields": ("province", "city", "sale_mode", "quantity", "unit")}),
         (
             "قیمت و سفارش",

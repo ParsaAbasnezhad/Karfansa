@@ -5,7 +5,6 @@ from typing import Any
 
 from apps.advertising.models import Advertisement
 from apps.geography.models import Province
-from apps.organization_news.models import OrganizationNews
 from apps.organizations.models import Industry, Organization
 from apps.transportation.models import TransportCompany
 
@@ -29,13 +28,6 @@ def make_transport_company(**fields: Any) -> TransportCompany:
     n = next(_counter)
     fields.setdefault("name", f"Carrier {n}")
     return TransportCompany.objects.create(**fields)
-
-
-def make_news(organization: Organization, **fields: Any) -> OrganizationNews:
-    n = next(_counter)
-    fields.setdefault("title", f"News {n}")
-    fields.setdefault("content", "Body text.")
-    return OrganizationNews.objects.create(organization=organization, **fields)
 
 
 def make_advertisement(organization: Organization, **fields: Any) -> Advertisement:

@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.views.generic import RedirectView
 
 from config.api import api
 
@@ -21,7 +22,16 @@ urlpatterns = [
     path("api/v1/", api.urls),
     path("advertising/", include("apps.advertising.urls")),
     path("geography/", include("apps.geography.urls")),
-    path("news/", include("apps.organization_news.urls")),
+    path(
+        "news/",
+        RedirectView.as_view(url="https://karfansa.news.ir/", permanent=True),
+        name="legacy-news-redirect",
+    ),
+    path(
+        "news",
+        RedirectView.as_view(url="https://karfansa.news.ir/", permanent=True),
+        name="legacy-news-no-slash-redirect",
+    ),
     path("organizations/", include("apps.organizations.urls")),
     path("transportation/", include("apps.transportation.urls")),
 

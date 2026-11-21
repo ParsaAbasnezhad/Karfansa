@@ -5,15 +5,11 @@ import type {
   AnalysisKind,
   AnalysisResponse,
   Analyst,
-  CompanyFilter,
-  CompanyNewsItem,
   CountedListResponse,
-  HeadlinesResponse,
   HomeSlide,
   ListResponse,
   Market,
   Report,
-  TickerItem,
   TransportCompany,
   TransportFilter,
   TransportType,
@@ -44,22 +40,6 @@ export const TRANSPORT_TABS: { key: TransportFilter; label: string }[] = [
   { key: 'log', label: TRANSPORT_TYPES.log.label },
 ]
 
-export const COMPANY_CATEGORIES: Record<string, { label: string; cls: string }> = {
-  sup: { label: 'تامین‌کنندگان', cls: 'b-sup' },
-  pro: { label: 'تولیدکنندگان', cls: 'b-pro' },
-  exp: { label: 'صادرکنندگان', cls: 'b-exp' },
-  bor: { label: 'شرکت‌های بورسی', cls: 'b-bor' },
-  srv: { label: 'خدمات بازرگانی', cls: 'b-srv' },
-}
-
-export const COMPANY_TABS: { key: CompanyFilter; label: string }[] = [
-  { key: 'all', label: 'همه' },
-  ...Object.entries(COMPANY_CATEGORIES).map(([key, v]) => ({
-    key: key as CompanyFilter,
-    label: v.label,
-  })),
-]
-
 export const ANALYSIS_TABS: { key: AnalysisKind; label: string }[] = [
   { key: 'all', label: 'همه' },
   { key: 'report', label: 'گزارش فصلی' },
@@ -69,17 +49,11 @@ export const ANALYSIS_TABS: { key: AnalysisKind; label: string }[] = [
 
 // ---- queries ----
 
-export const useTicker = () =>
-  useQuery({
-    queryKey: ['ticker'],
-    queryFn: ({ signal }) => apiGet<ListResponse<TickerItem>>('/ticker/', undefined, signal),
-    refetchInterval: 60_000,
-  })
-
 export const useSlides = () =>
   useQuery({
-    queryKey: ['slides'],
+    queryKey: ['home', 'slides'],
     queryFn: ({ signal }) => apiGet<ListResponse<HomeSlide>>('/v1/home/slides/', undefined, signal),
+    staleTime: 5 * 60_000,
   })
 
 export const useMarkets = () =>
@@ -99,24 +73,6 @@ export const useTransportCompanies = (type: TransportFilter) =>
         signal,
       ),
     placeholderData: keepPreviousData,
-  })
-
-export const useCompanyNews = (category: CompanyFilter) =>
-  useQuery({
-    queryKey: ['company-news', category],
-    queryFn: ({ signal }) =>
-      apiGet<CountedListResponse<CompanyNewsItem>>(
-        '/company-news/',
-        { category, limit: 8 },
-        signal,
-      ),
-    placeholderData: keepPreviousData,
-  })
-
-export const useHeadlines = () =>
-  useQuery({
-    queryKey: ['headlines'],
-    queryFn: ({ signal }) => apiGet<HeadlinesResponse>('/v1/news/headlines/', undefined, signal),
   })
 
 export const useAnalysis = (kind: AnalysisKind) =>

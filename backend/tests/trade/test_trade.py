@@ -53,6 +53,78 @@ def test_public_opportunities_only_returns_approved_active_matches(client: Clien
     assert body["results"][0]["relevance_score"] == 80
 
 
+def test_public_homepage_page_returns_six_newest_valid_opportunities(client: Client) -> None:
+    now = timezone.now()
+    active = [
+        make_opportunity(
+            title=f"فرصت معتبر {index}",
+            slug=f"home-valid-{index}",
+            published_at=now - timedelta(days=index),
+            valid_until=timezone.localdate() if index == 0 else None,
+        )
+        for index in range(7)
+    ]
+    make_opportunity(
+        title="فرصت تأییدنشده",
+        slug="home-pending",
+        review_status=OpportunityReviewStatus.PENDING,
+        is_published=False,
+        published_at=None,
+    )
+    make_opportunity(
+        title="فرصت منتشرنشده",
+        slug="home-unpublished",
+        is_published=False,
+        published_at=now + timedelta(days=1),
+    )
+    make_opportunity(
+        title="فرصت منقضی",
+        slug="home-expired",
+        published_at=now + timedelta(days=2),
+        valid_until=timezone.localdate() - timedelta(days=1),
+    )
+
+    response = client.get(
+        "/api/v1/trade/opportunities/",
+        {"ordering": "newest", "page": 1, "page_size": 6},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] == 7
+    assert body["page_size"] == 6
+    assert [item["id"] for item in body["results"]] == [item.pk for item in active[:6]]
+    assert body["results"][0]["valid_until"] == timezone.localdate().isoformat()
+
+
+def test_public_opportunity_detail_uses_listing_visibility_rules(client: Client) -> None:
+    visible = make_opportunity(title="فرصت عمومی", slug="public-detail")
+    pending = make_opportunity(
+        title="فرصت در انتظار",
+        slug="pending-detail",
+        review_status=OpportunityReviewStatus.PENDING,
+        is_published=False,
+        published_at=None,
+    )
+    unpublished = make_opportunity(
+        title="فرصت تأییدشده منتشرنشده",
+        slug="unpublished-detail",
+        is_published=False,
+    )
+    expired = make_opportunity(
+        title="فرصت منقضی",
+        slug="expired-detail",
+        valid_until=timezone.localdate() - timedelta(days=1),
+    )
+
+    response = client.get(f"/api/v1/trade/opportunities/{visible.slug}/")
+
+    assert response.status_code == 200
+    assert response.json()["id"] == visible.pk
+    for hidden in (pending, unpublished, expired):
+        assert client.get(f"/api/v1/trade/opportunities/{hidden.slug}/").status_code == 404
+
+
 def test_submission_is_private_pending_and_restricted_to_company_members(client: Client) -> None:
     user = User.objects.create_user(
         email="member@example.com",

@@ -1,6 +1,5 @@
 import { AppLink } from '@/components/AppLink'
 import { Icon } from '@/features/home/icons'
-import { NewsletterBand } from '@/features/home/NewsletterBand'
 import { StatusChip } from '@/features/system/StatusChip'
 import { jalaliYear } from '@/lib/format'
 import {
@@ -32,7 +31,6 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="wrap">
-        <NewsletterBand />
         <div className="fcols">
           <div className="about">
             <Logo variant="footer" />
@@ -51,7 +49,7 @@ export function SiteFooter() {
               ))}
             </div>
           </div>
-          <LinkList title="بخش‌های خبری" links={FOOTER_SECTIONS} />
+          <LinkList title="بخش‌ها" links={FOOTER_SECTIONS} />
           <LinkList title="دسترسی سریع" links={FOOTER_QUICK} />
           <LinkList title="درباره کارفنسا" links={FOOTER_ABOUT} />
           <div>
@@ -95,7 +93,6 @@ export function SiteFooter() {
           </span>
           <div className="mid">
             <span>تهران، ایران</span>
-            <span>نقل مطالب با ذکر منبع آزاد است</span>
             <StatusChip />
           </div>
           <button

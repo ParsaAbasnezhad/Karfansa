@@ -22,6 +22,8 @@ from django.utils import timezone
 from apps.geography.models import City, Province
 from apps.organizations.models import IndustryCategory, Organization, Product
 
+from .selectors import visible_linked_listing_q
+
 DEFAULT_WEIGHTS = {
     "product_exact": 1000,
     "product_synonym": 850,
@@ -346,14 +348,7 @@ def opportunity_search_score(
             is_published=True,
         )
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=timezone.localdate()))
-        .filter(
-            Q(service_listing__isnull=True)
-            | Q(
-                service_listing__status="approved",
-                service_listing__is_active=True,
-                service_listing__seller__is_public=True,
-            )
-        )
+        .filter(visible_linked_listing_q())
         .select_related(
             "province",
             "city",

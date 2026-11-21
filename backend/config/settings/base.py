@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.advertising",
     "apps.geography",
+    # Keep legacy models registered so existing news tables and migration history remain intact.
     "apps.news",
     "apps.market",
     "apps.organization_news",
@@ -135,6 +136,8 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
+SMS_WEBHOOK_URL = env("SMS_WEBHOOK_URL", default="")
 
 # --- Celery ---------------------------------------------------------------------------------
 CELERY_BROKER_URL = f"{REDIS_URL}/0"
@@ -149,10 +152,6 @@ CELERY_TASK_SOFT_TIME_LIMIT = 240
 CELERY_TASK_TIME_LIMIT = 300
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BEAT_SCHEDULE = {
-    "fetch-rss-news-every-15-minutes": {
-        "task": "apps.news.fetch_rss_news",
-        "schedule": 900.0,
-    },
     "refresh-market-data-every-minute": {
         "task": "apps.market.refresh_quotes",
         "schedule": 60.0,

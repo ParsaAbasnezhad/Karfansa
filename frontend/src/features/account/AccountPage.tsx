@@ -207,6 +207,13 @@ export function AccountPage() {
         <div className="account-actions">
           <ActionCard
             icon="building"
+            title="داشبورد کسب‌وکار"
+            description="هویت شرکت یا فعالیت فردی را مدیریت کنید"
+            href="/business"
+            accent="is-blue"
+          />
+          <ActionCard
+            icon="building"
             title="لیست شرکت‌ها"
             description="شرکت‌های فعال در حوزه‌های مختلف را ببینید"
             href="/companies/"

@@ -411,16 +411,6 @@ export function ContactPage() {
             </span>
             <Icon name="arrow-l" />
           </Link>
-          <Link className="contact-shortcut" to="/news/">
-            <span className="contact-shortcut-icon">
-              <Icon name="news" />
-            </span>
-            <span>
-              <strong>اخبار و اطلاعات اقتصادی</strong>
-              <small>دسترسی به خبرها و داده‌های بازار</small>
-            </span>
-            <Icon name="arrow-l" />
-          </Link>
           {!SITE.phone && !SITE.email && !SITE.address && !SITE.hours && (
             <p className="contact-no-details">
               راه‌های تماس مستقیم و ساعات کاری هنوز در تنظیمات سامانه ثبت نشده‌اند؛ می‌توانید از فرم

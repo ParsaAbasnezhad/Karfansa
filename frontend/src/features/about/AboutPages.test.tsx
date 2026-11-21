@@ -47,7 +47,9 @@ describe('About and contact pages', () => {
 
     renderWithProviders(<AboutPage />)
 
-    expect(await screen.findByLabelText('۱۲')).toBeInTheDocument()
+    expect(await screen.findByLabelText('۷')).toBeInTheDocument()
+    expect(screen.queryByText('خبرهای در دسترس')).not.toBeInTheDocument()
+    expect(vi.mocked(fetch).mock.calls.every(([url]) => !String(url).includes('/news/'))).toBe(true)
     expect(
       await screen.findByRole('heading', { name: 'داستان ویرایش‌پذیر کارفنسا' }),
     ).toBeInTheDocument()

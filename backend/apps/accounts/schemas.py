@@ -34,6 +34,25 @@ class PasswordResetConfirmIn(Schema):
     password: str
 
 
+class PhoneOtpIn(Schema):
+    phone: str
+    email: str = ""
+
+
+class PhoneRegisterIn(Schema):
+    phone: str
+    code: str
+    email: str
+    password: str
+    first_name: str
+    last_name: str
+
+
+class PhoneLoginIn(Schema):
+    phone: str
+    code: str
+
+
 class MessageOut(Schema):
     message: str
 

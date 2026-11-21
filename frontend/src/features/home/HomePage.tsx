@@ -1,9 +1,8 @@
 import { useEffect } from 'react'
 import { AnalysisSection } from './AnalysisSection'
-import { CompanyNews } from './CompanyNews'
-import { HeadlinesSection } from './HeadlinesSection'
+import { HomeSlider } from './HomeSlider'
 import { MarketsStrip } from './MarketsStrip'
-import { NewsHero } from './NewsHero'
+import { TradeOpportunitiesSection } from './TradeOpportunitiesSection'
 import { TransportSection } from './TransportSection'
 
 export function HomePage() {
@@ -13,13 +12,10 @@ export function HomePage() {
 
   return (
     <>
-      <section className="top">
-        <NewsHero />
-        <MarketsStrip />
-      </section>
+      <HomeSlider />
+      <TradeOpportunitiesSection />
+      <MarketsStrip />
       <TransportSection />
-      <CompanyNews />
-      <HeadlinesSection />
       <AnalysisSection />
       <p className="foot-note">عنوان‌ها و نام‌ها نمونه و فرضی است.</p>
     </>

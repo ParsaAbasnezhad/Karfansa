@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.core.slugs import build_unique_slug
 from apps.core.uploads import UploadTo
 from apps.core.validators import validate_image_extension, validate_image_size
+from apps.core.verification import VerificationStatus
 from apps.geography.models import City, Province
 
 from .search import normalize_search_text
@@ -21,6 +22,37 @@ class SellerProfile(models.Model):
     )
     display_name = models.CharField(max_length=120, verbose_name="نام نمایشی")
     bio = models.TextField(blank=True, max_length=1500, verbose_name="درباره فروشنده")
+    professional_title = models.CharField(max_length=120, blank=True, verbose_name="عنوان حرفه‌ای")
+    public_phone = models.CharField(max_length=20, blank=True, verbose_name="تلفن عمومی")
+    public_email = models.EmailField(blank=True, verbose_name="ایمیل عمومی")
+    profile_image = models.ImageField(
+        upload_to=UploadTo("services/profiles"),
+        blank=True,
+        validators=[validate_image_extension, validate_image_size],
+        verbose_name="تصویر پروفایل",
+    )
+    cover_image = models.ImageField(
+        upload_to=UploadTo("services/covers"),
+        blank=True,
+        validators=[validate_image_extension, validate_image_size],
+        verbose_name="تصویر پوششی",
+    )
+    verification_status = models.CharField(
+        max_length=20,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.DRAFT,
+        verbose_name="وضعیت تأیید",
+    )
+    rejection_reason = models.CharField(max_length=500, blank=True, verbose_name="دلیل رد")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="reviewed_seller_profiles",
+    )
     province = models.ForeignKey(
         Province,
         null=True,
@@ -44,6 +76,9 @@ class SellerProfile(models.Model):
     class Meta:
         verbose_name = "پروفایل فروشنده"
         verbose_name_plural = "پروفایل‌های فروشنده"
+        indexes = [
+            models.Index(fields=["verification_status"], name="svc_seller_verify_idx"),
+        ]
 
     def __str__(self) -> str:
         return self.display_name
@@ -75,7 +110,9 @@ class ServiceCategory(models.Model):
         ordering = ["sort_order", "name"]
         verbose_name = "دسته‌بندی بازار محصولات"
         verbose_name_plural = "دسته‌بندی‌های بازار محصولات"
-        indexes = [models.Index(fields=["parent", "is_active"], name="svc_cat_parent_active")]
+        indexes = [
+            models.Index(fields=["parent", "is_active"], name="svc_cat_parent_active"),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -111,8 +148,31 @@ class ProductListing(models.Model):
         REJECTED = "rejected", "ردشده"
         ARCHIVED = "archived", "بایگانی‌شده"
 
+    class Kind(models.TextChoices):
+        PRODUCT = "product", "محصول"
+        SERVICE = "service", "خدمت"
+
     seller = models.ForeignKey(
-        SellerProfile, on_delete=models.CASCADE, related_name="listings", verbose_name="فروشنده"
+        SellerProfile,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="listings",
+        verbose_name="فروشنده حقیقی",
+    )
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="product_listings",
+        verbose_name="شرکت مالک",
+    )
+    listing_kind = models.CharField(
+        max_length=16,
+        choices=Kind.choices,
+        default=Kind.PRODUCT,
+        verbose_name="نوع آگهی",
     )
     category = models.ForeignKey(
         ServiceCategory,
@@ -183,6 +243,13 @@ class ProductListing(models.Model):
                 condition=~models.Q(status="approved") | models.Q(is_active=True),
                 name="svc_approved_active",
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(seller__isnull=False, organization__isnull=True)
+                    | models.Q(seller__isnull=True, organization__isnull=False)
+                ),
+                name="svc_listing_one_owner",
+            ),
         ]
         indexes = [
             models.Index(
@@ -191,6 +258,8 @@ class ProductListing(models.Model):
             models.Index(fields=["category", "status"], name="svc_cat_status_idx"),
             models.Index(fields=["province", "city", "status"], name="svc_location_idx"),
             models.Index(fields=["sale_mode", "status"], name="svc_mode_status_idx"),
+            models.Index(fields=["organization", "status"], name="svc_org_status_idx"),
+            models.Index(fields=["listing_kind", "status"], name="svc_kind_status_idx"),
             models.Index(fields=["price"], name="svc_price_idx"),
             models.Index(fields=["quantity"], name="svc_quantity_idx"),
         ]
@@ -373,7 +442,16 @@ class ProductInquiry(models.Model):
         return f"درخواست {self.listing} از {self.buyer}"
 
     def clean(self) -> None:
-        if self.listing_id and self.buyer_id and self.listing.seller.user_id == self.buyer_id:
-            raise ValidationError({"buyer": "نمی‌توانید برای محصول خودتان درخواست بفرستید."})
+        if self.listing_id and self.buyer_id:
+            listing = self.listing
+            if listing.seller_id and listing.seller.user_id == self.buyer_id:
+                raise ValidationError({"buyer": "نمی‌توانید برای محصول خودتان درخواست بفرستید."})
+            if (
+                listing.organization_id
+                and listing.organization.members.filter(pk=self.buyer_id).exists()
+            ):
+                raise ValidationError(
+                    {"buyer": "نمی‌توانید برای محصول شرکت خودتان درخواست بفرستید."}
+                )
         if self.quantity is not None and self.quantity <= 0:
             raise ValidationError({"quantity": "مقدار درخواستی باید بیشتر از صفر باشد."})

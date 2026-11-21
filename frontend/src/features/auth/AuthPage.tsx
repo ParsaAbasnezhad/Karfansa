@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { AppLink } from '@/components/AppLink'
 import { Logo } from '@/components/layout/Logo'
 import { apiPost } from '@/lib/api-client'
 import './auth.css'
@@ -144,6 +145,11 @@ export function AuthPage() {
               ? `کد ارسال‌شده به ${email} و گذرواژهٔ تازه را وارد کنید.`
               : 'برای دنبال‌کردن خبرها و تحلیل‌های اقتصادی وارد حساب خود شوید.'}
         </p>
+        {step === 'details' && (
+          <p className="auth-intro">
+            <AppLink href="/join">ثبت‌نام کسب‌وکار با شماره موبایل</AppLink>
+          </p>
+        )}
         {step === 'details' && (
           <div className="auth-tabs" role="tablist" aria-label="نوع دسترسی">
             <button

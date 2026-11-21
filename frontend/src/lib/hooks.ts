@@ -10,9 +10,3 @@ export function useTehranClock() {
   }, [])
   return { today: formatLongDate(now), time: formatClock(now), year: jalaliYear(now) }
 }
-
-/** Smooth-scrolls to the newsletter band in the footer and focuses its email field. */
-export function scrollToNewsletter() {
-  document.getElementById('nl')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  setTimeout(() => document.getElementById('email')?.focus({ preventScroll: true }), 600)
-}

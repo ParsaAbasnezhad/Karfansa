@@ -10,46 +10,6 @@ const str = (v: QueryParams[string], fallback: string) =>
 const num = (v: QueryParams[string], fallback: number) =>
   v == null || v === '' ? fallback : Number(v)
 
-function rssNews(params: QueryParams) {
-  const topic = str(params.topic, '')
-  const query = str(params.q, '').trim()
-  const page = num(params.page, 1)
-  const pageSize = num(params.page_size, 12)
-  const topics = [...new Set(data.slides.map((slide) => slide.category))]
-  const filtered = data.slides
-    .map((slide) => ({
-      id: slide.id,
-      title: slide.title,
-      summary: slide.excerpt,
-      source_name: 'منابع خبری نمونه',
-      topic: slide.category,
-      original_url: slide.url,
-      image_url: slide.image ?? '',
-      published_at: slide.published_at,
-      fetched_at: slide.published_at,
-      score: 82,
-    }))
-    .filter((item) => (!topic || item.topic === topic) && (!query || item.title.includes(query)))
-  const start = (page - 1) * pageSize
-  return {
-    results: filtered.slice(start, start + pageSize),
-    topics,
-    count: filtered.length,
-    page,
-    page_size: pageSize,
-    total_pages: Math.ceil(filtered.length / pageSize),
-  }
-}
-
-function rssHeadlines() {
-  const { results } = rssNews({ page_size: 12 })
-  return {
-    featured: results[0] ?? null,
-    minis: results.slice(1, 3),
-    latest: results.slice(0, 6),
-  }
-}
-
 function marketQuotes() {
   const categories: Record<string, string> = {
     usd: 'exchange',
@@ -105,32 +65,6 @@ function marketOverview() {
 function search(query: string): SearchResponse {
   const q = query.trim()
   const pool: SearchResult[] = [
-    ...data.slides.map((s) => ({
-      id: s.id,
-      category: s.category,
-      title: s.title,
-      excerpt: s.excerpt,
-      published_at: s.published_at,
-      url: s.url,
-      image: s.image,
-    })),
-    ...data.companyNews.map((n) => ({
-      id: 100 + n.id,
-      category: n.company_name,
-      title: n.title,
-      excerpt: '',
-      published_at: n.published_at,
-      url: n.url,
-      image: n.image,
-    })),
-    ...data.headlines.latest.map((l) => ({
-      id: 200 + l.id,
-      category: l.category,
-      title: l.title,
-      excerpt: '',
-      published_at: l.published_at,
-      url: l.url,
-    })),
     ...data.analysis.articles.map((a) => ({
       id: 300 + a.id,
       category: a.category,
@@ -150,7 +84,10 @@ function search(query: string): SearchResponse {
 }
 
 const routes: Record<string, (p: QueryParams) => unknown> = {
-  '/v1/news/': rssNews,
+  // Slides are managed in Django; mock mode has no authored slide content.
+  '/v1/home/slides/': () => ({ results: [] }),
+  // Public opportunities are database managed; mock mode does not seed them.
+  '/v1/trade/opportunities/': () => ({ results: [], count: 0, page: 1, page_size: 6, total_pages: 0 }),
   '/v1/market/overview/': () => marketOverview(),
   '/v1/market/quotes/': (p) => {
     const category = str(p.category, '')
@@ -172,17 +109,6 @@ const routes: Record<string, (p: QueryParams) => unknown> = {
       results: quote.history.slice(-num(p.limit, 100)),
     }
   },
-  '/ticker/': () => ({ results: data.ticker }),
-  '/v1/home/slides/': () => ({
-    results: data.slides.map((slide) => ({
-      id: slide.id,
-      title: slide.title,
-      short_text: slide.excerpt,
-      description: slide.excerpt,
-      image: slide.image,
-      created_at: slide.published_at,
-    })),
-  }),
   '/markets/': () => ({ results: data.markets }),
   '/transport-companies/': (p) => {
     const type = str(p.type, 'all')
@@ -194,15 +120,6 @@ const routes: Record<string, (p: QueryParams) => unknown> = {
         : data.transportCompanies.filter((c) => c.type === type)
     return { counts: data.transportCounts, results: list.slice(0, num(p.limit, 6)) }
   },
-  '/company-news/': (p) => {
-    const category = str(p.category, 'all')
-    const list =
-      category === 'all'
-        ? data.companyNews
-        : data.companyNews.filter((n) => n.category === category)
-    return { counts: data.companyNewsCounts, results: list.slice(0, num(p.limit, 8)) }
-  },
-  '/v1/news/headlines/': rssHeadlines,
   '/analysis/': (p) => {
     const kind = str(p.kind, 'all')
     return {
@@ -282,13 +199,6 @@ export function mockPost<T>(path: string, body: unknown): Promise<T> {
   }
   if (path === '/v1/auth/password-reset' || path === '/v1/auth/password-reset/confirm') {
     return Promise.resolve({ message: 'درخواست ثبت شد.' } as T)
-  }
-  if (path === '/newsletter/') {
-    const email = (body as { email?: string } | null)?.email ?? ''
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      return Promise.reject(new ApiError(400))
-    }
-    return Promise.resolve({ ok: true } as T)
   }
   return Promise.reject(new ApiError(404))
 }

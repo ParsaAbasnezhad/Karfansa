@@ -38,7 +38,7 @@ describe('real API mode', () => {
     document.cookie = 'csrftoken=; Max-Age=0; path=/'
     document.cookie = 'csrftoken=abc123'
     const fetchMock = useFetch({ json: async () => ({ ok: true }) })
-    await apiPost('/newsletter/', { email: 'a@b.ir' })
+    await apiPost('/v1/contact/', { message: 'hello' })
     const init = fetchMock.mock.calls[0]![1] as RequestInit
     expect(init.method).toBe('POST')
     expect((init.headers as Record<string, string>)['X-CSRFToken']).toBe('abc123')

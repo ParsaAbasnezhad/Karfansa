@@ -40,6 +40,9 @@ export type ProductListing = {
   category_name: string
   category_slug: string
   seller: ServiceSeller
+  listing_kind?: 'product' | 'service'
+  organization_id?: string | null
+  organization_name?: string | null
   province_id: number
   province_name: string
   province_slug: string

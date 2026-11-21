@@ -1,23 +1,5 @@
 // Shape of the Django API responses (see docs/api-contract.md). Dates are ISO 8601 strings.
 
-export interface TickerItem {
-  id: number
-  title: string
-  published_at: string
-  url: string
-}
-
-export interface Slide {
-  id: number
-  category: string
-  title: string
-  excerpt: string
-  read_minutes: number
-  published_at: string
-  image: string
-  url: string
-}
-
 export interface HomeSlide {
   id: number
   title: string
@@ -57,19 +39,6 @@ export interface TransportCompany {
   url: string
 }
 
-export type CompanyCategory = 'sup' | 'pro' | 'exp' | 'bor' | 'srv'
-export type CompanyFilter = 'all' | CompanyCategory
-
-export interface CompanyNewsItem {
-  id: number
-  category: CompanyCategory
-  company_name: string
-  title: string
-  image: string
-  published_at: string
-  url: string
-}
-
 export type Counts = Partial<Record<string, number>>
 
 export interface ListResponse<T> {
@@ -78,12 +47,6 @@ export interface ListResponse<T> {
 
 export interface CountedListResponse<T> extends ListResponse<T> {
   counts: Counts
-}
-
-export interface HeadlinesResponse {
-  featured: RSSNewsItem | null
-  minis: RSSNewsItem[]
-  latest: RSSNewsItem[]
 }
 
 export type AnalysisKind = 'all' | 'report' | 'analysis' | 'note'
@@ -143,28 +106,6 @@ export interface SearchResponse {
   query: string
   count: number
   results: SearchResult[]
-}
-
-export interface RSSNewsItem {
-  id: number
-  title: string
-  summary: string
-  source_name: string
-  topic: string
-  original_url: string
-  image_url: string
-  published_at: string | null
-  fetched_at: string
-  score: number
-}
-
-export interface NewsListResponse {
-  results: RSSNewsItem[]
-  topics: string[]
-  count: number
-  page: number
-  page_size: number
-  total_pages: number
 }
 
 export interface HealthResponse {

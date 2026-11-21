@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
 import { useIranProvinces, useProvinceCities } from '@/features/account/geography'
@@ -176,6 +176,8 @@ export function InquiryList({ inquiries }: { inquiries: ProductInquiry[] }) {
 export function ListingForm({ listing }: { listing?: ProductListing }) {
   const { data: user } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const listingKind = params.get('kind') === 'service' ? 'service' : 'product'
   const queryClient = useQueryClient()
   const categories = useQuery({
     queryKey: ['services', 'categories'],
@@ -201,7 +203,9 @@ export function ListingForm({ listing }: { listing?: ProductListing }) {
     },
     onSuccess: async (saved) => {
       await queryClient.invalidateQueries({ queryKey: ['services'] })
-      navigate('/services/dashboard', { state: { savedStatus: saved.status } })
+      navigate(params.get('next') === 'business' ? '/business' : '/services/dashboard', {
+        state: { savedStatus: saved.status },
+      })
     },
   })
   const allCategories = flattenCategories(categories.data ?? [])
@@ -236,6 +240,7 @@ export function ListingForm({ listing }: { listing?: ProductListing }) {
         packaging: String(form.get('packaging') ?? '').trim(),
         specifications,
         submit_for_review: form.get('submit_for_review') === 'on',
+        listing_kind: listing?.listing_kind ?? listingKind,
       },
       files,
     })
@@ -244,7 +249,13 @@ export function ListingForm({ listing }: { listing?: ProductListing }) {
   if (!user) return <p className="svc-login-note"><AppLink href="/login">برای ثبت محصول وارد حساب شوید.</AppLink></p>
   return (
     <form className="svc-form-card svc-listing-form" onSubmit={submit} key={listing?.id ?? 'new-listing'}>
-      <h1>{listing ? 'ویرایش محصول' : 'ثبت محصول جدید'}</h1>
+      <h1>
+        {listing
+          ? 'ویرایش آگهی'
+          : listingKind === 'service'
+            ? 'ثبت خدمت جدید'
+            : 'ثبت محصول جدید'}
+      </h1>
       <p>پس از ارسال، محصول برای بررسی مدیران فرستاده می‌شود.</p>
       <label>نام محصول<input name="title" minLength={3} maxLength={180} required defaultValue={listing?.title} /></label>
       <label>معرفی محصول<textarea name="description" minLength={10} maxLength={5000} required rows={5} defaultValue={listing?.description} /></label>

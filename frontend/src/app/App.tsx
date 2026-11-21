@@ -7,9 +7,10 @@ import { SearchPage } from '@/features/search/SearchPage'
 import { AboutPage } from '@/features/about/AboutPage'
 import { ContactPage } from '@/features/about/ContactPage'
 import { AuthPage } from '@/features/auth/AuthPage'
-import { NewsPage } from '@/features/news/NewsPage'
 import { MarketsPage } from '@/features/markets/MarketsPage'
 import { AccountPage } from '@/features/account/AccountPage'
+import { BusinessDashboardPage } from '@/features/business/BusinessDashboardPage'
+import { JoinPage } from '@/features/business/JoinPage'
 import { GuestTrackPage } from '@/features/support/GuestTrackPage'
 import { SupportCenterPage } from '@/features/support/SupportCenterPage'
 import { TicketDetailPage } from '@/features/support/TicketDetailPage'
@@ -17,6 +18,7 @@ import { ProvincesPage } from '@/features/provinces/ProvincesPage'
 import { ProvinceDetailPage } from '@/features/provinces/ProvinceDetailPage'
 import { IndustriesPage } from '@/features/provinces/IndustriesPage'
 import { TradeOpportunitiesPage } from '@/features/trade/TradeOpportunitiesPage'
+import { TradeOpportunityDetailPage } from '@/features/trade/TradeOpportunityDetailPage'
 import {
   ServicesDashboardPage,
   ServicesLandingPage,
@@ -67,12 +69,12 @@ function AppRoutes() {
             <Route index element={<HomePage />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="contact" element={<ContactPage />} />
-            <Route path="news" element={<NewsPage />} />
             <Route path="markets" element={<MarketsPage />} />
             <Route path="provinces" element={<ProvincesPage />} />
             <Route path="provinces/:slug" element={<ProvinceDetailPage />} />
             <Route path="industries" element={<IndustriesPage />} />
             <Route path="trade" element={<TradeOpportunitiesPage />} />
+            <Route path="trade/:slug" element={<TradeOpportunityDetailPage />} />
             <Route path="services" element={<ServicesLandingPage />} />
             <Route path="services/listings" element={<ServicesListingsPage />} />
             <Route path="services/listings/new" element={<ServicesListingFormPage />} />
@@ -82,6 +84,8 @@ function AppRoutes() {
             <Route path="services/dashboard" element={<ServicesDashboardPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="join" element={<JoinPage />} />
+            <Route path="business" element={<BusinessDashboardPage />} />
             <Route path="account/support" element={<SupportCenterPage />} />
             <Route path="account/support/:ticketNumber" element={<TicketDetailPage />} />
             <Route path="support/track" element={<GuestTrackPage />} />

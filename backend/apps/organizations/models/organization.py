@@ -12,6 +12,7 @@ from apps.core.validators import (
     validate_image_size,
     validate_phone,
 )
+from apps.core.verification import VerificationStatus
 from apps.geography.models import City, Country, Province
 
 from .industry import Industry
@@ -85,7 +86,31 @@ class Organization(UUIDTimeStampedModel):
     linkedin = models.URLField(blank=True)
     instagram = models.URLField(blank=True)
 
-    # Set by platform staff only (never by the company itself).
+    ceo_name = models.CharField(max_length=150, blank=True, verbose_name="نام مدیرعامل")
+    representative_name = models.CharField(max_length=150, blank=True, verbose_name="نام نماینده")
+    representative_phone = models.CharField(
+        max_length=20, blank=True, validators=[validate_phone], verbose_name="تلفن نماینده"
+    )
+
+    # ``is_verified`` / ``is_active`` stay in sync with verification_status so existing
+    # trade and directory queries keep working.
+    verification_status = models.CharField(
+        max_length=20,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.DRAFT,
+        verbose_name="وضعیت تأیید",
+    )
+    rejection_reason = models.CharField(max_length=500, blank=True, verbose_name="دلیل رد")
+    submitted_at = models.DateTimeField(null=True, blank=True, verbose_name="تاریخ ارسال")
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="تاریخ بررسی")
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="reviewed_organizations",
+        verbose_name="بررسی‌کننده",
+    )
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
@@ -99,10 +124,21 @@ class Organization(UUIDTimeStampedModel):
                 condition=~models.Q(national_id=""),
                 name="organizations_national_id_unique",
             ),
+            models.UniqueConstraint(
+                fields=["registration_number"],
+                condition=~models.Q(registration_number=""),
+                name="organizations_registration_no_unique",
+            ),
+            models.UniqueConstraint(
+                fields=["economic_code"],
+                condition=~models.Q(economic_code=""),
+                name="organizations_economic_code_unique",
+            ),
         ]
         indexes = [
             models.Index(fields=["is_active", "is_verified"], name="org_active_verified_idx"),
             models.Index(fields=["name"], name="org_name_idx"),
+            models.Index(fields=["verification_status"], name="org_verification_idx"),
         ]
 
     def __str__(self) -> str:

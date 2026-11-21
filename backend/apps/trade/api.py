@@ -285,6 +285,16 @@ def search_opportunities(
 
 
 @router.get(
+    "/opportunities/{slug}/",
+    response=TradeOpportunityOut,
+    operation_id="trade_opportunity_detail",
+)
+def get_opportunity(request: HttpRequest, slug: str) -> dict[str, object]:
+    opportunity = get_object_or_404(selectors.public_opportunities(), slug=slug)
+    return opportunity_data(opportunity)
+
+
+@router.get(
     "/my-opportunities/",
     response=list[TradeOpportunityOut],
     operation_id="trade_my_opportunities",

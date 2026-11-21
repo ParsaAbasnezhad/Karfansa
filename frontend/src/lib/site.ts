@@ -24,9 +24,11 @@ export interface LinkItem {
   label: string
 }
 
+export const NEWS_SITE_URL = 'https://karfansa.news.ir'
+
 export const NAV: NavItem[] = [
   { href: '/', label: 'صفحه اصلی', icon: 'home' },
-  { href: '/news/', label: 'اخبار اقتصادی', icon: 'news' },
+  { href: NEWS_SITE_URL, label: 'اخبار', icon: 'news' },
   { href: '/companies/', label: 'شرکت‌ها', icon: 'building' },
   { href: '/markets/', label: 'بازارها', icon: 'trend', live: true },
   { href: '/provinces/', label: 'استان‌ها', icon: 'pin' },
@@ -41,7 +43,6 @@ export const NAV: NavItem[] = [
 export const TOP_LINKS: LinkItem[] = [
   { href: '/about/', label: 'درباره ما' },
   { href: '/contact/', label: 'تماس با ما' },
-  { href: '/submit-news/', label: 'ارسال خبر' },
   { href: '/ads/', label: 'تبلیغات' },
 ]
 
@@ -66,11 +67,10 @@ export const TRENDING: LinkItem[] = [
 export const DRAWER_LINKS: LinkItem[] = [
   ...TOP_LINKS,
   { href: '/register-company/', label: 'ثبت شرکت' },
-  { href: '/archive/', label: 'آرشیو اخبار' },
 ]
 
 export const FOOTER_SECTIONS: LinkItem[] = [
-  { href: '/news/', label: 'اخبار اقتصادی' },
+  { href: NEWS_SITE_URL, label: 'اخبار' },
   { href: '/companies/', label: 'شرکت‌ها' },
   { href: '/provinces/', label: 'استان‌های ایران' },
   { href: '/markets/', label: 'بازارها' },
@@ -84,10 +84,8 @@ export const FOOTER_SECTIONS: LinkItem[] = [
 ]
 export const FOOTER_QUICK: LinkItem[] = [
   { href: '/', label: 'صفحه اصلی' },
-  { href: '/archive/', label: 'آرشیو اخبار' },
   { href: '/register-company/', label: 'ثبت شرکت' },
   { href: '/login/', label: 'ورود / ثبت‌نام' },
-  { href: '/submit-news/', label: 'ارسال خبر' },
   { href: '/ads/', label: 'تبلیغات در کارفنسا' },
 ]
 export const FOOTER_ABOUT: LinkItem[] = [
@@ -101,12 +99,9 @@ export const FOOTER_ABOUT: LinkItem[] = [
 
 export const URLS = {
   login: '/login/',
-  allNews: '/news/',
   markets: '/markets/',
   transportAll: '/transport/',
   registerTransport: '/transport/register/',
-  companyNewsAll: '/companies/news/',
-  archive: '/archive/',
   analysisAll: '/analysis/',
   reportsAll: '/analysis/reports/',
 } as const

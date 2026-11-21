@@ -5,12 +5,16 @@ from django.views.decorators.csrf import csrf_protect
 from ninja import Router, Status
 from ninja.decorators import decorate_view
 
+from apps.accounts.phone import login_with_phone, register_with_phone, request_phone_otp
 from apps.accounts.schemas import (
     EmailIn,
     MessageOut,
     PasswordLoginIn,
     PasswordResetConfirmIn,
     PasswordResetIn,
+    PhoneLoginIn,
+    PhoneOtpIn,
+    PhoneRegisterIn,
     ProfileOut,
     ProfileUpdateIn,
     RegisterIn,
@@ -66,6 +70,36 @@ def request_password_reset(request: HttpRequest, payload: PasswordResetIn) -> di
 def confirm_password_reset(request: HttpRequest, payload: PasswordResetConfirmIn) -> dict[str, str]:
     reset_password(payload.email, payload.code, payload.password)
     return {"message": "گذرواژه با موفقیت تغییر کرد. حالا وارد شوید."}
+
+
+@router.post("/phone/otp", response=MessageOut)
+@decorate_view(csrf_protect)
+def request_phone_code(request: HttpRequest, payload: PhoneOtpIn) -> dict[str, str]:
+    request_phone_otp(payload.phone, payload.email)
+    return {"message": "اگر ارسال کد ممکن باشد، کد تأیید ارسال می‌شود."}
+
+
+@router.post("/phone/register", response={201: UserOut})
+@decorate_view(csrf_protect)
+def register_with_phone_code(request: HttpRequest, payload: PhoneRegisterIn) -> Status[UserOut]:
+    user = register_with_phone(
+        phone=payload.phone,
+        code=payload.code,
+        email=payload.email,
+        password=payload.password,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+    )
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    return Status(201, UserOut(email=user.email, phone=user.phone))
+
+
+@router.post("/phone/login", response=UserOut)
+@decorate_view(csrf_protect)
+def login_with_phone_code(request: HttpRequest, payload: PhoneLoginIn) -> UserOut:
+    user = login_with_phone(payload.phone, payload.code)
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    return UserOut(email=user.email, phone=user.phone)
 
 
 @router.post("/login", response=MessageOut)

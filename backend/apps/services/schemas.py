@@ -55,6 +55,7 @@ class ListingIn(Schema):
     packaging: str = Field(default="", max_length=500)
     specifications: list[SpecificationIn] = Field(default_factory=list, max_length=30)
     submit_for_review: bool = True
+    listing_kind: str = "product"
 
 
 class ListingOut(Schema):
@@ -66,6 +67,9 @@ class ListingOut(Schema):
     category_name: str
     category_slug: str
     seller: SellerOut
+    listing_kind: str = "product"
+    organization_id: str | None = None
+    organization_name: str | None = None
     province_id: int
     province_name: str
     province_slug: str
