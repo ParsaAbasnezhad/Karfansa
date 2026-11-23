@@ -166,6 +166,7 @@ class OpportunityOut(Schema):
     opportunity_type: str
     description: str
     review_status: str
+    rejection_reason: str
     is_published: bool
     province_name: str
     valid_until: date | None

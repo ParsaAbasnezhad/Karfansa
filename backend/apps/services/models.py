@@ -1,4 +1,5 @@
 from typing import Any, ClassVar
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -76,6 +77,9 @@ class SellerProfile(models.Model):
     class Meta:
         verbose_name = "پروفایل فروشنده"
         verbose_name_plural = "پروفایل‌های فروشنده"
+        permissions = [
+            ("moderate_sellerprofile", "Can moderate individual seller profiles"),
+        ]
         indexes = [
             models.Index(fields=["verification_status"], name="svc_seller_verify_idx"),
         ]
@@ -228,6 +232,9 @@ class ProductListing(models.Model):
         ordering = ["-published_at", "-created_at"]
         verbose_name = "محصول فروشنده"
         verbose_name_plural = "محصولات فروشندگان"
+        permissions = [
+            ("moderate_productlisting", "Can moderate product and service listings"),
+        ]
         constraints = [
             models.CheckConstraint(condition=models.Q(quantity__gt=0), name="svc_qty_positive"),
             models.CheckConstraint(
@@ -406,13 +413,40 @@ class ProductSpecification(models.Model):
 class ProductInquiry(models.Model):
     class Status(models.TextChoices):
         NEW = "new", "جدید"
+        REVIEWING = "reviewing", "در حال بررسی"
+        ACCEPTED = "accepted", "پذیرفته‌شده"
+        REJECTED = "rejected", "ردشده"
         READ = "read", "خوانده‌شده"
         REPLIED = "replied", "پاسخ‌داده‌شده"
         CLOSED = "closed", "بسته‌شده"
 
     listing = models.ForeignKey(
-        ProductListing, on_delete=models.CASCADE, related_name="inquiries", verbose_name="محصول"
+        ProductListing, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="inquiries", verbose_name="محصول"
     )
+    trade_opportunity = models.ForeignKey(
+        "trade.TradeOpportunity", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="inquiries",
+    )
+    public_id = models.UUIDField(default=uuid4, unique=True, editable=False)
+    client_key = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+    owner_organization = models.ForeignKey(
+        "organizations.Organization", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="received_inquiries",
+    )
+    owner_seller = models.ForeignKey(
+        SellerProfile, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="received_inquiries",
+    )
+    owner_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="received_direct_inquiries",
+    )
+    category = models.CharField(max_length=24, default="purchase")
+    subject = models.CharField(max_length=180, blank=True)
+    last_activity_at = models.DateTimeField(default=timezone.now)
+    owner_seen_at = models.DateTimeField(null=True, blank=True)
+    applicant_seen_at = models.DateTimeField(null=True, blank=True)
     buyer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -423,7 +457,7 @@ class ProductInquiry(models.Model):
     quantity = models.DecimalField(
         max_digits=20, decimal_places=4, null=True, blank=True, verbose_name="مقدار درخواستی"
     )
-    status = models.CharField(max_length=8, choices=Status.choices, default=Status.NEW)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.NEW)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -436,12 +470,37 @@ class ProductInquiry(models.Model):
                 fields=["listing", "status", "-created_at"], name="svc_inquiry_status_idx"
             ),
             models.Index(fields=["buyer", "-created_at"], name="svc_inquiry_buyer_idx"),
+            models.Index(
+                fields=["owner_organization", "status", "-last_activity_at"],
+                name="svc_inq_org_activity",
+            ),
+            models.Index(
+                fields=["owner_seller", "status", "-last_activity_at"],
+                name="svc_inq_seller_activity",
+            ),
+            models.Index(
+                fields=["owner_user", "status", "-last_activity_at"],
+                name="svc_inq_user_activity",
+            ),
+            models.Index(
+                fields=["buyer", "status", "-last_activity_at"],
+                name="svc_inq_buyer_activity",
+            ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(listing__isnull=False, trade_opportunity__isnull=True)
+                           | models.Q(listing__isnull=True, trade_opportunity__isnull=False)),
+                name="svc_inquiry_one_target",
+            ),
         ]
 
     def __str__(self) -> str:
         return f"درخواست {self.listing} از {self.buyer}"
 
     def clean(self) -> None:
+        if bool(self.listing_id) == bool(self.trade_opportunity_id):
+            raise ValidationError("درخواست باید دقیقاً یک آگهی یا فرصت تجاری داشته باشد.")
         if self.listing_id and self.buyer_id:
             listing = self.listing
             if listing.seller_id and listing.seller.user_id == self.buyer_id:
@@ -455,3 +514,58 @@ class ProductInquiry(models.Model):
                 )
         if self.quantity is not None and self.quantity <= 0:
             raise ValidationError({"quantity": "مقدار درخواستی باید بیشتر از صفر باشد."})
+
+
+class InquiryMessage(models.Model):
+    inquiry = models.ForeignKey(ProductInquiry, on_delete=models.CASCADE, related_name="thread")
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    body = models.TextField(max_length=4000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [models.Index(fields=["inquiry", "created_at"], name="svc_inq_msg_time")]
+
+    def __str__(self) -> str:
+        return f"Message on inquiry {self.inquiry_id}"
+
+
+class InquiryStatusEvent(models.Model):
+    inquiry = models.ForeignKey(
+        ProductInquiry, on_delete=models.CASCADE, related_name="status_events"
+    )
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    from_status = models.CharField(max_length=12)
+    to_status = models.CharField(max_length=12)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self) -> str:
+        return f"Inquiry {self.inquiry_id}: {self.from_status} → {self.to_status}"
+
+
+class InquiryNotification(models.Model):
+    inquiry = models.ForeignKey(
+        ProductInquiry, on_delete=models.CASCADE, related_name="notifications"
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="inquiry_notifications",
+    )
+    kind = models.CharField(max_length=24)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["recipient", "read_at", "-created_at"],
+                name="svc_inq_notif_unread",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.kind} for user {self.recipient_id}"

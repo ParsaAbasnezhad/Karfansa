@@ -35,11 +35,19 @@ describe('JoinPage', () => {
       }),
     )
     renderWithProviders(<JoinPage />)
-    const company = await screen.findByRole('button', { name: (value) => value.startsWith('ثبت شرکت') })
-    expect(screen.getByRole('button', { name: (value) => value.startsWith('فعالیت فردی') })).toBeInTheDocument()
+    const company = await screen.findByRole('button', {
+      name: (value) => value.startsWith('ثبت شرکت'),
+    })
+    expect(
+      screen.getByRole('button', { name: (value) => value.startsWith('فعالیت فردی') }),
+    ).toBeInTheDocument()
     await userEvent.click(company)
     expect(screen.getByLabelText('نام رسمی')).toBeInTheDocument()
     expect(screen.getByLabelText('شناسه ملی')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'بازگشت به انتخاب هویت' }))
+    expect(
+      screen.getByRole('button', { name: (value) => value.startsWith('فعالیت فردی') }),
+    ).toBeInTheDocument()
   })
 
   it('keeps password confirmation errors on the account step', async () => {

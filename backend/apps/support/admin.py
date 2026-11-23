@@ -3,6 +3,7 @@ from django.contrib import admin, messages
 from django.db.models import Q
 from django.http import HttpRequest
 
+from apps.core.admin import KarfansaModelAdmin, KarfansaTabularInline
 from apps.core.errors import ApiError
 
 from .models import SupportTicket, TicketMessage, TicketStatus
@@ -24,7 +25,7 @@ class AwaitingStaffFilter(admin.SimpleListFilter):
         return queryset
 
 
-class TicketMessageInline(admin.TabularInline):  # type: ignore[type-arg]
+class TicketMessageInline(KarfansaTabularInline):  # type: ignore[type-arg]
     model = TicketMessage
     extra = 0
     can_delete = False
@@ -74,7 +75,7 @@ class SupportTicketAdminForm(forms.ModelForm):  # type: ignore[type-arg]
 
 
 @admin.register(SupportTicket)
-class SupportTicketAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class SupportTicketAdmin(KarfansaModelAdmin):  # type: ignore[type-arg]
     form = SupportTicketAdminForm
     inlines = [TicketMessageInline]
     list_display = (
@@ -239,7 +240,7 @@ class SupportTicketAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
 
 @admin.register(TicketMessage)
-class TicketMessageAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class TicketMessageAdmin(KarfansaModelAdmin):  # type: ignore[type-arg]
     list_display = ("ticket", "sender_type", "is_internal", "short_message", "created_at")
     list_filter = ("sender_type", "is_internal", "created_at")
     search_fields = ("ticket__ticket_number", "message", "sender__email")

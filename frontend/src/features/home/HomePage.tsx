@@ -4,6 +4,7 @@ import { HomeSlider } from './HomeSlider'
 import { MarketsStrip } from './MarketsStrip'
 import { TradeOpportunitiesSection } from './TradeOpportunitiesSection'
 import { TransportSection } from './TransportSection'
+import { HomeIntentSection } from '@/features/intents/HomeIntentSection'
 
 export function HomePage() {
   useEffect(() => {
@@ -14,6 +15,7 @@ export function HomePage() {
     <>
       <HomeSlider />
       <TradeOpportunitiesSection />
+      <HomeIntentSection />
       <MarketsStrip />
       <TransportSection />
       <AnalysisSection />

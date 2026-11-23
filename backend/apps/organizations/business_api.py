@@ -106,6 +106,7 @@ def _opportunity_out(item: TradeOpportunity) -> OpportunityOut:
         opportunity_type=item.opportunity_type,
         description=item.description,
         review_status=item.review_status,
+        rejection_reason=item.rejection_reason,
         is_published=item.is_published,
         province_name=item.province.name_fa,
         valid_until=item.valid_until,

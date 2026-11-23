@@ -124,7 +124,9 @@ function OpportunityCard({
         {item.company && (
           <div>
             <dt>شرکت مرتبط</dt>
-            <dd>{item.company.name}</dd>
+            <dd>
+              <Link to={`/companies/${encodeURIComponent(item.company.slug)}`}>{item.company.name}</Link>
+            </dd>
           </div>
         )}
       </dl>

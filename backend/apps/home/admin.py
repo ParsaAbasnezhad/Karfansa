@@ -1,17 +1,18 @@
 from django.contrib import admin
 
+from apps.core.admin import KarfansaModelAdmin
 from apps.home.models import AboutPageContent, Slide
 
 
 @admin.register(Slide)
-class SlideAdmin(admin.ModelAdmin):
+class SlideAdmin(KarfansaModelAdmin):
     list_display = ("title", "is_active", "created_at")
     list_filter = ("is_active",)
     search_fields = ("title", "short_text")
 
 
 @admin.register(AboutPageContent)
-class AboutPageContentAdmin(admin.ModelAdmin):
+class AboutPageContentAdmin(KarfansaModelAdmin):
     fieldsets = (
         ("معرفی", {"fields": ("hero_title", "hero_intro")}),
         ("داستان کارفنسا", {"fields": ("story_title", "story_body")}),

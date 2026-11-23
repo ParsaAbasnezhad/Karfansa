@@ -234,7 +234,11 @@ export function IndustriesPage() {
                       <strong>شرکت‌های فعال</strong>
                       <ul className="industry-tags">
                         {item.companies.map((company) => (
-                          <li key={company.slug}>{company.name}</li>
+                          <li key={company.slug}>
+                            <Link to={`/companies/${encodeURIComponent(company.slug)}`}>
+                              {company.name}
+                            </Link>
+                          </li>
                         ))}
                       </ul>
                     </div>

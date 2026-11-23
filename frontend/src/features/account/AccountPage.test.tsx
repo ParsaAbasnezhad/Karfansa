@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@/test/render'
@@ -72,7 +72,7 @@ describe('AccountPage', () => {
     vi.stubGlobal('fetch', fetchMock)
     renderWithProviders(<AccountPage />)
 
-    expect(await screen.findByText('عضو کارفنسا از')).toBeInTheDocument()
+    expect(await screen.findByText('عضو از')).toBeInTheDocument()
     expect(screen.getByText('لیست شرکت‌ها')).toBeInTheDocument()
     expect(screen.getByText('ثبت خدمت‌دهنده')).toBeInTheDocument()
 
@@ -92,6 +92,79 @@ describe('AccountPage', () => {
     expect(screen.queryByRole('button', { name: 'تکمیل اطلاعات' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'اطلاعات حساب' })).not.toBeInTheDocument()
     expect(screen.getByText('تهران، تهران')).toBeInTheDocument()
+  })
+
+  it('uses active-business metrics without rendering account navigation', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    const active = {
+      kind: 'organization',
+      id: 'org-1',
+      label: 'شرکت آفتاب',
+      role: 'owner',
+      verification_status: 'verified',
+      is_active_context: true,
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input)
+        const responses: Record<string, unknown> = {
+          '/v1/auth/me': {
+            ...profile,
+            first_name: 'سارا',
+            last_name: 'احمدی',
+            province_id: 1,
+            province_name: 'تهران',
+            city_id: 10,
+            city_name: 'تهران',
+          },
+          '/v1/business/identities': { identities: [active], active },
+          '/v1/business/dashboard': {
+            ...active,
+            rejection_reason: '',
+            can_publish: true,
+            can_edit_profile: true,
+            can_submit_verification: false,
+            can_manage_members: false,
+            can_manage_trade: false,
+            listings_total: 7,
+            inquiries_new: 3,
+            opportunities_total: 0,
+          },
+          '/v1/inquiries/notifications/list': { results: [], unread_count: 4 },
+          '/v1/inquiries/received': { results: [] },
+          '/v1/support/tickets/': {
+            results: [],
+            count: 0,
+            page: 1,
+            page_size: 4,
+            total_pages: 0,
+            summary: { total: 0, open: 0, waiting_for_user: 0, answered: 0, unread: 0 },
+          },
+          '/v1/geography/provinces/': [],
+        }
+        const path = new URL(url, window.location.origin).pathname.replace('/api', '')
+        return {
+          ok: true,
+          status: 200,
+          json: async () => responses[path] ?? [],
+        }
+      }),
+    )
+    renderWithProviders(<AccountPage />)
+
+    expect(await screen.findByRole('heading', { name: 'خوش آمدید، سارا احمدی' })).toBeVisible()
+    const metrics = within(screen.getByRole('region', { name: 'خلاصه فعالیت' }))
+    await waitFor(() => {
+      expect(screen.getAllByText('شرکت آفتاب').length).toBeGreaterThan(0)
+      expect(metrics.getByText('۷')).toBeInTheDocument()
+      expect(metrics.getByText('۳')).toBeInTheDocument()
+      expect(metrics.getByText('۴')).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByRole('complementary', { name: 'ناوبری پنل کاربری' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'باز کردن منوی پنل' })).not.toBeInTheDocument()
   })
 
   it('shows a login prompt when there is no authenticated session', async () => {

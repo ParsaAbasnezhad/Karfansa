@@ -16,7 +16,7 @@ describe('SiteHeader authentication actions', () => {
     expect(screen.getByText('ثبت‌نام')).toBeInTheDocument()
   })
 
-  it('opens the independent news site from desktop, mobile and footer navigation', async () => {
+  it('keeps header navigation out of the footer and links only to existing help pages', async () => {
     vi.stubEnv('VITE_USE_MOCK', 'true')
     renderWithProviders(
       <>
@@ -35,8 +35,46 @@ describe('SiteHeader authentication actions', () => {
     const mobile = within(screen.getByRole('navigation', { name: 'بخش‌ها' })).getByRole('link', {
       name: 'اخبار',
     })
-    const footer = within(screen.getByRole('contentinfo')).getByRole('link', { name: 'اخبار' })
-    for (const link of [desktop, mobile, footer]) {
+    const footer = within(screen.getByRole('contentinfo'))
+    const bottomBar = footer.getByRole('navigation', { name: 'شبکه‌های اجتماعی کارفنسا' })
+    expect(bottomBar.parentElement).toHaveClass('footer-bottom-inner')
+    for (const headerItem of [
+      'اخبار',
+      'شرکت‌ها',
+      'بازارها',
+      'صفحه اصلی',
+      'تماس با ما',
+      'ورود / ثبت‌نام',
+    ]) {
+      expect(footer.queryByRole('link', { name: headerItem })).not.toBeInTheDocument()
+    }
+    for (const social of [
+      { name: 'تلگرام', href: 'https://t.me/karfansa' },
+      { name: 'اینستاگرام', href: 'https://instagram.com/karfansa' },
+      { name: 'لینکدین', href: 'https://linkedin.com/company/karfansa' },
+      { name: 'ایکس', href: 'https://x.com/karfansa' },
+    ]) {
+      const link = within(bottomBar).getByRole('link', { name: social.name })
+      expect(link).toHaveAttribute('href', social.href)
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    }
+    expect(footer.queryByRole('link', { name: 'واتساپ' })).not.toBeInTheDocument()
+    expect(footer.getByLabelText('جایگاه نماد اعتماد الکترونیکی')).toBeInTheDocument()
+    expect(footer.getByLabelText('جایگاه نماد ساماندهی')).toBeInTheDocument()
+    expect(footer.queryByRole('link', { name: 'مرکز پشتیبانی' })).toHaveAttribute(
+      'href',
+      '/account/support/',
+    )
+    expect(footer.getByRole('link', { name: 'ثبت درخواست پشتیبانی' })).toHaveAttribute(
+      'href',
+      '/account/support/?new=1',
+    )
+    expect(footer.getByRole('link', { name: 'پرسش‌های متداول' })).toHaveAttribute(
+      'href',
+      '/contact/#contact-faq-title',
+    )
+    for (const link of [desktop, mobile]) {
       expect(link).toHaveAttribute('href', 'https://karfansa.news.ir')
       expect(link).toHaveAttribute('target', '_blank')
       expect(link).toHaveAttribute('rel', 'noopener noreferrer')

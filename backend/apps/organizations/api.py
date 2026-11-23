@@ -1,7 +1,7 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest
-from ninja import Query, Router
-from ninja.pagination import paginate
+from ninja import Field, Query, Router, Schema
+from ninja.pagination import LimitOffsetPagination, paginate
 
 from . import selectors
 from .models import Industry, Organization
@@ -15,8 +15,14 @@ from .schemas import (
 router = Router()
 
 
+class OrganizationPagination(LimitOffsetPagination):
+    class Input(Schema):
+        limit: int = Field(20, ge=1, le=100)
+        offset: int = Field(0, ge=0)
+
+
 @router.get("/", response=list[OrganizationListOut], operation_id="organizations_list")
-@paginate
+@paginate(OrganizationPagination)
 def list_organizations(
     request: HttpRequest, filters: Query[OrganizationFilters]
 ) -> QuerySet[Organization]:

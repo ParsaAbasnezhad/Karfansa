@@ -110,7 +110,9 @@ function ProvinceShape({ slug }: { slug: string }) {
   const [viewBox, setViewBox] = useState('0 0 640 570')
 
   useLayoutEffect(() => {
-    const box = pathRef.current?.getBBox()
+    const box = typeof pathRef.current?.getBBox === 'function'
+      ? pathRef.current.getBBox()
+      : null
     if (!box) return
     const pad = 4
     setViewBox(`${box.x - pad} ${box.y - pad} ${box.width + pad * 2} ${box.height + pad * 2}`)
@@ -438,7 +440,11 @@ export function ProvinceDetailPage() {
                         <strong>شرکت‌های فعال</strong>
                         <ul>
                           {item.companies.map((company) => (
-                            <li key={company.slug}>{company.name}</li>
+                            <li key={company.slug}>
+                              <Link to={`/companies/${encodeURIComponent(company.slug)}`}>
+                                {company.name}
+                              </Link>
+                            </li>
                           ))}
                         </ul>
                       </div>

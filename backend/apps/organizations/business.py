@@ -411,12 +411,15 @@ def submit_organization(user: User, organization_id: UUID) -> Organization:
     return org
 
 
+@transaction.atomic
 def staff_decide_organization(
     reviewer: User,
     organization: Organization,
     status: str,
     reason: str = "",
 ) -> None:
+    if not reviewer.has_perm("organizations.moderate_organization"):
+        raise DjangoValidationError("مجوز بررسی شرکت را ندارید.")
     if status not in {
         VerificationStatus.VERIFIED,
         VerificationStatus.REJECTED,
@@ -434,12 +437,15 @@ def staff_decide_organization(
     audit(reviewer, "organization.decision", organization, status=status)
 
 
+@transaction.atomic
 def staff_decide_individual(
     reviewer: User,
     profile: SellerProfile,
     status: str,
     reason: str = "",
 ) -> None:
+    if not reviewer.has_perm("services.moderate_sellerprofile"):
+        raise DjangoValidationError("مجوز بررسی پروفایل فردی را ندارید.")
     if status not in {
         VerificationStatus.VERIFIED,
         VerificationStatus.REJECTED,
@@ -516,7 +522,9 @@ def document_for_user(user: User, document_id: int) -> VerificationDocument:
     document = VerificationDocument.objects.filter(pk=document_id).first()
     if document is None:
         raise ApiError("مدرک پیدا نشد.", status_code=404)
-    if user.is_staff:
+    if user.has_perm("organizations.view_verificationdocument") or user.has_perm(
+        "organizations.moderate_organization"
+    ):
         return document
     model = document.content_type.model_class()
     if model is SellerProfile:
@@ -806,6 +814,8 @@ def update_opportunity(user: User, opportunity_id: int, data: dict[str, Any]) ->
     opportunity.title = data["title"].strip()
     opportunity.description = data["description"].strip()
     opportunity.opportunity_type = data["opportunity_type"]
+    opportunity.review_status = OpportunityReviewStatus.PENDING
+    opportunity.rejection_reason = ""
     try:
         opportunity.full_clean()
         opportunity.save()

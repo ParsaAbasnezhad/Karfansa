@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import environ
+from django.templatetags.static import static
 
 env = environ.Env()
 
@@ -17,6 +18,8 @@ API_DOCS_ENABLED = False
 
 INSTALLED_APPS = [
     # Django
+    "unfold",
+    "unfold.contrib.filters",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -32,6 +35,8 @@ INSTALLED_APPS = [
     "apps.contact",
     "apps.home",
     "apps.core",
+    "apps.intents",
+    "apps.analysis",
     "apps.advertising",
     "apps.geography",
     # Keep legacy models registered so existing news tables and migration history remain intact.
@@ -44,6 +49,42 @@ INSTALLED_APPS = [
     "apps.support",
     "apps.transportation",
 ]
+
+# Unfold supports Django 5.2 and keeps the existing Django admin site and auth.
+UNFOLD = {
+    "SITE_TITLE": "مدیریت کارفنسا",
+    "SITE_HEADER": "کارفنسا",
+    "SITE_SUBHEADER": "پنل مدیریت",
+    "SITE_URL": "/",
+    "SITE_SYMBOL": "dashboard",
+    "SITE_ICON": lambda request: static("core/admin/brand-mark.svg"),
+    "SHOW_VIEW_ON_SITE": False,
+    "SHOW_HISTORY": True,
+    "THEME": "dark",
+    "BORDER_RADIUS": "10px",
+    "DASHBOARD_CALLBACK": "apps.core.admin_dashboard.dashboard_callback",
+    "STYLES": [lambda request: static("core/admin/karfansa-admin.css")],
+    "SCRIPTS": [lambda request: static("core/admin/karfansa-admin.js")],
+    "COLORS": {
+        "primary": {
+            "50": "#edf9f3",
+            "100": "#d7f2e3",
+            "200": "#b2e5cb",
+            "300": "#7bd2a8",
+            "400": "#42b982",
+            "500": "#209a68",
+            "600": "#147c53",
+            "700": "#126345",
+            "800": "#124f39",
+            "900": "#104130",
+            "950": "#08251b",
+        },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+    },
+}
 
 AUTH_USER_MODEL = "accounts.User"
 AUTH_PASSWORD_VALIDATORS = [
@@ -75,7 +116,7 @@ ASGI_APPLICATION = "config.asgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -113,6 +154,7 @@ EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@karfansa.ir")
 SUPPORT_INBOX_EMAIL = env("SUPPORT_INBOX_EMAIL", default=DEFAULT_FROM_EMAIL)
 OTP_TTL_SECONDS = env.int("OTP_TTL_SECONDS", default=300)
+INTENT_TRUSTED_PROXY_IPS = env.list("INTENT_TRUSTED_PROXY_IPS", default=[])
 
 # Redis base URL without a database number. db 0: Celery broker, 1: cache, 2: Celery results.
 REDIS_URL: str = env("REDIS_URL", default="redis://localhost:6379").rstrip("/")

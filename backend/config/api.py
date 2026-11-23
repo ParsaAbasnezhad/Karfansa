@@ -8,16 +8,22 @@ from django.conf import settings
 from ninja import NinjaAPI
 
 from apps.accounts.api import router as accounts_router
+from apps.analysis.api import router as analysis_router
 from apps.contact.api import router as contact_router
 from apps.core.api import router as core_router
 from apps.core.errors import register_exception_handlers
 from apps.geography.api import router as geography_router
 from apps.home.api import router as home_router
+from apps.intents.api import router as intents_router
 from apps.market.api import router as market_router
+from apps.organizations.api import router as organizations_router
 from apps.organizations.business_api import router as business_router
 from apps.services.api import router as services_router
+from apps.services.individuals_api import router as individuals_router
+from apps.services.inquiries_api import router as inquiries_router
 from apps.support.api import router as support_router
 from apps.trade.api import router as trade_router
+from apps.transportation.api import router as transportation_router
 
 api = NinjaAPI(
     title="Karfansa API",
@@ -31,11 +37,17 @@ register_exception_handlers(api)
 
 api.add_router("/health", core_router, tags=["system"])
 api.add_router("/auth", accounts_router, tags=["authentication"])
+api.add_router("/analysis", analysis_router, tags=["analysis and reports"])
 api.add_router("/business", business_router, tags=["business accounts"])
 api.add_router("/contact", contact_router, tags=["contact"])
 api.add_router("/geography", geography_router, tags=["geography"])
 api.add_router("/home", home_router, tags=["homepage"])
+api.add_router("/intents", intents_router, tags=["user intent"])
 api.add_router("/market", market_router, tags=["market"])
+api.add_router("/organizations", organizations_router, tags=["organizations"])
+api.add_router("/individuals", individuals_router, tags=["individual businesses"])
 api.add_router("/trade", trade_router, tags=["trade opportunities"])
+api.add_router("/transport-companies", transportation_router, tags=["transportation"])
 api.add_router("/services", services_router, tags=["individual product marketplace"])
+api.add_router("/inquiries", inquiries_router, tags=["business inquiries"])
 api.add_router("/support", support_router, tags=["support"])

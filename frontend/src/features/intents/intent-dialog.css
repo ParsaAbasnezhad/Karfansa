@@ -1,0 +1,290 @@
+.intent-dialog {
+  position: fixed;
+  width: min(100% - 32px, 610px);
+  max-height: min(88dvh, 800px);
+  overflow: auto;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: 0 28px 80px rgb(11 22 85 / 0.22);
+}
+.intent-dialog::backdrop {
+  background: rgb(11 22 55 / 0.55);
+  backdrop-filter: blur(3px);
+}
+.intent-dialog-body {
+  padding: clamp(20px, 3vw, 30px);
+}
+.intent-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.intent-dialog-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.intent-dialog-mark .i {
+  width: 21px;
+  height: 21px;
+}
+.intent-dialog-kicker {
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 700;
+}
+.intent-dialog-heading h2 {
+  margin: 2px 0;
+  color: var(--navy);
+  font-size: 21px;
+  line-height: 1.5;
+}
+.intent-dialog-heading p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.intent-dialog-close {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+  margin-inline-start: auto;
+  border: 0;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.intent-dialog-close:hover {
+  color: var(--fg);
+  background: var(--blue-soft);
+}
+.intent-dialog-help {
+  margin: 18px 0 12px;
+  color: var(--fg-soft);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.intent-dialog-options {
+  display: grid;
+  gap: 8px;
+}
+.intent-dialog-option {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 62px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+.intent-dialog-option:hover {
+  transform: translateY(-1px);
+  border-color: #b8cbef;
+}
+.intent-dialog-option:focus-within {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.intent-dialog-option.is-selected {
+  border-color: var(--blue);
+  background: var(--blue-tint);
+}
+.intent-dialog-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.intent-dialog-option-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.intent-dialog-option-icon .i {
+  width: 17px;
+  height: 17px;
+}
+.intent-dialog-option strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.intent-dialog-option small {
+  display: block;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+.intent-dialog-tick {
+  margin-inline-start: auto;
+  color: var(--blue);
+  opacity: 0;
+}
+.intent-dialog-tick .i {
+  width: 18px;
+  height: 18px;
+}
+.intent-dialog-option.is-selected .intent-dialog-tick {
+  opacity: 1;
+}
+.intent-dialog-note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.intent-dialog-contact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+.intent-dialog-contact div {
+  display: grid;
+  gap: 2px;
+}
+.intent-dialog-contact strong {
+  font-size: 11px;
+}
+.intent-dialog-contact span {
+  justify-self: start;
+  color: var(--fg-soft);
+  font-size: 12px;
+}
+.intent-dialog-contact small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.intent-dialog-contact button {
+  flex: none;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 700;
+}
+.intent-dialog-contact button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.intent-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 20px;
+}
+.intent-dialog-actions button {
+  min-height: 43px;
+  padding: 8px 17px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.intent-dialog-primary {
+  border: 1px solid var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+.intent-dialog-primary:hover:not(:disabled) {
+  background: var(--blue-hover);
+}
+.intent-dialog-primary:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.intent-dialog-secondary {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg-soft);
+}
+.intent-dialog-loading,
+.intent-dialog-error {
+  padding: 28px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.intent-dialog-error {
+  color: var(--red);
+}
+.intent-dialog-error button {
+  margin-inline-start: 8px;
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font-weight: 700;
+}
+.intent-dialog-success {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--up);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .intent-dialog {
+    width: 100%;
+    max-width: none;
+    max-height: 90dvh;
+    margin: auto 0 0;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+  }
+  .intent-dialog-body {
+    padding: 22px 18px max(20px, env(safe-area-inset-bottom));
+  }
+  .intent-dialog-body::before {
+    display: block;
+    width: 42px;
+    height: 4px;
+    margin: -10px auto 18px;
+    border-radius: 99px;
+    background: var(--line);
+    content: '';
+  }
+  .intent-dialog-actions button {
+    flex: 1;
+  }
+  .intent-dialog-contact {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intent-dialog-option {
+    transition-duration: 0.01ms;
+  }
+}

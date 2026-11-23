@@ -118,6 +118,7 @@ class Organization(UUIDTimeStampedModel):
         ordering = ["name"]
         verbose_name = "شرکت"
         verbose_name_plural = "شرکت‌ها"  # noqa: RUF001
+        permissions = [("moderate_organization", "Can moderate organization verification")]
         constraints = [
             models.UniqueConstraint(
                 fields=["national_id"],

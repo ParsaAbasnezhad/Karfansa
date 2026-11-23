@@ -62,7 +62,9 @@ class TradeOpportunityOut(Schema):
     valid_until: date | None
     review_status: str
     review_status_display: str
+    rejection_reason: str
     is_published: bool
+    inquiry_available: bool
     relevance_score: int
     last_reviewed_at: datetime | None
     created_at: datetime

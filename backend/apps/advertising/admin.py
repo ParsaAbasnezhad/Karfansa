@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from apps.core.admin import KarfansaModelAdmin
+
 from .models import Advertisement
 
 
 @admin.register(Advertisement)
-class AdvertisementAdmin(admin.ModelAdmin):
+class AdvertisementAdmin(KarfansaModelAdmin):
     list_display = (
         "title",
         "organization",

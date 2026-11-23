@@ -1,108 +1,110 @@
 import { AppLink } from '@/components/AppLink'
 import { Icon } from '@/features/home/icons'
-import { StatusChip } from '@/features/system/StatusChip'
 import { jalaliYear } from '@/lib/format'
-import {
-  FOOTER_ABOUT,
-  FOOTER_QUICK,
-  FOOTER_SECTIONS,
-  SITE,
-  SOCIAL,
-  type LinkItem,
-} from '@/lib/site'
+import { SITE, SOCIAL } from '@/lib/site'
 import { Logo } from './Logo'
 
-function LinkList({ title, links }: { title: string; links: LinkItem[] }) {
+const footerSocials = SOCIAL.filter((social) => social.href !== 'https://wa.me/')
+
+const supportLinks = [
+  { href: '/account/support/', label: 'مرکز پشتیبانی' },
+  { href: '/account/support/?new=1', label: 'ثبت درخواست پشتیبانی' },
+]
+
+const guidanceLinks = [
+  { href: '/support/track/', label: 'پیگیری درخواست' },
+  { href: '/contact/#contact-faq-title', label: 'پرسش‌های متداول' },
+]
+
+function FooterLinks({
+  title,
+  description,
+  links,
+}: {
+  title: string
+  description: string
+  links: typeof supportLinks
+}) {
   return (
-    <div>
-      <h5>{title}</h5>
+    <nav className="footer-links" aria-label={title}>
+      <h2>{title}</h2>
+      <p>{description}</p>
       <ul>
-        {links.map((l) => (
-          <li key={l.href + l.label}>
-            <AppLink href={l.href}>{l.label}</AppLink>
+        {links.map((link) => (
+          <li key={link.href}>
+            <AppLink href={link.href}>
+              <span>{link.label}</span>
+              <Icon name="arrow-l" />
+            </AppLink>
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   )
 }
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
+    <footer className="site-footer" dir="rtl">
       <div className="wrap">
-        <div className="fcols">
-          <div className="about">
+        <div className="footer-main">
+          <section className="footer-brand" aria-label="درباره کارفنسا">
             <Logo variant="footer" />
+            <span className="footer-eyebrow">بستر ارتباط فعالان اقتصادی ایران</span>
+            <h2>{SITE.tagline}</h2>
             <p>{SITE.about}</p>
-            <div className="soc">
-              {SOCIAL.map((s) => (
-                <a
-                  key={s.icon}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.label}
-                >
-                  <Icon name={s.icon} />
-                </a>
-              ))}
-            </div>
-          </div>
-          <LinkList title="بخش‌ها" links={FOOTER_SECTIONS} />
-          <LinkList title="دسترسی سریع" links={FOOTER_QUICK} />
-          <LinkList title="درباره کارفنسا" links={FOOTER_ABOUT} />
-          <div>
-            <h5>تماس با ما</h5>
-            <div className="contact">
-              {SITE.address && (
-                <div className="it">
-                  <Icon name="pin" />
-                  <b>نشانی</b>
-                  <span>{SITE.address}</span>
-                </div>
-              )}
-              {SITE.phone && (
-                <div className="it">
-                  <Icon name="phone" />
-                  <b>تلفن</b>
-                  <span className="ltr">{SITE.phone}</span>
-                </div>
-              )}
-              <div className="it">
-                <Icon name="mail" />
-                <b>{SITE.email ? 'ایمیل' : 'پیام'}</b>
-                {SITE.email ? (
-                  <span className="ltr">{SITE.email}</span>
-                ) : (
-                  <AppLink href="/contact/">فرم تماس</AppLink>
-                )}
+          </section>
+          <FooterLinks
+            title="پشتیبانی کاربران"
+            description="برای راهنمایی یا ثبت و پیگیری درخواست."
+            links={supportLinks}
+          />
+          <FooterLinks
+            title="راهنما و پاسخ‌گویی"
+            description="پاسخ پرسش‌های پرتکرار و پیگیری تیکت."
+            links={guidanceLinks}
+          />
+          <section className="footer-trust" aria-labelledby="footer-trust-title">
+            <h2 id="footer-trust-title">نشان‌های اعتماد</h2>
+            <p>جایگاه نشان‌های رسمی کارفنسا</p>
+            <div className="footer-trust-list">
+              <div className="footer-trust-slot" aria-label="جایگاه نماد اعتماد الکترونیکی">
+                <Icon name="badge-check" />
+                <span>اینماد</span>
+                <small>محل درج نشان رسمی</small>
               </div>
-              <div className="trust">
-                <div>جایگاه نماد اعتماد</div>
-                <div>جایگاه نماد ساماندهی</div>
+              <div className="footer-trust-slot" aria-label="جایگاه نماد ساماندهی">
+                <Icon name="globe" />
+                <span>ساماندهی</span>
+                <small>محل درج نشان رسمی</small>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
-      <div className="copy">
-        <div className="wrap">
-          <span>
-            کپی‌رایت {jalaliYear(new Date())} {SITE.latin}؛ تمامی حقوق این وبسایت محفوظ است.
-          </span>
-          <div className="mid">
-            <span>تهران، ایران</span>
-            <StatusChip />
-          </div>
-          <button
-            type="button"
-            className="totop"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          >
-            <Icon name="arrow-up" />
-            بازگشت به بالا
-          </button>
+      <div className="footer-bottom">
+        <div className="wrap footer-bottom-inner">
+          <p>
+            © {jalaliYear(new Date())} <span dir="ltr">{SITE.latin}</span>؛ تمامی حقوق محفوظ است.
+          </p>
+          <nav className="footer-social" aria-label="شبکه‌های اجتماعی کارفنسا">
+            <h3>کارفنسا را دنبال کنید</h3>
+            <ul>
+              {footerSocials.map((social) => (
+                <li key={social.icon}>
+                  <a
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    title={social.label}
+                  >
+                    <Icon name={social.icon} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
       </div>
     </footer>

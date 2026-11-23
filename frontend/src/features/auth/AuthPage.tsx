@@ -4,6 +4,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { Logo } from '@/components/layout/Logo'
 import { apiPost } from '@/lib/api-client'
+import {
+  claimStoredGuestIntent,
+  clearGuestIntent,
+  readGuestIntent,
+} from '@/features/intents/intent'
 import './auth.css'
 import './auth-responsive.css'
 
@@ -56,11 +61,14 @@ export function AuthPage() {
           setError('گذرواژه و تکرار آن یکسان نیستند.')
           return
         }
-        await apiPost('/v1/auth/register', {
+        const guest = readGuestIntent()
+        const registration = await apiPost<{ intent_claimed: boolean }>('/v1/auth/register', {
           email: submittedEmail,
           phone: data.get('phone'),
           password,
+          guest_intent_token: guest?.saved ? guest.token : null,
         })
+        if (registration.intent_claimed) clearGuestIntent()
         setMode('login')
         setMessage('حساب ساخته شد. برای ورود، ایمیل و گذرواژه را وارد کنید.')
       } else {
@@ -68,7 +76,18 @@ export function AuthPage() {
           email: submittedEmail,
           password: data.get('password'),
         })
-        window.location.assign('/')
+        try {
+          await claimStoredGuestIntent()
+        } catch {
+          // Home retries the transfer after authentication; keep the local token.
+        }
+        const state = location.state as { returnTo?: string } | null
+        const destination = new URL(state?.returnTo || '/', window.location.origin)
+        window.location.assign(
+          destination.origin === window.location.origin
+            ? `${destination.pathname}${destination.search}${destination.hash}`
+            : '/',
+        )
       }
     } catch (cause) {
       const body =
@@ -121,206 +140,208 @@ export function AuthPage() {
         if (event.target === event.currentTarget) close()
       }}
     >
-    <section
-      className={`auth-page auth-page--${mode} auth-page--${step}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="auth-title"
-    >
-      <div className="auth-card">
-        <button type="button" className="auth-back" onClick={close}>
-          بستن
-        </button>
-        <div className="auth-brand">
-          <Logo />
-        </div>
-        <p className="auth-eyebrow">حساب کاربری کارفنسا</p>
-        <h1 id="auth-title" key={title} className="auth-title">
-          {title}
-        </h1>
-        <p className="auth-intro">
-          {step === 'reset'
-            ? 'ایمیل حسابتان را وارد کنید تا کد امن بازیابی برایتان ارسال شود.'
-            : step === 'reset-code'
-              ? `کد ارسال‌شده به ${email} و گذرواژهٔ تازه را وارد کنید.`
-              : 'برای دنبال‌کردن خبرها و تحلیل‌های اقتصادی وارد حساب خود شوید.'}
-        </p>
-        {step === 'details' && (
-          <p className="auth-intro">
-            <AppLink href="/join">ثبت‌نام کسب‌وکار با شماره موبایل</AppLink>
-          </p>
-        )}
-        {step === 'details' && (
-          <div className="auth-tabs" role="tablist" aria-label="نوع دسترسی">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'login'}
-              className={mode === 'login' ? 'active' : ''}
-              onClick={() => {
-                setMode('login')
-                setError('')
-                setMessage('')
-              }}
-            >
-              ورود
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'register'}
-              className={mode === 'register' ? 'active' : ''}
-              onClick={() => {
-                setMode('register')
-                setError('')
-                setMessage('')
-              }}
-            >
-              ثبت‌نام
-            </button>
+      <section
+        className={`auth-page auth-page--${mode} auth-page--${step}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-title"
+      >
+        <div className="auth-card">
+          <button type="button" className="auth-back" onClick={close}>
+            بستن
+          </button>
+          <div className="auth-brand">
+            <Logo />
           </div>
-        )}
-        <form onSubmit={submit} className="auth-form" key={`${mode}-${step}`}>
-          {step === 'details' && mode === 'register' && (
-            <label>
-              شماره تلفن
-              <input
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                required
-                placeholder="09123456789"
-                dir="ltr"
-              />
-            </label>
-          )}
-          {(step === 'details' || step === 'reset') && (
-            <label>
-              ایمیل
-              <input
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="name@example.com"
-                dir="ltr"
-                defaultValue={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </label>
+          <p className="auth-eyebrow">حساب کاربری کارفنسا</p>
+          <h1 id="auth-title" key={title} className="auth-title">
+            {title}
+          </h1>
+          <p className="auth-intro">
+            {step === 'reset'
+              ? 'ایمیل حسابتان را وارد کنید تا کد امن بازیابی برایتان ارسال شود.'
+              : step === 'reset-code'
+                ? `کد ارسال‌شده به ${email} و گذرواژهٔ تازه را وارد کنید.`
+                : 'برای دنبال‌کردن خبرها و تحلیل‌های اقتصادی وارد حساب خود شوید.'}
+          </p>
+          {step === 'details' && (
+            <p className="auth-intro">
+              <AppLink href="/join">ثبت‌نام کسب‌وکار با شماره موبایل</AppLink>
+            </p>
           )}
           {step === 'details' && (
-            <label>
-              گذرواژه
-              <input
-                name="password"
-                type="password"
-                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                minLength={mode === 'register' ? 12 : undefined}
-                required
-                placeholder={mode === 'register' ? 'حداقل ۱۲ نویسه' : 'گذرواژهٔ حساب'}
-                dir="ltr"
-              />
-            </label>
+            <div className="auth-tabs" role="tablist" aria-label="نوع دسترسی">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'login'}
+                className={mode === 'login' ? 'active' : ''}
+                onClick={() => {
+                  setMode('login')
+                  setError('')
+                  setMessage('')
+                }}
+              >
+                ورود
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'register'}
+                className={mode === 'register' ? 'active' : ''}
+                onClick={() => {
+                  setMode('register')
+                  setError('')
+                  setMessage('')
+                }}
+              >
+                ثبت‌نام
+              </button>
+            </div>
           )}
-          {step === 'details' && mode === 'register' && (
-            <label>
-              تکرار گذرواژه
-              <input
-                name="password_confirmation"
-                type="password"
-                autoComplete="new-password"
-                minLength={12}
-                required
-                placeholder="گذرواژه را دوباره وارد کنید"
-                dir="ltr"
-              />
-            </label>
-          )}
-          {step === 'reset-code' && (
-            <>
+          <form onSubmit={submit} className="auth-form" key={`${mode}-${step}`}>
+            {step === 'details' && mode === 'register' && (
               <label>
-                کد بازیابی
+                شماره تلفن
                 <input
-                  name="code"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
                   required
-                  placeholder="کد ۶ رقمی"
+                  placeholder="09123456789"
                   dir="ltr"
                 />
               </label>
+            )}
+            {(step === 'details' || step === 'reset') && (
               <label>
-                گذرواژهٔ جدید
+                ایمیل
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="name@example.com"
+                  dir="ltr"
+                  defaultValue={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
+            )}
+            {step === 'details' && (
+              <label>
+                گذرواژه
                 <input
                   name="password"
+                  type="password"
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  minLength={mode === 'register' ? 12 : undefined}
+                  required
+                  placeholder={mode === 'register' ? 'حداقل ۱۲ نویسه' : 'گذرواژهٔ حساب'}
+                  dir="ltr"
+                />
+              </label>
+            )}
+            {step === 'details' && mode === 'register' && (
+              <label>
+                تکرار گذرواژه
+                <input
+                  name="password_confirmation"
                   type="password"
                   autoComplete="new-password"
                   minLength={12}
                   required
-                  placeholder="حداقل ۱۲ نویسه"
+                  placeholder="گذرواژه را دوباره وارد کنید"
                   dir="ltr"
                 />
               </label>
-            </>
-          )}
-          {mode === 'login' && step === 'details' && (
-            <button
-              type="button"
-              className="auth-forgot"
-              onClick={() => {
-                setStep('reset')
-                setError('')
-                setMessage('')
-              }}
-            >
-              گذرواژه را فراموش کرده‌اید؟
+            )}
+            {step === 'reset-code' && (
+              <>
+                <label>
+                  کد بازیابی
+                  <input
+                    name="code"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    required
+                    placeholder="کد ۶ رقمی"
+                    dir="ltr"
+                  />
+                </label>
+                <label>
+                  گذرواژهٔ جدید
+                  <input
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={12}
+                    required
+                    placeholder="حداقل ۱۲ نویسه"
+                    dir="ltr"
+                  />
+                </label>
+              </>
+            )}
+            {mode === 'login' && step === 'details' && (
+              <button
+                type="button"
+                className="auth-forgot"
+                onClick={() => {
+                  setStep('reset')
+                  setError('')
+                  setMessage('')
+                }}
+              >
+                گذرواژه را فراموش کرده‌اید؟
+              </button>
+            )}
+            {error && (
+              <p className="auth-error" role="alert">
+                {error}
+              </p>
+            )}
+            {message && (
+              <p className="auth-message" role="status">
+                {message}
+              </p>
+            )}
+            <button className="auth-submit" type="submit" disabled={busy}>
+              {busy
+                ? 'لطفاً صبر کنید…'
+                : step === 'reset'
+                  ? 'ارسال کد بازیابی'
+                  : step === 'reset-code'
+                    ? 'ذخیرهٔ گذرواژهٔ جدید'
+                    : mode === 'login'
+                      ? 'ورود به حساب'
+                      : 'ساخت حساب کاربری'}
+              <span aria-hidden="true">←</span>
             </button>
-          )}
-          {error && (
-            <p className="auth-error" role="alert">
-              {error}
-            </p>
-          )}
-          {message && (
-            <p className="auth-message" role="status">
-              {message}
-            </p>
-          )}
-          <button className="auth-submit" type="submit" disabled={busy}>
-            {busy
-              ? 'لطفاً صبر کنید…'
-              : step === 'reset'
-                ? 'ارسال کد بازیابی'
-                : step === 'reset-code'
-                  ? 'ذخیرهٔ گذرواژهٔ جدید'
-                  : mode === 'login'
-                    ? 'ورود به حساب'
-                    : 'ساخت حساب کاربری'}
-            <span aria-hidden="true">←</span>
-          </button>
-        </form>
-        <p className="auth-terms">ورود شما به معنی پذیرش قوانین استفاده و حریم خصوصی کارفنساست.</p>
-      </div>
-      <aside className="auth-aside" aria-label="معرفی کارفنسا">
-        <div className="auth-orbit orbit-one" />
-        <div className="auth-orbit orbit-two" />
-        <div className="auth-aside-content">
-          <span className="auth-aside-kicker">KARFANSA · INSIGHT</span>
-          <h2>
-            اقتصاد را
-            <br />
-            <em>روشن‌تر</em> ببین.
-          </h2>
-          <p>نبض بازار و تحلیل‌های قابل‌اعتماد، همیشه همراه شما.</p>
-          <div className="auth-aside-foot">
-            <span className="auth-live-dot" /> نگاه دقیق‌تر به فردای اقتصاد
-          </div>
+          </form>
+          <p className="auth-terms">
+            ورود شما به معنی پذیرش قوانین استفاده و حریم خصوصی کارفنساست.
+          </p>
         </div>
-      </aside>
-    </section>
+        <aside className="auth-aside" aria-label="معرفی کارفنسا">
+          <div className="auth-orbit orbit-one" />
+          <div className="auth-orbit orbit-two" />
+          <div className="auth-aside-content">
+            <span className="auth-aside-kicker">KARFANSA · INSIGHT</span>
+            <h2>
+              اقتصاد را
+              <br />
+              <em>روشن‌تر</em> ببین.
+            </h2>
+            <p>نبض بازار و تحلیل‌های قابل‌اعتماد، همیشه همراه شما.</p>
+            <div className="auth-aside-foot">
+              <span className="auth-live-dot" /> نگاه دقیق‌تر به فردای اقتصاد
+            </div>
+          </div>
+        </aside>
+      </section>
     </div>
   )
 }

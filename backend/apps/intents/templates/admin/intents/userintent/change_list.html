@@ -1,0 +1,38 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'intents/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="intent-admin" dir="rtl">
+  <div class="intent-admin-heading">
+    <div>
+      <span>نمای کلی سرنخ‌ها</span>
+      <h2>اهداف کاربران و سرنخ‌های تجاری</h2>
+      <p>آمار رکوردهای فعال از داده‌های ثبت‌شده محاسبه می‌شود. رکوردهای ادغام‌شده در جمع‌ها نیستند.</p>
+    </div>
+  </div>
+  <div class="intent-admin-cards">
+    <div><small>رکورد فعال</small><strong>{{ intent_totals.records }}</strong></div>
+    <div><small>کاربر یکتا</small><strong>{{ intent_totals.users }}</strong></div>
+    <div><small>مهمان</small><strong>{{ intent_totals.guests }}</strong></div>
+    <div><small>شماره یکتای ثبت‌شده</small><strong>{{ intent_totals.phones }}</strong></div>
+    <div><small>رضایت تماس</small><strong>{{ intent_totals.consented }}</strong></div>
+    <div><small>نیازمند پیگیری</small><strong>{{ intent_totals.needs_follow_up }}</strong></div>
+  </div>
+  <div class="intent-admin-chart">
+    <h3>تعداد انتخاب هر هدف <small>یک نفر می‌تواند چند هدف داشته باشد</small></h3>
+    {% for item in intent_selections %}
+    <div class="intent-admin-chart-row">
+      <span>{{ item.label }}</span>
+      <div class="intent-admin-track"><i style="width: {{ item.percent }}%"></i></div>
+      <strong>{{ item.count }}</strong>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{{ block.super }}
+{% endblock %}

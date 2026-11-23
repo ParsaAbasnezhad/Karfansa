@@ -1,11 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { type FormEvent, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
-import { useIranProvinces } from '@/features/account/geography'
 import { useAuth } from '@/features/auth/useAuth'
-import { ApiError, apiGet, apiPatch, apiPost, apiPostForm } from '@/lib/api-client'
-import './business.css'
+import { NotificationBell } from '@/features/inquiries/NotificationBell'
+import { ApiError, apiGet, apiPost } from '@/lib/api-client'
+import { formatLongDate, formatNumber } from '@/lib/format'
+import { BusinessIcon, type BusinessIconName } from './BusinessIcons'
+import { OpportunityForm, ProfilePanel } from './BusinessForms'
+import {
+  ActivityPanel,
+  EmptyState,
+  InquiriesPanel,
+  InquiryChart,
+  ListingsPanel,
+  Metric,
+  PanelHeading,
+  Status,
+  SubmittedPanel,
+  TradePanel,
+  type Inquiry,
+  type Listing,
+  type Opportunity,
+} from './BusinessDashboardPanels'
+import { statusLabels } from './BusinessDashboardStatus'
+import '@fontsource-variable/inter/wght.css'
+import './business-dashboard.css'
 
 type Identity = {
   kind: 'individual' | 'organization'
@@ -33,78 +53,266 @@ type Dashboard = {
   opportunities_total: number
 }
 
-type Member = {
-  id: string
-  display_name: string
-  role: string
-  status: string
+type Member = { id: string; display_name: string; role: string; status: string }
+type Profile = Record<string, string | number | boolean | null>
+type Section =
+  'overview' | 'profile' | 'listings' | 'inquiries' | 'trade' | 'members' | 'verification'
+type NavItem = { id: Section; label: string; icon: BusinessIconName }
+
+const memberRoles: Record<string, string> = {
+  owner: 'مالک',
+  admin: 'مدیر',
+  manager: 'کارشناس',
+  member: 'عضو',
+}
+const memberStatuses: Record<string, string> = {
+  active: 'فعال',
+  invited: 'دعوت‌شده',
+  suspended: 'معلق',
+  removed: 'حذف‌شده',
 }
 
-type Opportunity = {
-  id: number
-  title: string
-  review_status: string
-  is_published: boolean
+const messageFrom = (error: unknown) =>
+  error instanceof ApiError ? error.message : 'ارتباط با سرویس برقرار نشد.'
+
+async function loadListings(signal?: AbortSignal): Promise<Listing[]> {
+  const results: Listing[] = []
+  let page = 1
+  while (true) {
+    const response = await apiGet<{ results: Listing[]; count: number }>(
+      `/v1/business/listings?page=${page}&page_size=50`,
+      undefined,
+      signal,
+    )
+    results.push(...response.results)
+    if (!response.results.length || results.length >= response.count) break
+    page += 1
+  }
+  return results
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  draft: 'پیش‌نویس',
-  pending_review: 'در انتظار بررسی',
-  verified: 'تأییدشده',
-  rejected: 'ردشده',
-  suspended: 'تعلیق‌شده',
+function profileChecklist(kind: string, record?: Profile) {
+  if (kind === 'organization') {
+    return [
+      { label: 'نام رسمی شرکت', done: Boolean(String(record?.name ?? '').trim()) },
+      { label: 'استان فعالیت', done: Boolean(record?.province_id) },
+      {
+        label: 'شماره تماس',
+        done: Boolean(String(record?.phone || record?.representative_phone || '').trim()),
+      },
+    ]
+  }
+  return [{ label: 'نام نمایشی', done: String(record?.display_name ?? '').trim().length >= 2 }]
 }
 
-function messageFrom(error: unknown) {
-  return error instanceof ApiError ? error.message : 'ارتباط با سرویس برقرار نشد.'
+function LoadingState() {
+  return (
+    <div
+      className="business-os bos-loading"
+      dir="rtl"
+      aria-busy="true"
+      aria-label="در حال بارگذاری داشبورد"
+    >
+      <div className="bos-loading-rail">
+        <div className="bos-skeleton bos-skeleton-brand" />
+        <div className="bos-skeleton" />
+        <div className="bos-skeleton" />
+        <div className="bos-skeleton" />
+      </div>
+      <div className="bos-loading-body">
+        <div className="bos-skeleton bos-skeleton-title" />
+        <div className="bos-loading-metrics">
+          {[0, 1, 2, 3].map((item) => (
+            <div className="bos-skeleton" key={item} />
+          ))}
+        </div>
+        <div className="bos-loading-panels">
+          <div className="bos-skeleton" />
+          <div className="bos-skeleton" />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function BusinessDashboardPage() {
-  const { data: user, isPending } = useAuth()
+  const { data: user, isPending: authPending } = useAuth()
   const queryClient = useQueryClient()
+  const [params, setParams] = useSearchParams()
   const [error, setError] = useState('')
+  const [collapsed, setCollapsed] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const drawerCloseRef = useRef<HTMLButtonElement>(null)
+  const drawerWasOpenRef = useRef(false)
+  const [rangeDays, setRangeDays] = useState<7 | 30>(7)
+  const sectionValue = params.get('section')
+  const section: Section = [
+    'profile',
+    'listings',
+    'inquiries',
+    'trade',
+    'members',
+    'verification',
+  ].includes(sectionValue ?? '')
+    ? (sectionValue as Section)
+    : 'overview'
+  const setSection = (next: Section) => {
+    const search = new URLSearchParams(params)
+    if (next === 'overview') search.delete('section')
+    else search.set('section', next)
+    setParams(search)
+    setDrawerOpen(false)
+  }
+
+  useEffect(() => {
+    if (drawerOpen) drawerCloseRef.current?.focus()
+    else if (drawerWasOpenRef.current) menuButtonRef.current?.focus()
+    drawerWasOpenRef.current = drawerOpen
+    if (!drawerOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setDrawerOpen(false)
+        return
+      }
+      if (event.key !== 'Tab') return
+      const elements = Array.from(
+        drawerCloseRef.current
+          ?.closest('aside')
+          ?.querySelectorAll<HTMLElement>('a, button, select') ?? [],
+      ).filter((element) => element.getClientRects().length > 0)
+      if (!elements.length) return
+      const first = elements[0]
+      const last = elements[elements.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [drawerOpen])
+
   const identities = useQuery({
     queryKey: ['business', 'identities'],
-    queryFn: () => apiGet<{ identities: Identity[]; active: Identity | null }>('/v1/business/identities'),
-    enabled: Boolean(user),
-  })
-  const dashboard = useQuery({
-    queryKey: ['business', 'dashboard'],
-    queryFn: () => apiGet<Dashboard>('/v1/business/dashboard'),
+    queryFn: ({ signal }) =>
+      apiGet<{ identities: Identity[]; active: Identity | null }>(
+        '/v1/business/identities',
+        undefined,
+        signal,
+      ),
     enabled: Boolean(user),
   })
   const active = identities.data?.active
-  const members = useQuery({
-    queryKey: ['business', 'members', active?.id],
-    queryFn: () => apiGet<Member[]>(`/v1/business/organizations/${active?.id}/members`),
-    enabled: Boolean(user && active?.kind === 'organization' && dashboard.data?.can_manage_members),
+  const identityKey = active ? `${active.kind}:${active.id}` : 'none'
+  const dashboard = useQuery({
+    queryKey: ['business', 'dashboard', identityKey],
+    queryFn: ({ signal }) => apiGet<Dashboard>('/v1/business/dashboard', undefined, signal),
+    enabled: Boolean(user && identities.isSuccess),
+  })
+  const data = dashboard.data
+  const hasIdentity = Boolean(
+    data?.kind && active && data.kind === active.kind && data.id === active.id,
+  )
+  const listings = useQuery({
+    queryKey: ['business', 'listings', identityKey],
+    queryFn: ({ signal }) => loadListings(signal),
+    enabled: hasIdentity,
+  })
+  const received = useQuery({
+    queryKey: ['business', 'inquiries', 'received', identityKey],
+    queryFn: ({ signal }) =>
+      apiGet<Inquiry[]>('/v1/services/inquiries/received', undefined, signal),
+    enabled: hasIdentity && listings.isSuccess,
+  })
+  const submitted = useQuery({
+    queryKey: ['business', 'inquiries', 'submitted'],
+    queryFn: ({ signal }) =>
+      apiGet<Inquiry[]>('/v1/services/inquiries/submitted', undefined, signal),
+    enabled: hasIdentity && section === 'inquiries',
+  })
+  const profile = useQuery({
+    queryKey: ['business', 'profile', data?.kind, data?.id],
+    queryFn: ({ signal }) =>
+      apiGet<Profile>(
+        data?.kind === 'organization'
+          ? `/v1/business/organizations/${data.id}`
+          : '/v1/business/individual',
+        undefined,
+        signal,
+      ),
+    enabled: hasIdentity,
   })
   const opportunities = useQuery({
-    queryKey: ['business', 'opportunities', active?.id],
-    queryFn: () => apiGet<Opportunity[]>(`/v1/business/organizations/${active?.id}/opportunities`),
-    enabled: Boolean(user && active?.kind === 'organization' && dashboard.data?.can_manage_trade),
+    queryKey: ['business', 'opportunities', identityKey],
+    queryFn: ({ signal }) =>
+      apiGet<Opportunity[]>(
+        `/v1/business/organizations/${active?.id}/opportunities`,
+        undefined,
+        signal,
+      ),
+    enabled: hasIdentity && data?.kind === 'organization' && Boolean(data.can_manage_trade),
   })
+  const members = useQuery({
+    queryKey: ['business', 'members', identityKey],
+    queryFn: ({ signal }) =>
+      apiGet<Member[]>(`/v1/business/organizations/${active?.id}/members`, undefined, signal),
+    enabled: hasIdentity && Boolean(data?.can_manage_members) && section === 'members',
+  })
+  const scopedInquiries = useMemo(() => {
+    const ids = new Set((listings.data ?? []).map((item) => item.id))
+    return (received.data ?? [])
+      .filter((item) => ids.has(item.listing_id))
+      .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+  }, [listings.data, received.data])
+  const canPublish = Boolean(
+    data?.can_publish &&
+    (data.kind !== 'organization' || (profile.isSuccess && profile.data?.is_active !== false)),
+  )
+  const nav: NavItem[] = [
+    { id: 'overview', label: 'نمای مدیریتی', icon: 'grid' },
+    { id: 'listings', label: 'محصولات و خدمات', icon: 'package' },
+    { id: 'inquiries', label: 'درخواست‌های مشتریان', icon: 'inbox' },
+    ...(data?.can_manage_trade
+      ? [{ id: 'trade', label: 'فرصت‌های تجاری', icon: 'trade' } as NavItem]
+      : []),
+    { id: 'profile', label: 'پروفایل کسب‌وکار', icon: 'building' },
+    { id: 'verification', label: 'تأیید و مدارک', icon: 'shield' },
+    ...(data?.can_manage_members
+      ? [{ id: 'members', label: 'اعضا و دسترسی‌ها', icon: 'users' } as NavItem]
+      : []),
+  ]
 
   const switchIdentity = useMutation({
     mutationFn: (identity: Identity) =>
       apiPost('/v1/business/identity', { kind: identity.kind, id: identity.id }),
     onSuccess: async () => {
       setError('')
-      await queryClient.invalidateQueries({ queryKey: ['business'] })
+      await queryClient.cancelQueries({ queryKey: ['business'] })
+      queryClient.removeQueries({
+        queryKey: ['business'],
+        predicate: (query) => query.queryKey[1] !== 'identities',
+      })
+      queryClient.removeQueries({ queryKey: ['inquiries'] })
+      queryClient.removeQueries({ queryKey: ['inquiry-detail'] })
+      queryClient.removeQueries({ queryKey: ['inquiry-notifications'] })
+      await queryClient.invalidateQueries({ queryKey: ['business', 'identities'] })
+      setSection('overview')
     },
     onError: (cause) => setError(messageFrom(cause)),
   })
-
   const invite = useMutation({
     mutationFn: (email: string) =>
       apiPost(`/v1/business/organizations/${active?.id}/members`, { email }),
     onSuccess: async () => {
       setError('')
-      await queryClient.invalidateQueries({ queryKey: ['business', 'members'] })
+      await queryClient.invalidateQueries({ queryKey: ['business', 'members', identityKey] })
     },
     onError: (cause) => setError(messageFrom(cause)),
   })
-
   const createOpportunity = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
       apiPost(`/v1/business/organizations/${active?.id}/opportunities`, body),
@@ -115,461 +323,688 @@ export function BusinessDashboardPage() {
     onError: (cause) => setError(messageFrom(cause)),
   })
 
-  if (isPending || (user && (identities.isLoading || dashboard.isLoading))) {
-    return (
-      <section className="biz-page" dir="rtl" aria-busy="true">
-        <p className="biz-loading">در حال بارگذاری داشبورد…</p>
-      </section>
-    )
-  }
-
+  if (
+    authPending ||
+    (user && (identities.isLoading || dashboard.isLoading || switchIdentity.isPending))
+  )
+    return <LoadingState />
   if (!user) {
     return (
-      <section className="biz-page" dir="rtl">
-        <div className="biz-card">
-          <h1>داشبورد کسب‌وکار</h1>
-          <p>برای مدیریت هویت تجاری وارد حساب شوید.</p>
-          <AppLink className="biz-button" href="/login">
-            ورود
+      <div className="business-os bos-gate" dir="rtl">
+        <div className="bos-gate-card">
+          <span className="bos-mark">
+            <BusinessIcon name="briefcase" />
+          </span>
+          <span className="bos-eyebrow">KARFANSA BUSINESS OS</span>
+          <h1>مرکز مدیریت کسب‌وکار</h1>
+          <p>برای مدیریت هویت تجاری، محصولات و درخواست‌ها وارد حساب خود شوید.</p>
+          <AppLink className="bos-primary" href="/login">
+            ورود به حساب <BusinessIcon name="arrow-left" />
           </AppLink>
         </div>
-      </section>
+      </div>
+    )
+  }
+  if (identities.isError || dashboard.isError || !data || (active && !hasIdentity)) {
+    return (
+      <div className="business-os bos-gate" dir="rtl">
+        <div className="bos-gate-card">
+          <BusinessIcon name="warning" />
+          <h1>داشبورد در دسترس نیست</h1>
+          <p>{messageFrom(identities.error ?? dashboard.error)}</p>
+          <button
+            className="bos-primary"
+            type="button"
+            onClick={() => {
+              void identities.refetch()
+              void dashboard.refetch()
+            }}
+          >
+            تلاش دوباره
+          </button>
+        </div>
+      </div>
     )
   }
 
-  const data = dashboard.data
-  const status = STATUS_LABEL[data?.verification_status ?? ''] ?? 'هویت انتخاب نشده'
+  const allListings = listings.data ?? []
+  const publishedProducts = allListings.filter(
+    (item) => item.listing_kind === 'product' && item.status === 'approved' && item.is_active,
+  ).length
+  const publishedServices = allListings.filter(
+    (item) => item.listing_kind === 'service' && item.status === 'approved' && item.is_active,
+  ).length
+  const pendingInquiries = scopedInquiries.filter(
+    (item) => item.status === 'new' || item.status === 'read',
+  ).length
+  const publishedOpportunities = (opportunities.data ?? []).filter(
+    (item) => item.is_published,
+  ).length
+  const checklist = profileChecklist(data.kind, profile.data)
+  const completion = profile.isSuccess
+    ? Math.round((checklist.filter((item) => item.done).length / checklist.length) * 100)
+    : null
+  const status = statusLabels[data.verification_status] ?? 'هویت انتخاب نشده'
+  const displayName = user.first_name || user.email || user.phone || 'حساب کاربری'
+  const publicProfilePath =
+    data.kind === 'organization'
+      ? profile.data?.slug
+        ? `/companies/${encodeURIComponent(String(profile.data.slug))}`
+        : ''
+      : `/individuals/${encodeURIComponent(data.id)}`
 
-  return (
-    <section className="biz-page" dir="rtl">
-      <header className="biz-heading">
-        <p className="biz-kicker">داشبورد کسب‌وکار</p>
-        <h1>{data?.label || 'هویت خود را انتخاب کنید'}</h1>
-        <p>
-          وضعیت تأیید: <strong className={`biz-status is-${data?.verification_status || 'draft'}`}>{status}</strong>
-        </p>
-        {data?.rejection_reason && <p className="biz-error">{data.rejection_reason}</p>}
-      </header>
-      {error && (
-        <p className="biz-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="biz-switcher" role="group" aria-label="تعویض هویت فعال">
-        {(identities.data?.identities ?? []).map((identity) => (
-          <button
-            key={`${identity.kind}-${identity.id}`}
-            type="button"
-            className={identity.is_active_context ? 'is-active' : ''}
-            aria-pressed={identity.is_active_context}
-            onClick={() => switchIdentity.mutate(identity)}
-          >
-            {identity.label}
-            <small>{identity.kind === 'organization' ? 'شرکت' : 'فردی'}</small>
-          </button>
-        ))}
-        <AppLink href="/join">هویت تازه</AppLink>
+  const identitySelector = (
+    <div className="bos-identity" title="تعویض هویت فعال">
+      <div className="bos-identity-avatar">
+        <BusinessIcon name={active?.kind === 'organization' ? 'building' : 'user'} />
       </div>
-      {!data?.kind && (
-        <div className="biz-card">
-          <h2>هنوز هویتی ثبت نشده</h2>
-          <p>شرکت یا فعالیت فردی را از مسیر ثبت‌نام بسازید.</p>
-          <AppLink className="biz-button" href="/join">
-            شروع ثبت‌نام
-          </AppLink>
-        </div>
-      )}
-      {data?.kind && (
-        <>
-          <div className="biz-stats">
-            <article>
-              <strong>{data.listings_total}</strong>
-              <span>آگهی‌ها</span>
-            </article>
-            <article>
-              <strong>{data.inquiries_new}</strong>
-              <span>درخواست تازه</span>
-            </article>
-            <article>
-              <strong>{data.opportunities_total}</strong>
-              <span>فرصت تجاری</span>
-            </article>
-          </div>
-          <div className="biz-actions">
-            {data.can_publish && (
-              <>
-                <Link to="/services/listings/new?kind=product&next=business">ثبت محصول</Link>
-                <Link to="/services/listings/new?kind=service&next=business">ثبت خدمت</Link>
-              </>
-            )}
-            <Link to="/services/dashboard">درخواست‌های مشتریان</Link>
-          </div>
-          {data.can_edit_profile && <ProfilePanel kind={data.kind} id={data.id} canSubmit={data.can_submit_verification} />}
-          <OwnedListings />
-          {data.verification_status === 'suspended' && (
-            <p className="biz-error">این هویت تعلیق شده است و با ویرایش پروفایل دوباره فعال نمی‌شود.</p>
-          )}
-        </>
-      )}
-      {data?.can_manage_trade && active && (
-        <section className="biz-card">
-          <h2>فرصت‌های تجاری شرکت</h2>
-          {opportunities.data?.length ? (
-            <ul className="biz-list">
-              {opportunities.data.map((item) => (
-                <li key={item.id}>
-                  {item.title}
-                  <small>{item.is_published ? 'منتشرشده' : item.review_status}</small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>هنوز فرصتی ثبت نشده است.</p>
-          )}
-          <OpportunityForm
-            busy={createOpportunity.isPending}
-            onSubmit={(body) => createOpportunity.mutate(body)}
-          />
-        </section>
-      )}
-      {data?.can_manage_members && (
-        <section className="biz-card">
-          <h2>اعضای شرکت</h2>
-          <ul className="biz-list">
-            {(members.data ?? []).map((member) => (
-              <li key={member.id}>
-                {member.display_name}
-                <small>
-                  {member.role} · {member.status}
-                </small>
-              </li>
-            ))}
-          </ul>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              const email = String(new FormData(event.currentTarget).get('email') ?? '').trim()
-              if (email) invite.mutate(email)
-              event.currentTarget.reset()
-            }}
-          >
-            <label>
-              دعوت با ایمیل
-              <input name="email" type="email" required dir="ltr" />
-            </label>
-            <button className="biz-button" disabled={invite.isPending}>
-              {invite.isPending ? 'در حال ثبت دعوت…' : 'ارسال دعوت'}
-            </button>
-          </form>
-        </section>
-      )}
-    </section>
-  )
-}
-
-function OwnedListings() {
-  const listings = useQuery({
-    queryKey: ['business', 'listings'],
-    queryFn: () =>
-      apiGet<{ results: { id: number; title: string; status: string; listing_kind?: string }[] }>(
-        '/v1/business/listings?page_size=8',
-      ),
-  })
-  const rows = listings.data?.results ?? []
-  return (
-    <section className="biz-card">
-      <h2>محصول‌ها و خدمات</h2>
-      {listings.isLoading && <p>در حال بارگذاری آگهی‌ها…</p>}
-      {!listings.isLoading && rows.length === 0 && <p>آگهی فعالی برای این هویت ثبت نشده است.</p>}
-      {rows.length > 0 && (
-        <ul className="biz-list">
-          {rows.map((item) => (
-            <li key={item.id}>
-              <Link to={`/services/listings/${item.id}/edit`}>{item.title}</Link>
-              <small>{item.listing_kind === 'service' ? 'خدمت' : 'محصول'} · {item.status}</small>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-function ProfilePanel({ kind, id, canSubmit }: { kind: string; id: string; canSubmit: boolean }) {
-  const queryClient = useQueryClient()
-  const provinces = useIranProvinces()
-  const [notice, setNotice] = useState('')
-  const [problem, setProblem] = useState('')
-  const path = kind === 'organization' ? `/v1/business/organizations/${id}` : '/v1/business/individual'
-  const profile = useQuery({
-    queryKey: ['business', 'profile', kind, id],
-    queryFn: () => apiGet<Record<string, string | number | boolean | null>>(path),
-  })
-  const documents = useQuery({
-    queryKey: ['business', 'documents', kind, id],
-    queryFn: () =>
-      apiGet<{ id: number; document_type: string; review_status: string }[]>(
-        `/v1/business/documents?kind=${kind}&identity_id=${id}`,
-      ),
-    enabled: canSubmit,
-  })
-  const save = useMutation({
-    mutationFn: (body: Record<string, unknown>) => apiPatch(path, body),
-    onSuccess: async () => {
-      setProblem('')
-      setNotice('اطلاعات ذخیره شد.')
-      await queryClient.invalidateQueries({ queryKey: ['business'] })
-    },
-    onError: (cause) => setProblem(messageFrom(cause)),
-  })
-  const submitReview = useMutation({
-    mutationFn: () => apiPost(kind === 'organization' ? `${path}/submit` : '/v1/business/individual/submit', {}),
-    onSuccess: async () => {
-      setProblem('')
-      setNotice('درخواست بررسی ثبت شد.')
-      await queryClient.invalidateQueries({ queryKey: ['business'] })
-    },
-    onError: (cause) => setProblem(messageFrom(cause)),
-  })
-  const upload = useMutation({
-    mutationFn: (form: FormData) => apiPostForm(path.includes('/organizations/') ? `${path}/image` : '/v1/business/individual/image', form),
-    onSuccess: async () => {
-      setProblem('')
-      setNotice('تصویر ذخیره شد.')
-    },
-    onError: (cause) => setProblem(messageFrom(cause)),
-  })
-  const uploadDocument = useMutation({
-    mutationFn: (form: FormData) => apiPostForm('/v1/business/documents', form),
-    onSuccess: async () => {
-      setProblem('')
-      setNotice('مدرک بارگذاری شد.')
-      await queryClient.invalidateQueries({ queryKey: ['business', 'documents'] })
-    },
-    onError: (cause) => setProblem(messageFrom(cause)),
-  })
-  const record = profile.data
-  if (profile.isLoading || !record) return <section className="biz-card"><p>در حال بارگذاری پروفایل…</p></section>
-  const text = (name: string) => String(record[name] ?? '')
-  const saveProfile = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const data = new FormData(event.currentTarget)
-    const province = Number(data.get('province_id'))
-    if (kind === 'organization') {
-      save.mutate({
-        name: String(data.get('name') ?? '').trim(),
-        organization_type: String(data.get('organization_type') ?? 'other'),
-        national_id: String(data.get('national_id') ?? '').trim(),
-        registration_number: String(data.get('registration_number') ?? '').trim(),
-        economic_code: String(data.get('economic_code') ?? '').trim(),
-        ceo_name: String(data.get('ceo_name') ?? '').trim(),
-        phone: String(data.get('phone') ?? '').trim(),
-        email: String(data.get('email') ?? '').trim(),
-        website: String(data.get('website') ?? '').trim(),
-        address: String(data.get('address') ?? '').trim(),
-        description: String(data.get('description') ?? '').trim(),
-        province_id: Number.isFinite(province) && province > 0 ? province : null,
-      })
-      return
-    }
-    save.mutate({
-      display_name: String(data.get('display_name') ?? '').trim(),
-      professional_title: String(data.get('professional_title') ?? '').trim(),
-      bio: String(data.get('bio') ?? '').trim(),
-      public_phone: String(data.get('public_phone') ?? '').trim(),
-      public_email: String(data.get('public_email') ?? '').trim(),
-      is_public: data.get('is_public') === 'on',
-      province_id: Number.isFinite(province) && province > 0 ? province : null,
-    })
-  }
-  return (
-    <section className="biz-card">
-      <h2>ویرایش پروفایل</h2>
-      {notice && <p>{notice}</p>}
-      {problem && <p className="biz-error" role="alert">{problem}</p>}
-      <form key={`${kind}-${id}-${text('display_name')}${text('name')}`} onSubmit={saveProfile}>
-        {kind === 'organization' ? (
-          <>
-            <label>نام رسمی<input name="name" required minLength={2} defaultValue={text('name')} /></label>
-            <label>
-              نوع
-              <select name="organization_type" defaultValue={text('organization_type') || 'other'}>
-                <option value="manufacturer">تولیدی</option>
-                <option value="trading">بازرگانی</option>
-                <option value="supplier">تأمین‌کننده</option>
-                <option value="exporter">صادرکننده</option>
-                <option value="importer">واردکننده</option>
-                <option value="other">سایر</option>
-              </select>
-            </label>
-            <label>شناسه ملی<input name="national_id" defaultValue={text('national_id')} dir="ltr" /></label>
-            <label>شماره ثبت<input name="registration_number" defaultValue={text('registration_number')} dir="ltr" /></label>
-            <label>کد اقتصادی<input name="economic_code" defaultValue={text('economic_code')} dir="ltr" /></label>
-            <label>مدیرعامل<input name="ceo_name" defaultValue={text('ceo_name')} /></label>
-            <label>تلفن<input name="phone" defaultValue={text('phone')} dir="ltr" /></label>
-            <label>ایمیل<input name="email" type="email" defaultValue={text('email')} dir="ltr" /></label>
-            <label>وب‌سایت<input name="website" defaultValue={text('website')} dir="ltr" /></label>
-            <label>نشانی<textarea name="address" rows={2} defaultValue={text('address')} /></label>
-            <label>توضیح<textarea name="description" rows={3} defaultValue={text('description')} /></label>
-          </>
-        ) : (
-          <>
-            <label>نام نمایشی<input name="display_name" required minLength={2} defaultValue={text('display_name')} /></label>
-            <label>عنوان حرفه‌ای<input name="professional_title" defaultValue={text('professional_title')} /></label>
-            <label>تلفن عمومی<input name="public_phone" defaultValue={text('public_phone')} dir="ltr" /></label>
-            <label>ایمیل عمومی<input name="public_email" type="email" defaultValue={text('public_email')} dir="ltr" /></label>
-            <label>معرفی<textarea name="bio" rows={3} defaultValue={text('bio')} /></label>
-            <label><input name="is_public" type="checkbox" defaultChecked={record.is_public !== false} /> نمایش عمومی</label>
-          </>
-        )}
-        <label>
-          استان
-          <select name="province_id" defaultValue={record.province_id ? String(record.province_id) : ''}>
-            <option value="">بدون استان</option>
-            {(Array.isArray(provinces.data) ? provinces.data : []).map((item) => (
-              <option key={item.id} value={item.id}>{item.name_fa}</option>
-            ))}
-          </select>
-        </label>
-        <button className="biz-button" disabled={save.isPending}>{save.isPending ? 'در حال ذخیره…' : 'ذخیره اطلاعات'}</button>
-      </form>
-      {canSubmit && (
-        <button className="biz-button" type="button" disabled={submitReview.isPending} onClick={() => submitReview.mutate()}>
-          {submitReview.isPending ? 'در حال ارسال…' : 'ارسال برای بررسی'}
-        </button>
-      )}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          const data = new FormData(event.currentTarget)
-          const file = data.get('upload')
-          if (!(file instanceof File) || file.size === 0) return
-          const body = new FormData()
-          body.set('slot', String(data.get('slot') ?? 'profile'))
-          body.set('upload', file)
-          upload.mutate(body)
-          event.currentTarget.reset()
+      <div className="bos-identity-copy">
+        <small>هویت فعال</small>
+        <strong>{active?.label ?? 'انتخاب هویت'}</strong>
+      </div>
+      <BusinessIcon name="chevron-down" className="bos-identity-chevron" />
+      <select
+        aria-label="تعویض هویت فعال"
+        value={active ? identityKey : ''}
+        disabled={switchIdentity.isPending}
+        onChange={(event) => {
+          const next = identities.data?.identities.find(
+            (item) => `${item.kind}:${item.id}` === event.target.value,
+          )
+          if (next && !next.is_active_context) switchIdentity.mutate(next)
         }}
       >
-        <h3>تصویر</h3>
-        <label>
-          نوع
-          <select name="slot" defaultValue={kind === 'organization' ? 'logo' : 'profile'}>
-            {kind === 'organization' ? (
-              <>
-                <option value="logo">لوگو</option>
-                <option value="cover">کاور</option>
-              </>
-            ) : (
-              <>
-                <option value="profile">پروفایل</option>
-                <option value="cover">کاور</option>
-              </>
-            )}
-          </select>
-        </label>
-        <label>فایل<input name="upload" type="file" accept="image/jpeg,image/png,image/webp" required /></label>
-        <button className="biz-button" disabled={upload.isPending}>{upload.isPending ? 'در حال بارگذاری…' : 'بارگذاری تصویر'}</button>
-      </form>
-      {canSubmit && (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault()
-            const data = new FormData(event.currentTarget)
-            const file = data.get('upload')
-            if (!(file instanceof File) || file.size === 0) return
-            const body = new FormData()
-            body.set('kind', kind)
-            body.set('identity_id', id)
-            body.set('document_type', String(data.get('document_type') ?? 'other'))
-            body.set('upload', file)
-            uploadDocument.mutate(body)
-            event.currentTarget.reset()
-          }}
-        >
-          <h3>مدارک تأیید</h3>
-          {(documents.data ?? []).map((item) => (
-            <p key={item.id}>{item.document_type} · {item.review_status}</p>
-          ))}
-          <label>
-            نوع مدرک
-            <select name="document_type" defaultValue={kind === 'organization' ? 'registration' : 'identity'}>
-              <option value="identity">مدرک هویتی</option>
-              <option value="national_id">شناسه ملی</option>
-              <option value="registration">آگهی ثبت</option>
-              <option value="tax">مدرک مالیاتی</option>
-              <option value="representative">معرفی‌نامه</option>
-              <option value="other">سایر</option>
-            </select>
-          </label>
-          <label>فایل خصوصی<input name="upload" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required /></label>
-          <button className="biz-button" disabled={uploadDocument.isPending}>
-            {uploadDocument.isPending ? 'در حال بارگذاری…' : 'بارگذاری مدرک'}
-          </button>
-        </form>
-      )}
-    </section>
-  )
-}
-
-function OpportunityForm({
-  busy,
-  onSubmit,
-}: {
-  busy: boolean
-  onSubmit: (body: Record<string, unknown>) => void
-}) {
-  const provinces = useIranProvinces()
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const data = new FormData(event.currentTarget)
-    onSubmit({
-      title: String(data.get('title') ?? '').trim(),
-      description: String(data.get('description') ?? '').trim(),
-      opportunity_type: String(data.get('opportunity_type') ?? 'export'),
-      province_id: Number(data.get('province_id')),
-      source: 'ثبت‌شده از داشبورد شرکت',
-    })
-  }
-  return (
-    <form onSubmit={submit}>
-      <h3>فرصت تازه</h3>
-      <label>
-        عنوان
-        <input name="title" required minLength={3} />
-      </label>
-      <label>
-        نوع
-        <select name="opportunity_type" defaultValue="export">
-          <option value="export">صادرات</option>
-          <option value="import">واردات</option>
-          <option value="raw-materials">تأمین مواد اولیه</option>
-          <option value="bulk-buy">خرید عمده</option>
-          <option value="bulk-sell">فروش عمده</option>
-          <option value="partnership">همکاری تجاری</option>
-          <option value="investment">سرمایه‌گذاری</option>
-        </select>
-      </label>
-      <label>
-        استان
-        <select name="province_id" required defaultValue="">
-          <option value="" disabled>
-            انتخاب استان
+        {!active && <option value="">انتخاب هویت</option>}
+        {(identities.data?.identities ?? []).map((item) => (
+          <option key={`${item.kind}:${item.id}`} value={`${item.kind}:${item.id}`}>
+            {item.label} · {item.kind === 'organization' ? 'شرکت' : 'فردی'}
           </option>
-          {(Array.isArray(provinces.data) ? provinces.data : []).map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name_fa}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        توضیحات
-        <textarea name="description" required minLength={10} rows={3} />
-      </label>
-      <button className="biz-button" disabled={busy}>
-        {busy ? 'در حال ثبت…' : 'ثبت فرصت'}
-      </button>
-    </form>
+        ))}
+      </select>
+    </div>
+  )
+
+  return (
+    <div
+      className={`business-os${collapsed ? ' is-collapsed' : ''}${drawerOpen ? ' is-drawer-open' : ''}`}
+      dir="rtl"
+    >
+      <button
+        className="bos-drawer-scrim"
+        type="button"
+        aria-label="بستن فهرست"
+        tabIndex={drawerOpen ? 0 : -1}
+        onClick={() => setDrawerOpen(false)}
+      />
+      <aside
+        className="bos-sidebar"
+        role={drawerOpen ? 'dialog' : undefined}
+        aria-modal={drawerOpen || undefined}
+        aria-label="ناوبری کسب‌وکار"
+      >
+        <div className="bos-brand-row">
+          <div className="bos-mark">
+            <BusinessIcon name="briefcase" />
+          </div>
+          <div className="bos-brand-text">
+            <strong>KARFANSA</strong>
+            <span>BUSINESS OS</span>
+          </div>
+          <button
+            ref={drawerCloseRef}
+            type="button"
+            className="bos-sidebar-close"
+            aria-label="بستن فهرست"
+            onClick={() => setDrawerOpen(false)}
+          >
+            <BusinessIcon name="close" />
+          </button>
+        </div>
+        <div className="bos-identity-wrap">{identitySelector}</div>
+        <div className="bos-sidebar-scroll">
+          <div className="bos-nav-group">
+            <span className="bos-nav-caption">فضای کاری</span>
+            <nav aria-label="فضای کاری">
+              {nav.slice(0, data.can_manage_trade ? 4 : 3).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  title={collapsed ? item.label : undefined}
+                  className={`bos-nav-item${section === item.id ? ' is-active' : ''}`}
+                  aria-current={section === item.id ? 'page' : undefined}
+                  onClick={() => setSection(item.id)}
+                >
+                  <BusinessIcon name={item.icon} />
+                  <span>{item.label}</span>
+                  {item.id === 'inquiries' && data.inquiries_new > 0 && (
+                    <em>{formatNumber(data.inquiries_new)}</em>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+          <div className="bos-nav-group">
+            <span className="bos-nav-caption">مدیریت</span>
+            <nav aria-label="مدیریت کسب‌وکار">
+              {nav.slice(data.can_manage_trade ? 4 : 3).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  title={collapsed ? item.label : undefined}
+                  className={`bos-nav-item${section === item.id ? ' is-active' : ''}`}
+                  aria-current={section === item.id ? 'page' : undefined}
+                  onClick={() => setSection(item.id)}
+                >
+                  <BusinessIcon name={item.icon} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+        <div className="bos-sidebar-footer">
+          <Link
+            to="/account"
+            className="bos-account-link"
+            title={collapsed ? 'حساب کاربری' : undefined}
+          >
+            <BusinessIcon name="settings" />
+            <span>حساب کاربری</span>
+            <BusinessIcon name="arrow-up-left" className="bos-external" />
+          </Link>
+          <button
+            className="bos-collapse"
+            type="button"
+            title={collapsed ? 'باز کردن نوار کناری' : 'جمع کردن نوار کناری'}
+            aria-label={collapsed ? 'باز کردن نوار کناری' : 'جمع کردن نوار کناری'}
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            <BusinessIcon name={collapsed ? 'chevron-left' : 'chevron-right'} />
+            <span>جمع کردن نوار</span>
+          </button>
+        </div>
+      </aside>
+
+      <div className="bos-main">
+        <div className="bos-topbar">
+          <div className="bos-topbar-start">
+            <button
+              ref={menuButtonRef}
+              className="bos-mobile-menu"
+              type="button"
+              aria-label="باز کردن فهرست"
+              aria-expanded={drawerOpen}
+              onClick={() => setDrawerOpen(true)}
+            >
+              <BusinessIcon name="menu" />
+            </button>
+            <span className="bos-breadcrumb">
+              فضای کاری <BusinessIcon name="chevron-left" />{' '}
+              {nav.find((item) => item.id === section)?.label ?? 'نمای مدیریتی'}
+            </span>
+          </div>
+          <div className="bos-topbar-end">
+            <span className="bos-date">
+              <BusinessIcon name="calendar" />
+              {formatLongDate(new Date())}
+            </span>
+            <NotificationBell enabled />
+            <details className="bos-account-menu">
+              <summary aria-label="منوی حساب کاربری">
+                <span>{displayName.slice(0, 1)}</span>
+                <BusinessIcon name="chevron-down" />
+              </summary>
+              <div>
+                <strong>{displayName}</strong>
+                <small>{user.email || user.phone}</small>
+                <Link to="/account">
+                  <BusinessIcon name="user" /> حساب کاربری
+                </Link>
+                <Link to="/">
+                  <BusinessIcon name="external" /> بازگشت به سایت
+                </Link>
+              </div>
+            </details>
+          </div>
+        </div>
+        <main className="bos-content" id="business-content">
+          <header className="bos-hero">
+            <div>
+              <span className="bos-eyebrow">KARFANSA / BUSINESS OS</span>
+              <h1>مرکز مدیریت کسب‌وکار</h1>
+              <p>نمای کلی فعالیت‌ها، فرصت‌ها و عملکرد کسب‌وکار شما</p>
+              <div className="bos-hero-meta">
+                <span>
+                  <BusinessIcon name={data.kind === 'organization' ? 'building' : 'user'} />
+                  {data.label}
+                </span>
+                <Status value={data.verification_status} label={status} />
+              </div>
+            </div>
+            <div className="bos-hero-aside">
+              <span>هویت فعال</span>
+              <strong>{data.kind === 'organization' ? 'حساب شرکتی' : 'حساب فردی'}</strong>
+              <small>{formatLongDate(new Date())}</small>
+            </div>
+          </header>
+          {error && (
+            <div className="bos-alert" role="alert">
+              <BusinessIcon name="warning" />
+              {error}
+              <button type="button" aria-label="بستن پیام" onClick={() => setError('')}>
+                <BusinessIcon name="close" />
+              </button>
+            </div>
+          )}
+          {!data.kind ? (
+            <section className="bos-panel bos-no-identity">
+              <EmptyState
+                icon="building"
+                title="هنوز هویتی ثبت نشده"
+                description="برای شروع، هویت شرکتی یا فردی خود را بسازید."
+              />
+              <AppLink className="bos-primary" href="/join">
+                ایجاد هویت <BusinessIcon name="arrow-left" />
+              </AppLink>
+            </section>
+          ) : (
+            <>
+              {section === 'overview' && (
+                <>
+                  <div className="bos-section-title">
+                    <div>
+                      <span className="bos-eyebrow">EXECUTIVE OVERVIEW</span>
+                      <h2>
+                        نمای مدیریتی <span>/ {data.label}</span>
+                      </h2>
+                    </div>
+                    <span className="bos-live-label">
+                      <i /> داده‌های فعلی حساب
+                    </span>
+                  </div>
+                  <div className="bos-kpis">
+                    <Metric
+                      icon="package"
+                      label="محصولات فعال"
+                      value={listings.isSuccess ? publishedProducts : null}
+                      detail="تأییدشده و در دسترس"
+                    />
+                    <Metric
+                      icon="briefcase"
+                      label="خدمات فعال"
+                      value={listings.isSuccess ? publishedServices : null}
+                      detail="تأییدشده و در دسترس"
+                    />
+                    {data.can_manage_trade && (
+                      <Metric
+                        icon="trade"
+                        label="فرصت‌های منتشرشده"
+                        value={opportunities.isSuccess ? publishedOpportunities : null}
+                        detail={`${formatNumber(data.opportunities_total)} فرصت ثبت‌شده`}
+                      />
+                    )}
+                    <Metric
+                      icon="inbox"
+                      label="درخواست‌های جدید"
+                      value={data.inquiries_new}
+                      detail="نیازمند بررسی"
+                      highlight
+                    />
+                    <Metric
+                      icon="clock"
+                      label="در انتظار رسیدگی"
+                      value={received.isSuccess && listings.isSuccess ? pendingInquiries : null}
+                      detail="جدید یا خوانده‌شده"
+                    />
+                  </div>
+                  <div className="bos-command">
+                    <div>
+                      <span className="bos-command-icon">
+                        <BusinessIcon name="spark" />
+                      </span>
+                      <div>
+                        <strong>اقدام سریع</strong>
+                        <small>کارهای مهم را از همین‌جا آغاز کنید</small>
+                      </div>
+                    </div>
+                    <div className="bos-command-actions">
+                      {canPublish && (
+                        <Link to="/services/listings/new?kind=product&next=business">
+                          <BusinessIcon name="plus" /> افزودن محصول
+                        </Link>
+                      )}
+                      {canPublish && (
+                        <Link to="/services/listings/new?kind=service&next=business">
+                          <BusinessIcon name="plus" /> افزودن خدمت
+                        </Link>
+                      )}
+                      {data.can_manage_trade && (
+                        <button type="button" onClick={() => setSection('trade')}>
+                          <BusinessIcon name="trade" /> ثبت فرصت تجاری
+                        </button>
+                      )}
+                      {data.can_edit_profile && (
+                        <button type="button" onClick={() => setSection('profile')}>
+                          <BusinessIcon name="edit" /> ویرایش پروفایل
+                        </button>
+                      )}
+                      <button type="button" onClick={() => setSection('inquiries')}>
+                        <BusinessIcon name="inbox" /> مدیریت درخواست‌ها
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bos-workspace">
+                    <section className="bos-panel bos-activity-panel">
+                      <PanelHeading
+                        eyebrow="BUSINESS PERFORMANCE"
+                        title="فعالیت درخواست‌ها"
+                        action={
+                          <div className="bos-range" role="group" aria-label="بازه زمانی">
+                            <button
+                              type="button"
+                              className={rangeDays === 7 ? 'is-active' : ''}
+                              aria-pressed={rangeDays === 7}
+                              onClick={() => setRangeDays(7)}
+                            >
+                              ۷ روز
+                            </button>
+                            <button
+                              type="button"
+                              className={rangeDays === 30 ? 'is-active' : ''}
+                              aria-pressed={rangeDays === 30}
+                              onClick={() => setRangeDays(30)}
+                            >
+                              ۳۰ روز
+                            </button>
+                          </div>
+                        }
+                      />
+                      <InquiryChart
+                        inquiries={scopedInquiries}
+                        days={rangeDays}
+                        loading={received.isLoading || listings.isLoading}
+                        error={received.isError || listings.isError}
+                      />
+                    </section>
+                    <section className="bos-panel bos-profile-panel">
+                      <PanelHeading
+                        eyebrow="BUSINESS IDENTITY"
+                        title="پروفایل کسب‌وکار"
+                        action={
+                          <button
+                            className="bos-text-action"
+                            type="button"
+                            onClick={() => setSection('profile')}
+                          >
+                            مشاهده <BusinessIcon name="arrow-left" />
+                          </button>
+                        }
+                      />
+                      <div className="bos-profile-state">
+                        <div className="bos-profile-score">
+                          <strong>
+                            {completion === null ? '—' : `${formatNumber(completion)}٪`}
+                          </strong>
+                          <span>تکمیل اطلاعات لازم</span>
+                        </div>
+                        <Status value={data.verification_status} />
+                      </div>
+                      <div
+                        className="bos-progress"
+                        role="progressbar"
+                        aria-label="تکمیل اطلاعات لازم"
+                        aria-valuenow={completion ?? 0}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
+                        <span style={{ width: `${completion ?? 0}%` }} />
+                      </div>
+                      {profile.isError ? (
+                        <p className="bos-error">دریافت اطلاعات پروفایل انجام نشد.</p>
+                      ) : (
+                        <ul className="bos-checklist">
+                          {checklist.map((item) => (
+                            <li key={item.label} className={item.done ? 'is-done' : ''}>
+                              <BusinessIcon name={item.done ? 'check' : 'clock'} />
+                              {item.label}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {data.rejection_reason && (
+                        <p className="bos-error">{data.rejection_reason}</p>
+                      )}
+                      {publicProfilePath && (
+                        <Link className="bos-inline-action" to={publicProfilePath}>
+                          نمایش پروفایل عمومی <BusinessIcon name="arrow-up-left" />
+                        </Link>
+                      )}
+                    </section>
+                    <ListingsPanel
+                      listings={allListings}
+                      loading={listings.isLoading}
+                      error={listings.isError}
+                      canPublish={canPublish}
+                      full={false}
+                      onAll={() => setSection('listings')}
+                    />
+                    {data.can_manage_trade && (
+                      <TradePanel
+                        opportunities={opportunities.data ?? []}
+                        loading={opportunities.isLoading}
+                        error={opportunities.isError}
+                        full={false}
+                        onAll={() => setSection('trade')}
+                      />
+                    )}
+                    <InquiriesPanel
+                      inquiries={scopedInquiries}
+                      loading={received.isLoading || listings.isLoading}
+                      error={received.isError || listings.isError}
+                      full={false}
+                      onAll={() => setSection('inquiries')}
+                    />
+                    <ActivityPanel
+                      listings={allListings}
+                      inquiries={scopedInquiries}
+                      loading={listings.isLoading || received.isLoading}
+                    />
+                  </div>
+                </>
+              )}
+              {section !== 'overview' && (
+                <div className="bos-section-title">
+                  <div>
+                    <span className="bos-eyebrow">BUSINESS WORKSPACE</span>
+                    <h2>{nav.find((item) => item.id === section)?.label}</h2>
+                  </div>
+                  <button className="bos-back" type="button" onClick={() => setSection('overview')}>
+                    <BusinessIcon name="chevron-right" /> بازگشت به نمای مدیریتی
+                  </button>
+                </div>
+              )}
+              {section === 'profile' && (
+                <div className="bos-detail-grid">
+                  <section className="bos-panel bos-profile-panel">
+                    <PanelHeading title="وضعیت پروفایل" />
+                    <div className="bos-profile-state">
+                      <div className="bos-profile-score">
+                        <strong>
+                          {completion === null ? '—' : `${formatNumber(completion)}٪`}
+                        </strong>
+                        <span>اطلاعات لازم</span>
+                      </div>
+                      <Status value={data.verification_status} />
+                    </div>
+                    <div className="bos-progress">
+                      <span style={{ width: `${completion ?? 0}%` }} />
+                    </div>
+                    <ul className="bos-checklist">
+                      {checklist.map((item) => (
+                        <li key={item.label} className={item.done ? 'is-done' : ''}>
+                          <BusinessIcon name={item.done ? 'check' : 'clock'} />
+                          {item.label}
+                        </li>
+                      ))}
+                    </ul>
+                    {publicProfilePath && (
+                      <Link className="bos-inline-action" to={publicProfilePath}>
+                        نمایش پروفایل عمومی <BusinessIcon name="arrow-up-left" />
+                      </Link>
+                    )}
+                  </section>
+                  {data.can_edit_profile ? (
+                    <ProfilePanel
+                      key={identityKey}
+                      kind={data.kind}
+                      id={data.id}
+                      canSubmit={data.can_submit_verification}
+                    />
+                  ) : (
+                    <section className="bos-panel">
+                      <EmptyState
+                        icon="shield"
+                        title="دسترسی ویرایش ندارید"
+                        description="نقش فعلی شما اجازه ویرایش پروفایل را نمی‌دهد."
+                      />
+                    </section>
+                  )}
+                </div>
+              )}
+              {section === 'verification' && (
+                <div className="bos-detail-grid">
+                  <section className="bos-panel">
+                    <PanelHeading title="وضعیت تأیید" />
+                    <Status value={data.verification_status} />
+                    <p className="bos-muted">
+                      وضعیت فعلی هویت {data.kind === 'organization' ? 'شرکتی' : 'فردی'} شما در
+                      فرایند بررسی.
+                    </p>
+                    {data.rejection_reason && <p className="bos-error">{data.rejection_reason}</p>}
+                    {data.verification_status === 'suspended' && (
+                      <p className="bos-error">
+                        این هویت تعلیق شده است و با ارسال دوباره فعال نمی‌شود.
+                      </p>
+                    )}
+                  </section>
+                  {data.can_edit_profile && (
+                    <ProfilePanel
+                      key={identityKey}
+                      kind={data.kind}
+                      id={data.id}
+                      canSubmit={data.can_submit_verification}
+                    />
+                  )}
+                </div>
+              )}
+              {section === 'listings' && (
+                <ListingsPanel
+                  listings={allListings}
+                  loading={listings.isLoading}
+                  error={listings.isError}
+                  canPublish={canPublish}
+                  full
+                  onAll={() => setSection('listings')}
+                />
+              )}
+              {section === 'inquiries' && (
+                <div className="bos-inquiry-workspace">
+                    <Link className="bos-action-link" to="/account/inquiries?tab=received">باز کردن مرکز درخواست‌های همکاری ←</Link>
+                  <InquiriesPanel
+                    inquiries={scopedInquiries}
+                    loading={received.isLoading || listings.isLoading}
+                    error={received.isError || listings.isError}
+                    full
+                    onAll={() => setSection('inquiries')}
+                  />
+                  <SubmittedPanel
+                    inquiries={submitted.data ?? []}
+                    loading={submitted.isLoading}
+                    error={submitted.isError}
+                  />
+                </div>
+              )}
+              {section === 'trade' && data.can_manage_trade && (
+                <div className="bos-detail-grid">
+                  <TradePanel
+                    opportunities={opportunities.data ?? []}
+                    loading={opportunities.isLoading}
+                    error={opportunities.isError}
+                    full
+                    onAll={() => setSection('trade')}
+                  />
+                  <section className="bos-panel bos-form-panel">
+                    <OpportunityForm
+                      busy={createOpportunity.isPending}
+                      onSubmit={(body) => createOpportunity.mutate(body)}
+                    />
+                  </section>
+                </div>
+              )}
+              {section === 'members' && data.can_manage_members && (
+                <section className="bos-panel bos-members-panel">
+                  <PanelHeading eyebrow="TEAM ACCESS" title="اعضا و دسترسی‌ها" />
+                  {members.isLoading ? (
+                    <div className="bos-skeleton bos-row-skeleton" />
+                  ) : members.isError ? (
+                    <p className="bos-error">دریافت اعضا انجام نشد.</p>
+                  ) : members.data?.length ? (
+                    <ul className="bos-row-list">
+                      {members.data.map((member) => (
+                        <li key={member.id}>
+                          <span className="bos-row-symbol">
+                            <BusinessIcon name="user" />
+                          </span>
+                          <span className="bos-row-main">
+                            <strong>{member.display_name}</strong>
+                            <small>{memberRoles[member.role] ?? member.role}</small>
+                          </span>
+                          <Status
+                            value={member.status}
+                            label={memberStatuses[member.status] ?? member.status}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <EmptyState
+                      icon="users"
+                      title="عضوی ثبت نشده"
+                      description="اعضای شرکت در این بخش نمایش داده می‌شوند."
+                    />
+                  )}
+                  <form
+                    className="bos-invite"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      const email = String(
+                        new FormData(event.currentTarget).get('email') ?? '',
+                      ).trim()
+                      if (email) invite.mutate(email)
+                      event.currentTarget.reset()
+                    }}
+                  >
+                    <label htmlFor="bos-invite-email">دعوت عضو با ایمیل</label>
+                    <div>
+                      <input
+                        id="bos-invite-email"
+                        name="email"
+                        type="email"
+                        required
+                        dir="ltr"
+                        placeholder="name@company.com"
+                      />
+                      <button className="bos-primary" disabled={invite.isPending}>
+                        {invite.isPending ? 'در حال ارسال…' : 'ارسال دعوت'}
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+    </div>
   )
 }

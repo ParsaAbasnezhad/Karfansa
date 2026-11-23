@@ -139,6 +139,40 @@
   margin: 14px 0;
 }
 
+.biz-sections {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: 0 0 16px;
+}
+
+.biz-sections button,
+.biz-linkish {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  color: var(--fg-soft);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.biz-sections button.is-active {
+  background: var(--blue-soft, #e8eefc);
+  border-color: var(--blue);
+  color: var(--navy);
+}
+
+.biz-actions .biz-linkish {
+  display: inline-flex;
+  align-items: center;
+}
+
 .biz-switcher button {
   border: 1px solid var(--line);
   background: white;

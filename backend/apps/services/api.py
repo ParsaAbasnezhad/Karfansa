@@ -2,11 +2,13 @@ from decimal import Decimal
 from math import ceil
 from typing import Any
 
+from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from ninja import File, Query, Router, Status, UploadedFile
 from ninja.decorators import decorate_view
@@ -16,11 +18,12 @@ from apps.accounts.models import User
 from apps.core.errors import ApiError
 from apps.core.verification import VerificationStatus
 from apps.geography.models import City, Province
-from apps.organizations.access import can_edit_listing, can_view_inquiries, identity_or_default
+from apps.organizations.access import can_edit_listing, identity_or_default
 from apps.organizations.models import MembershipStatus, Organization
 
 from .integrations import sync_product_opportunity
 from .models import (
+    InquiryStatusEvent,
     ListingImage,
     ProductInquiry,
     ProductListing,
@@ -64,6 +67,12 @@ def _seller_data(profile: SellerProfile) -> SellerOut:
         "province_name": province.name_fa if province else None,
         "city_name": city.name_fa if city else None,
         "is_public": profile.is_public,
+        "professional_title": profile.professional_title,
+        "profile_image": profile.profile_image.url if profile.profile_image else None,
+        "cover_image": profile.cover_image.url if profile.cover_image else None,
+        "is_verified": profile.verification_status == VerificationStatus.VERIFIED,
+        "listings_count": 0,
+        "organization_slug": None,
     })
 
 
@@ -79,6 +88,12 @@ def _public_seller(listing: ProductListing) -> SellerOut:
             "province_name": organization.province.name_fa if organization.province_id else None,
             "city_name": organization.city.name_fa if organization.city_id else None,
             "is_public": organization.is_active,
+            "professional_title": organization.get_organization_type_display(),
+            "profile_image": organization.logo.url if organization.logo else None,
+            "cover_image": organization.cover_image.url if organization.cover_image else None,
+            "is_verified": organization.is_verified,
+            "listings_count": 0,
+            "organization_slug": organization.slug,
         })
     if listing.seller is None:
         raise ApiError("فروشنده این آگهی مشخص نیست.", status_code=404)
@@ -107,6 +122,7 @@ def _listing_data(listing: ProductListing) -> ListingOut:
         "listing_kind": listing.listing_kind,
         "organization_id": str(organization.pk) if organization else None,
         "organization_name": organization.name if organization else None,
+        "organization_slug": organization.slug if organization else None,
         "province_id": listing.province_id,
         "province_name": listing.province.name_fa,
         "province_slug": listing.province.slug,
@@ -205,6 +221,8 @@ def listings(
     province: str = "",
     city: str = "",
     seller: int | None = None,
+    organization: str = "",
+    listing_kind: str = "",
     export: bool | None = None,
     domestic: bool | None = None,
     min_price: Decimal | None = Query(None, ge=0),  # type: ignore[type-arg]  # noqa: B008
@@ -239,7 +257,20 @@ def listings(
             else queryset.filter(city__slug=city)
         )
     if seller is not None:
-        queryset = queryset.filter(seller_id=seller)
+        queryset = queryset.filter(seller_id=seller, organization__isnull=True)
+    if organization:
+        from uuid import UUID
+
+        try:
+            UUID(organization)
+        except ValueError:
+            queryset = queryset.filter(organization__slug=organization)
+        else:
+            queryset = queryset.filter(organization_id=organization)
+    if listing_kind:
+        if listing_kind not in ProductListing.Kind.values:
+            raise HttpError(422, "listing_kind must be product or service")
+        queryset = queryset.filter(listing_kind=listing_kind)
     if export is True:
         queryset = queryset.filter(sale_mode__in=["export", "both"])
     if export is False:
@@ -604,20 +635,11 @@ def _inquiry_data(inquiry: ProductInquiry) -> InquiryOut:
 )
 def received_inquiries(request: HttpRequest) -> list[InquiryOut]:
     user = require_user(request)
-    profile = SellerProfile.objects.filter(user=user).first()
-    owned = ProductListing.objects.none()
-    if profile is not None:
-        owned = ProductListing.objects.filter(seller=profile, organization__isnull=True)
-    company_ids = user.organization_memberships.filter(
-        status=MembershipStatus.ACTIVE,
-        role__in=("owner", "admin", "manager", "member"),
-    ).values("organization_id")
-    if profile is None and not company_ids.exists():
-        raise ApiError("ابتدا پروفایل فروشندگی خود را تکمیل کنید.", status_code=403)
-    listing_ids = ProductListing.objects.filter(
-        Q(pk__in=owned.values("pk")) | Q(organization_id__in=company_ids)
-    ).values("pk")
-    inquiries = ProductInquiry.objects.filter(listing_id__in=listing_ids).select_related(
+    from .inquiries_api import _owner_scope
+
+    inquiries = ProductInquiry.objects.filter(
+        _owner_scope(request, user), listing__isnull=False
+    ).select_related(
         "listing", "buyer"
     )
     return [_inquiry_data(item) for item in inquiries]
@@ -629,9 +651,9 @@ def received_inquiries(request: HttpRequest) -> list[InquiryOut]:
     operation_id="services_inquiries_submitted",
 )
 def submitted_inquiries(request: HttpRequest) -> list[InquiryOut]:
-    inquiries = ProductInquiry.objects.filter(buyer=require_user(request)).select_related(
-        "listing", "buyer"
-    )
+    inquiries = ProductInquiry.objects.filter(
+        buyer=require_user(request), listing__isnull=False
+    ).select_related("listing", "buyer")
     return [_inquiry_data(item) for item in inquiries]
 
 
@@ -651,18 +673,35 @@ def create_inquiry(request: HttpRequest, slug: str, payload: InquiryIn) -> Statu
     )
     if listing.seller_id and listing.seller.user_id == buyer.pk:
         raise ApiError("نمی‌توانید برای محصول خودتان درخواست بفرستید.")
-    if listing.organization_id and listing.organization.members.filter(pk=buyer.pk).exists():
+    if listing.organization_id and buyer.organization_memberships.filter(
+        organization_id=listing.organization_id, status=MembershipStatus.ACTIVE
+    ).exists():
         raise ApiError("نمی‌توانید برای محصول شرکت خودتان درخواست بفرستید.")
+    rate_key = f"legacy-inquiry:{buyer.pk}:{listing.pk}"
+    if not cache.add(rate_key, "1", timeout=5):
+        raise ApiError("چند لحظه پیش درخواست ارسال کرده‌اید.", status_code=429)
+    now = timezone.now()
     inquiry = ProductInquiry(
         listing=listing,
         buyer=buyer,
         message=payload.message.strip(),
         quantity=payload.quantity,
+        subject=listing.title[:180],
+        category="purchase",
+        owner_organization=listing.organization,
+        owner_seller=listing.seller,
+        applicant_seen_at=now,
+        last_activity_at=now,
     )
     try:
-        inquiry.full_clean()
-        inquiry.save()
+        with transaction.atomic():
+            inquiry.full_clean()
+            inquiry.save()
+            from .inquiries_api import _notify
+
+            _notify(inquiry, "new", owner=True)
     except DjangoValidationError as exc:
+        cache.delete(rate_key)
         raise ApiError("اطلاعات درخواست معتبر نیست.") from exc
     return Status(
         201,
@@ -682,12 +721,8 @@ def update_inquiry(
     request: HttpRequest, inquiry_id: int, payload: InquiryStatusIn
 ) -> InquiryOut:
     user = require_user(request)
-    inquiry = get_object_or_404(
-        ProductInquiry.objects.select_related("listing", "listing__seller", "buyer"),
-        pk=inquiry_id,
-    )
-    if not can_view_inquiries(user, inquiry.listing):
-        raise ApiError("درخواست پیدا نشد.", status_code=404)
+    from .inquiries_api import _notify, _owner_scope
+
     allowed: dict[str, set[str]] = {
         ProductInquiry.Status.NEW: {ProductInquiry.Status.READ, ProductInquiry.Status.CLOSED},
         ProductInquiry.Status.READ: {
@@ -697,8 +732,23 @@ def update_inquiry(
         ProductInquiry.Status.REPLIED: {ProductInquiry.Status.CLOSED},
         ProductInquiry.Status.CLOSED: set(),
     }
-    if payload.status not in allowed[inquiry.status]:
-        raise ApiError("تغییر وضعیت درخواست مجاز نیست.")
-    inquiry.status = payload.status
-    inquiry.save(update_fields=["status", "updated_at"])
+    with transaction.atomic():
+        inquiry = get_object_or_404(
+            ProductInquiry.objects.select_related("listing", "listing__seller", "buyer")
+            .select_for_update(of=("self",))
+            .filter(_owner_scope(request, user), listing__isnull=False),
+            pk=inquiry_id,
+        )
+        if payload.status not in allowed.get(inquiry.status, set()):
+            raise ApiError("تغییر وضعیت درخواست مجاز نیست.")
+        old_status = inquiry.status
+        now = timezone.now()
+        inquiry.status = payload.status
+        inquiry.last_activity_at = now
+        inquiry.owner_seen_at = now
+        inquiry.save(update_fields=["status", "last_activity_at", "owner_seen_at", "updated_at"])
+        InquiryStatusEvent.objects.create(
+            inquiry=inquiry, actor=user, from_status=old_status, to_status=payload.status
+        )
+        _notify(inquiry, "status", owner=False)
     return _inquiry_data(inquiry)

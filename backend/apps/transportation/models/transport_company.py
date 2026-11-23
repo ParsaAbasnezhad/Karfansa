@@ -13,6 +13,7 @@ from apps.core.validators import (
 )
 from apps.geography.models import City, Country, Province
 
+from ..validators import validate_instagram_contact, validate_telegram_contact
 from .lookups import TransportMode, VehicleType
 
 
@@ -72,7 +73,10 @@ class TransportCompany(UUIDTimeStampedModel):
     email = models.EmailField(blank=True)
     website = models.URLField(blank=True)
     whatsapp = models.URLField(blank=True)
-    telegram = models.URLField(blank=True)
+    telegram = models.CharField(max_length=255, blank=True, validators=[validate_telegram_contact])
+    instagram = models.CharField(
+        max_length=255, blank=True, validators=[validate_instagram_contact]
+    )
 
     # Set by platform staff only (never by the company itself).
     is_verified = models.BooleanField(default=False)

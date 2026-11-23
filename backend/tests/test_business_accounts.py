@@ -1,6 +1,7 @@
 import re
 
 import pytest
+from django.contrib.auth.models import Permission
 from django.core import mail
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -226,6 +227,12 @@ def test_suspended_company_cannot_publish_or_unsuspend_itself(client: Client) ->
     staff = user("staff-review@example.com", "09120009999")
     staff.is_staff = True
     staff.save(update_fields=["is_staff"])
+    staff.user_permissions.add(
+        Permission.objects.get(
+            content_type__app_label="organizations",
+            codename="moderate_organization",
+        )
+    )
     staff_decide_organization(staff, membership.organization, VerificationStatus.SUSPENDED)
     edited = client.patch(
         f"/api/v1/business/organizations/{organization_id}",

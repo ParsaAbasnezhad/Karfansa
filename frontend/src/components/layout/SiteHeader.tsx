@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
+import { NotificationBell } from '@/features/inquiries/NotificationBell'
 import { useMarkets } from '@/features/home/data'
 import { Icon } from '@/features/home/icons'
 import { SearchForm } from '@/features/home/SearchForm'
@@ -100,6 +101,7 @@ export function SiteHeader() {
           <Logo />
           <SearchForm variant="masthead" />
           <div className="mast-tools">
+            <NotificationBell enabled={Boolean(user)} />
             <button
               type="button"
               className="iconbtn sbtn"

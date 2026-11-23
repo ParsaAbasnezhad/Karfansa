@@ -29,6 +29,12 @@ export type ServiceSeller = {
   province_name: string | null
   city_name: string | null
   is_public: boolean
+  professional_title?: string
+  profile_image?: string | null
+  cover_image?: string | null
+  is_verified?: boolean
+  listings_count?: number
+  organization_slug?: string | null
 }
 
 export type ProductListing = {
@@ -43,6 +49,7 @@ export type ProductListing = {
   listing_kind?: 'product' | 'service'
   organization_id?: string | null
   organization_name?: string | null
+  organization_slug?: string | null
   province_id: number
   province_name: string
   province_slug: string

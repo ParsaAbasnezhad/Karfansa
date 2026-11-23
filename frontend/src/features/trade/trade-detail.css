@@ -1,23 +1,43 @@
-.trade-detail { min-width: 0; }
-.trade-detail-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 18px; color: var(--muted); font-size: 13px; }
-.trade-detail-breadcrumb a, .trade-detail-header a, .trade-detail-facts a { color: var(--blue); }
-.trade-detail-header { padding: clamp(24px, 4vw, 42px); border: 1px solid var(--line); border-radius: var(--r); background: linear-gradient(120deg, var(--blue-tint), #fff); box-shadow: var(--shadow); }
-.trade-detail-type { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 99px; background: var(--blue-soft); color: var(--blue); font-size: 13px; font-weight: 700; }
-.trade-detail-type svg { width: 18px; height: 18px; }
-.trade-detail-header h1 { margin: 14px 0 8px; color: var(--navy); font-size: clamp(25px, 3vw, 38px); line-height: 1.5; overflow-wrap: anywhere; }
-.trade-detail-header p { margin: 0; color: var(--fg-soft); }
-.trade-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 350px); gap: 18px; margin-top: 18px; }
-.trade-detail-body, .trade-detail-facts { min-width: 0; padding: 25px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow); }
-.trade-detail-body h2, .trade-detail-facts h2 { margin: 0 0 15px; color: var(--navy); font-size: 20px; }
-.trade-detail-body p { margin: 0; color: var(--fg-soft); line-height: 2; white-space: pre-line; overflow-wrap: anywhere; }
-.trade-detail-facts dl { margin: 0; }
-.trade-detail-facts dl > div { display: grid; gap: 4px; padding: 11px 0; border-top: 1px solid var(--line); }
-.trade-detail-facts dt { color: var(--muted); font-size: 12px; }
-.trade-detail-facts dd { margin: 0; color: var(--fg); font-weight: 650; overflow-wrap: anywhere; }
-.trade-detail-action, .trade-detail-back { display: inline-flex; justify-content: center; margin-top: 20px; padding: 10px 16px; border-radius: 9px; background: var(--blue); color: #fff; font-weight: 700; text-decoration: none; }
-.trade-detail-back { width: fit-content; }
-.trade-detail-state { display: grid; justify-items: center; gap: 10px; padding: 55px 25px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); text-align: center; }
-.trade-detail-state h1, .trade-detail-state p { margin: 0; }
-.trade-detail-state a { color: var(--blue); }
-.trade-detail a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
-@media (max-width: 800px) { .trade-detail-layout { grid-template-columns: 1fr; } }
+/* Trade opportunity detail — complements the shared kd-* detail system */
+
+.trade-detail {
+  min-width: 0;
+}
+
+.trade-detail .trade-detail-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: 18px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--blue-soft);
+  color: var(--navy);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.trade-detail .trade-detail-back:hover {
+  background: var(--blue);
+  color: #fff;
+}
+
+.trade-detail a:focus-visible,
+.trade-detail button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.trade-detail .kd-hero--opportunity .kd-hero-lead {
+  -webkit-line-clamp: 1;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trade-detail .trade-detail-back {
+    transition: none;
+  }
+}

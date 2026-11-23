@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from apps.core.admin import KarfansaModelAdmin
+
 from .models import ContactMessage
 
 
 @admin.register(ContactMessage)
-class ContactMessageAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class ContactMessageAdmin(KarfansaModelAdmin):  # type: ignore[type-arg]
     list_display = ("subject", "name", "phone", "email", "is_read", "created_at")
     list_filter = ("is_read", "created_at")
     search_fields = ("name", "phone", "email", "subject", "message")

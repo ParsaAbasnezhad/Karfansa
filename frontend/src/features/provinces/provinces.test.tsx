@@ -159,11 +159,11 @@ describe('province pages', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'تهران' })).toBeInTheDocument()
-    expect(screen.getAllByText('ثبت نشده')).toHaveLength(7)
+    expect(screen.getAllByText('ثبت نشده')).toHaveLength(6)
     expect(
       screen.getByText('تهران', { selector: '.province-city-list strong' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('اطلاعات اقتصادی معتبر هنوز ثبت نشده است.')).toBeInTheDocument()
+    expect(await screen.findByText('هنوز دادهٔ اقتصادی تأییدشده‌ای برای این استان ثبت نشده است.')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'صنایع و ظرفیت‌های تولیدی' })).toBeInTheDocument()
     expect(screen.getByText('محصول غذایی')).toBeInTheDocument()
     expect(screen.getByText('شرکت غذایی')).toBeInTheDocument()

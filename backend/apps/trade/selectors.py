@@ -24,6 +24,7 @@ def public_opportunities(
     industry: str = "",
     opportunity_type: str = "",
     query: str = "",
+    company: str = "",
     ordering: str = "newest",
 ) -> QuerySet[TradeOpportunity]:
     opportunities = (
@@ -43,6 +44,8 @@ def public_opportunities(
             "service_listing",
         )
     )
+    if company:
+        opportunities = opportunities.filter(company__slug=company)
     if province:
         opportunities = opportunities.filter(province__slug=province)
     if product:
