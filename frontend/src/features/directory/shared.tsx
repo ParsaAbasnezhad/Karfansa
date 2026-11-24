@@ -1,5 +1,7 @@
 import { type FormEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { SectionHero } from '@/components/SectionHero'
+import directoryHero from '@/assets/section-heroes/directory.svg'
 import { useIranProvinces, useProvinceCities } from '@/features/account/geography'
 import { Icon } from '@/features/home/icons'
 import { formatNumber } from '@/lib/format'
@@ -207,13 +209,17 @@ export function DirectoryHero({
   search: ReactNode
 }) {
   return (
-    <header className="dir-hero">
-      <span className="dir-hero-mark" aria-hidden="true" />
-      <p className="dir-kicker">{kicker}</p>
-      <h1>{title}</h1>
-      <p className="dir-hero-lead">{subtitle}</p>
-      {search}
-    </header>
+    <>
+      <SectionHero
+        eyebrow={kicker}
+        title={title}
+        description={subtitle}
+        image={directoryHero}
+        visualVariant="directory"
+        className="dir-hero"
+      />
+      <div className="dir-search-panel">{search}</div>
+    </>
   )
 }
 

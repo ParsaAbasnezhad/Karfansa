@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { SectionHero } from '@/components/SectionHero'
+import industriesHeroImage from '@/assets/section-heroes/industries.svg'
 import { apiGet } from '@/lib/api-client'
 import { formatNumber } from '@/lib/format'
 import type { ProvinceSummary, ProvinceIndustry } from './types'
@@ -8,7 +10,6 @@ import {
   IndustryAdvantageIcon,
   IndustryCategoryIcon,
   IndustryEmptyArt,
-  IndustryHeroArt,
 } from './IndustryArt'
 import './industries.css'
 
@@ -53,20 +54,20 @@ export function IndustriesPage() {
 
   return (
     <main className="industries-page" dir="rtl">
-      <header className="industries-hero">
-        <div className="industries-hero-copy">
-          <span className="industries-eyebrow">نقشهٔ تولید ایران</span>
-          <h1>صنعت، مزیت رقابتی هر استان</h1>
-          <p>ظرفیت‌ها، بازیگران و محصولات صنعتی را با داده‌های مستند بررسی کنید.</p>
-          <div className="industries-hero-meta">
+      <SectionHero
+        className="industries-hero"
+        visualVariant="industries"
+        eyebrow="نقشهٔ تولید ایران"
+        title="صنعت، مزیت رقابتی هر استان"
+        description="ظرفیت‌ها، بازیگران و محصولات صنعتی را با داده‌های مستند بررسی کنید."
+        image={industriesHeroImage}
+        meta={
+          <>
             <span>۱۱ دستهٔ صنعتی</span>
             <span>اطلاعات مبتنی بر منبع</span>
-          </div>
-        </div>
-        <div className="industries-hero-art">
-          <IndustryHeroArt />
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <section className="industries-filters" aria-label="فیلتر صنایع">
         <div className="industries-filter-heading">

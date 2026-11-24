@@ -90,6 +90,13 @@ describe('services marketplace', () => {
 
     renderWithProviders(<ServicesLandingPage />)
 
+    expect(screen.getByRole('heading', { name: 'از تولیدکننده تا بازارهای جهانی' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'از تولیدکننده تا بازارهای جهانی' }).closest('section')?.querySelector('img'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'مشاهده محصولات' })).toHaveAttribute('href', '#svc-listings')
+    expect(screen.getByRole('link', { name: 'ثبت محصول' })).toHaveAttribute('href', '/services/dashboard')
+    expect(document.getElementById('svc-listings')).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'زعفران ممتاز' })).toBeInTheDocument()
     expect(
       screen.getAllByRole('link', { name: /کشاورزی/ }).some(

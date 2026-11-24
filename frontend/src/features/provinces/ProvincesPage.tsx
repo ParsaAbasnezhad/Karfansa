@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiGet } from '@/lib/api-client'
 import { useQuery } from '@tanstack/react-query'
+import { SectionHero } from '@/components/SectionHero'
+import provincesHeroImage from '@/assets/section-heroes/provinces.svg'
 import type { ProvinceSummary } from './types'
 import provinceMap from './iran-provinces-map.json'
 import './provinces.css'
@@ -42,24 +44,22 @@ export function ProvincesPage() {
 
   return (
     <div className="provinces-page" dir="rtl">
-      <header className="provinces-hero">
-        <div className="provinces-hero-copy">
-          <span className="provinces-eyebrow">شناخت سرزمین ایران</span>
-          <h1>هر استان، دنیایی از فرصت</h1>
-          <p>جغرافیا، شهرها و ظرفیت‌های اقتصادی استان‌های ایران را یک‌جا کشف کنید.</p>
-          {!provinces.isPending && !provinces.isError && (
-            <div className="provinces-hero-meta">
+      <SectionHero
+        className="provinces-hero"
+        visualVariant="provinces"
+        eyebrow="شناخت سرزمین ایران"
+        title="هر استان، دنیایی از فرصت"
+        description="جغرافیا، شهرها و ظرفیت‌های اقتصادی استان‌های ایران را یک‌جا کشف کنید."
+        image={provincesHeroImage}
+        meta={
+          !provinces.isPending && !provinces.isError ? (
+            <>
               <span className="provinces-hero-count">{formatPersianNumber(published.length)}</span>
               <span>استان برای شناختن</span>
-            </div>
-          )}
-        </div>
-        <div className="provinces-hero-art" aria-hidden="true">
-          <span className="provinces-hero-orbit provinces-hero-orbit-one" />
-          <span className="provinces-hero-orbit provinces-hero-orbit-two" />
-          <span className="provinces-hero-pin">ایران</span>
-        </div>
-      </header>
+            </>
+          ) : undefined
+        }
+      />
 
       {provinces.isPending ? (
         <p className="provinces-state">در حال دریافت فهرست استان‌ها…</p>

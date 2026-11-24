@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { SectionHero } from '@/components/SectionHero'
+import servicesHero from '@/assets/section-heroes/services.svg'
 import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
 import { useIranProvinces, useProvinceCities } from '@/features/account/geography'
@@ -64,15 +66,33 @@ export function ErrorState({ error }: { error: unknown }) {
 }
 
 export function ServiceHero({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <SectionHero
+        as="section"
+        className="svc-hero svc-hero-compact"
+        visualVariant="services"
+        image={servicesHero}
+        eyebrow="بازار محصولات کارفنسا"
+        title="محصول ایرانی، مستقیم از تولیدکننده"
+        description="بازار فروش محصولات کشاورزی، دامی و صنایع‌دستی برای فروش داخلی و صادرات."
+        primaryAction={<Link className="svc-button" to="/services/dashboard">ثبت محصول</Link>}
+      />
+    )
+  }
+
   return (
-    <section className={`svc-hero${compact ? ' svc-hero-compact' : ''}`}>
-      <div>
-        <span className="svc-eyebrow">بازار محصولات کارفنسا</span>
-        <h1>محصول ایرانی، مستقیم از تولیدکننده</h1>
-        <p>بازار فروش محصولات کشاورزی، دامی و صنایع‌دستی برای فروش داخلی و صادرات.</p>
-      </div>
-      <Link className="svc-button svc-button-light" to="/services/dashboard">ثبت محصول</Link>
-    </section>
+    <SectionHero
+      as="section"
+      className="svc-hero"
+      visualVariant="services"
+      image={servicesHero}
+      eyebrow="بازار محصولات کارفنسا"
+      title="از تولیدکننده تا بازارهای جهانی"
+      description="محصولات ایرانی را کشف کنید، مستقیم با تولیدکنندگان و تأمین‌کنندگان ارتباط بگیرید و فرصت‌های جدید تجارت را بسازید."
+      primaryAction={<a className="svc-button" href="#svc-listings">مشاهده محصولات</a>}
+      secondaryAction={<Link className="svc-button svc-button-secondary" to="/services/dashboard">ثبت محصول</Link>}
+    />
   )
 }
 

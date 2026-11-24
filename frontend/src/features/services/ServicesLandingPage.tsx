@@ -35,7 +35,7 @@ export function ServicesLandingPage() {
           </div>
         )}
       </section>
-      <section className="svc-section">
+      <section className="svc-section" id="svc-listings">
         <div className="svc-section-heading"><div><span className="svc-eyebrow">تازه‌ترین عرضه‌ها</span><h2>محصولات تأییدشده</h2></div></div>
         {listings.isPending ? <Loading /> : listings.isError ? <ErrorState error={listings.error} /> : (
           <ProductGrid items={listings.data.results} />

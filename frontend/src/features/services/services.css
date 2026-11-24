@@ -39,7 +39,8 @@
 
   width: min(1200px, 100%);
   margin: 16px auto 64px;
-  padding: 0 clamp(12px, 3vw, 22px);
+  padding: 0 20px;
+  box-sizing: border-box;
   color: var(--svc-ink);
   font-size: 14px;
   line-height: 1.7;
@@ -102,52 +103,8 @@ html:has(.svc-page) { scroll-behavior: smooth; }
   background: currentColor;
 }
 
-/* ------------------------------------------------ Hero (جمع‌وجور) */
-.svc-hero {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  overflow: hidden;
-  padding: clamp(20px, 3.4vw, 36px) clamp(18px, 3.6vw, 40px);
-  border-radius: var(--svc-r-lg);
-  background:
-    radial-gradient(420px 220px at 8% -20%, rgba(113, 138, 240, .3), transparent 70%),
-    radial-gradient(420px 260px at 100% 120%, rgba(147, 197, 253, .28), transparent 70%),
-    linear-gradient(120deg, var(--navy) 0%, var(--blue) 62%, #5074e7 100%);
-  color: #fff;
-  box-shadow: var(--svc-shadow-lg);
-}
-.svc-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image: radial-gradient(rgba(255, 255, 255, .2) 1px, transparent 1px);
-  background-size: 20px 20px;
-  -webkit-mask-image: linear-gradient(to left, #000, transparent 60%);
-          mask-image: linear-gradient(to left, #000, transparent 60%);
-}
-.svc-hero > div { max-width: 600px; }
-.svc-hero h1 {
-  margin: 8px 0 6px;
-  font-size: clamp(21px, 3.4vw, 32px);
-  font-weight: 800;
-  line-height: 1.45;
-}
-.svc-hero p { margin-bottom: 0; color: rgba(255, 255, 255, .85); font-size: clamp(12.5px, 1.5vw, 14.5px); line-height: 1.95; }
-.svc-hero .svc-eyebrow {
-  background: rgba(255, 255, 255, .14);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, .22);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.svc-hero-compact { padding: clamp(14px, 2.2vw, 20px) clamp(16px, 3vw, 28px); }
-.svc-hero-compact h1 { margin: 6px 0 2px; font-size: clamp(17px, 2.4vw, 22px); }
-.svc-hero-compact p { display: none; }
+/* Hero layout and responsive styling live in SectionHero.module.css. */
+.svc-section[id="svc-listings"] { scroll-margin-top: 24px; }
 
 /* ------------------------------------------------ Buttons */
 .svc-button {
@@ -702,13 +659,12 @@ html:has(.svc-page) { scroll-behavior: smooth; }
   .svc-detail-aside { position: static; }
 }
 
+@media (max-width: 768px) {
+  .svc-page { padding-inline: 16px; }
+}
+
 @media (max-width: 640px) {
-  .svc-page { margin: 10px auto 40px; font-size: 13.5px; }
-  .svc-hero { flex-direction: column; align-items: flex-start; gap: 14px; }
-  .svc-hero .svc-button { width: 100%; }
-  .svc-hero-compact { flex-direction: row; flex-wrap: wrap; }
-  .svc-hero-compact .svc-button { width: auto; }
-  .svc-section { border-radius: var(--svc-r); }
+  .svc-page { margin: 10px auto 40px; font-size: 13.5px; }  .svc-section { border-radius: var(--svc-r); }
 
   .svc-category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .svc-category-grid a { grid-template-columns: 32px minmax(0, 1fr) 14px; gap: 2px 7px; min-height: 66px; padding: 9px; }
@@ -735,8 +691,7 @@ html:has(.svc-page) { scroll-behavior: smooth; }
   .svc-dashboard-list article { align-items: flex-start; }
 }
 
-@media (max-width: 380px) {
-  .svc-product-card { grid-template-columns: 1fr; }
+@media (max-width: 380px) {  .svc-product-card { grid-template-columns: 1fr; }
   .svc-product-image { aspect-ratio: 4 / 3; min-height: 0; height: auto; }
   .svc-pagination span { font-size: 11px; }
 }

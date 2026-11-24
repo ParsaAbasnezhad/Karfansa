@@ -1,0 +1,237 @@
+.root.root {
+  --hero-navy: #172b40;
+  --hero-panel: #14243a;
+  --hero-ink: #f8fafc;
+  --hero-soft: #c9d6e1;
+  --hero-gold: #d3ad69;
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 34%);
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 1160px;
+  min-height: 210px;
+  margin-inline: auto;
+  padding-block: 12px;
+  padding-inline: 32px 12px;
+  overflow: hidden;
+  border: 1px solid #31485c;
+  border-radius: 20px;
+  background: var(--hero-navy);
+  color: var(--hero-ink);
+  box-shadow: 0 12px 28px rgba(15, 33, 52, .12), 0 2px 6px rgba(15, 33, 52, .06);
+  text-align: right;
+}
+
+.root.root::before,
+.root.root::after {
+  content: none;
+}
+
+.copy {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 100%;
+  color: var(--hero-gold);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.eyebrow::before {
+  content: '';
+  flex: none;
+  width: 17px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.root .title {
+  max-width: none;
+  margin: 6px 0 3px;
+  color: var(--hero-ink);
+  font-size: clamp(23px, 2.3vw, 29px);
+  font-weight: 850;
+  line-height: 1.36;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+
+.root .description {
+  display: block;
+  max-width: 67ch;
+  margin: 0;
+  color: var(--hero-soft);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.68;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.actions :is(a, button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 5px 14px;
+  border: 1px solid var(--hero-gold);
+  border-radius: 9px;
+  background: var(--hero-gold);
+  color: #172b40 !important;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: transform .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.actions :is(a, button):hover {
+  transform: translateY(-1px);
+  border-color: #e4c98e;
+  background: #e4c98e;
+  box-shadow: none;
+  filter: none;
+}
+
+.actions :is(a, button):nth-child(2) {
+  border-color: rgba(255, 255, 255, .4);
+  background: transparent;
+  color: var(--hero-ink) !important;
+}
+
+.actions :is(a, button):nth-child(2):hover {
+  border-color: rgba(255, 255, 255, .75);
+  background: rgba(255, 255, 255, .08);
+}
+
+.actions :is(a, button):focus-visible {
+  outline: 3px solid var(--hero-gold);
+  outline-offset: 3px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 8px;
+  color: var(--hero-soft);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.meta > * + *::before {
+  content: '·';
+  margin-inline-end: 12px;
+  color: var(--hero-gold);
+}
+
+.visual {
+  display: grid;
+  width: 100%;
+  height: 184px;
+  min-width: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #2e455b;
+  border-radius: 14px;
+  background: var(--hero-panel);
+}
+
+.visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 1024px) {
+  .root.root {
+    grid-template-columns: minmax(0, 1fr) minmax(230px, 32%);
+    gap: 18px;
+    min-height: 200px;
+    padding-inline-start: 24px;
+  }
+
+  .visual {
+    height: 174px;
+  }
+
+  .root .title {
+    font-size: clamp(22px, 2.8vw, 26px);
+  }
+}
+
+@media (max-width: 768px) {
+  .root.root {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 178px;
+    padding: 20px;
+    border-radius: 19px;
+  }
+
+  .root .title {
+    font-size: clamp(21px, 4.8vw, 26px);
+  }
+
+  .visual {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .root.root {
+    padding: 17px 16px;
+  }
+
+  .root .title {
+    font-size: 21px;
+  }
+
+  .root .description {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions :is(a, button) {
+    min-width: 0;
+    padding-inline: 7px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .actions :only-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+  }
+}
