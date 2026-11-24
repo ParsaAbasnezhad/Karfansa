@@ -5,12 +5,31 @@
    ========================================================================== */
 
 .trade-page {
-  --trade-primary: var(--blue);
+  /* Brand colors */
+  --trade-primary: #203b53;
+  --trade-primary-dark: #162b43;
+  --trade-primary-light: #2d506b;
+
+  /* Typography */
   --trade-ink: var(--fg);
   --trade-muted: var(--muted);
+
+  /* Borders & surfaces */
   --trade-line: var(--line);
-  --trade-soft: var(--blue-soft);
-  --trade-gold: #c99a3b;
+  --trade-soft: #edf3f8;
+
+  /* Accent */
+  --trade-gold: #e8b969;
+  --trade-gold-dark: #c99a3b;
+
+  /* Hero */
+  --trade-hero-bg: linear-gradient(
+    115deg,
+    #203b53 0%,
+    #1b344c 48%,
+    #162b43 100%
+  );
+
   --trade-radius: var(--r);
 
   width: min(1200px, 100%);
@@ -19,9 +38,6 @@
   color: var(--trade-ink);
 }
 
-.trade-page > * + * {
-  margin-top: 20px;
-}
 
 @media (max-width: 768px) {
   .trade-page { padding-inline: 16px; }

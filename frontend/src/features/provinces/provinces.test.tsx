@@ -10,6 +10,7 @@ import provinceMap from './iran-provinces-map.json'
 
 describe('province pages', () => {
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.unstubAllEnvs()
     vi.unstubAllGlobals()
   })
@@ -22,6 +23,11 @@ describe('province pages', () => {
 
   it('lists only published provinces', async () => {
     vi.stubEnv('VITE_USE_MOCK', 'false')
+    const originalMatchMedia = window.matchMedia.bind(window)
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      ...originalMatchMedia(query),
+      matches: query === '(min-width: 768px)',
+    }))
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -48,11 +54,141 @@ describe('province pages', () => {
     expect(document.querySelector('.iran-map-link')?.getAttribute('href')).toBe(
       '/provinces/tehran/',
     )
-    expect(screen.getByRole('link', { name: '© مشارکت‌کنندگان OpenStreetMap' })).toHaveAttribute(
-      'href',
-      'https://www.openstreetmap.org/copyright',
-    )
+    expect(
+      screen.getByRole('link', { name: '© داده‌های جغرافیایی OpenStreetMap' }),
+    ).toHaveAttribute('href', 'https://www.openstreetmap.org/copyright')
     expect(screen.queryByText('استان پیش‌نویس')).not.toBeInTheDocument()
+  })
+
+  it('does not mount the interactive map on mobile and keeps province navigation', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    const originalMatchMedia = window.matchMedia.bind(window)
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      ...originalMatchMedia(query),
+      matches: false,
+    }))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [
+          { id: 1, slug: 'tehran', name_fa: 'تهران', name_en: 'Tehran', is_published: true },
+        ],
+      }),
+    )
+
+    renderWithProviders(<ProvincesPage />)
+
+    const provinceLink = await screen.findByRole('link', { name: 'مشاهدهٔ صفحهٔ تهران' })
+    expect(document.querySelector('.iran-map-panel')).not.toBeInTheDocument()
+    expect(document.querySelector('.iran-map-svg')).not.toBeInTheDocument()
+    expect(provinceLink).toHaveAttribute('href', '/provinces/tehran/')
+  })
+
+  it.each([320, 375, 390, 430, 768, 1440])('matches the map breakpoint at %ipx', async (width) => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    const originalMatchMedia = window.matchMedia.bind(window)
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      ...originalMatchMedia(query),
+      matches: query === '(min-width: 768px)' && width >= 768,
+    }))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [
+          { id: 1, slug: 'tehran', name_fa: 'تهران', name_en: 'Tehran', is_published: true },
+        ],
+      }),
+    )
+
+    const { unmount } = renderWithProviders(<ProvincesPage />)
+
+    await screen.findByText('تهران', { selector: '.iran-directory-select strong' })
+    if (width >= 768) {
+      await screen.findByRole('group', { name: 'نقشهٔ تعاملی استان‌های ایران' })
+    }
+    expect(Boolean(document.querySelector('.iran-map-panel'))).toBe(width >= 768)
+    unmount()
+  })
+
+  it('normalizes Persian province searches and preserves province navigation', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [
+          { id: 1, slug: 'yazd', name_fa: 'یزد', name_en: 'Yazd', is_published: true },
+          { id: 2, slug: 'qom', name_fa: 'قم', name_en: 'Qom', is_published: true },
+        ],
+      }),
+    )
+
+    renderWithProviders(<ProvincesPage />)
+
+    await screen.findByText('یزد', { selector: '.iran-directory-select strong' })
+    await userEvent.type(screen.getByRole('searchbox', { name: 'جست‌وجوی استان' }), 'يَزْد')
+
+    expect(
+      screen.getByText('یزد', { selector: '.iran-directory-select strong' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('قم', { selector: '.iran-directory-select strong' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'مشاهدهٔ صفحهٔ یزد' })).toHaveAttribute(
+      'href',
+      '/provinces/yazd/',
+    )
+  })
+
+  it('synchronizes province selection and shows only API-backed economic counts', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    const originalMatchMedia = window.matchMedia.bind(window)
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      ...originalMatchMedia(query),
+      matches: query === '(min-width: 768px)',
+    }))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (input: string) => {
+        const url = String(input)
+        const payload = url.includes('/v1/organizations/')
+          ? { count: 8, results: [] }
+          : url.includes('/v1/trade/opportunities/')
+            ? { count: 3, results: [] }
+            : url.includes('/v1/geography/provinces/tehran/')
+              ? { id: 1, slug: 'tehran', name_fa: 'تهران', industries: [], statistics: [] }
+              : [
+                  {
+                    id: 1,
+                    slug: 'tehran',
+                    name_fa: 'تهران',
+                    name_en: 'Tehran',
+                    is_published: true,
+                  },
+                ]
+        return { ok: true, status: 200, json: async () => payload }
+      }),
+    )
+
+    renderWithProviders(<ProvincesPage />)
+
+    await screen.findByRole('group', { name: 'نقشهٔ تعاملی استان‌های ایران' })
+    await userEvent.click(screen.getByRole('button', { name: /تهران/ }))
+
+    expect(await screen.findByText('کسب‌وکار فعال: ۸')).toBeInTheDocument()
+    expect(screen.getByText('فرصت تجاری: ۳')).toBeInTheDocument()
+    expect(document.querySelector('.iran-map-link')).toHaveClass('is-selected')
+
+    const mapProvince = document.querySelector<HTMLElement>('.iran-map-link')
+    expect(mapProvince).not.toBeNull()
+    if (mapProvince) await userEvent.hover(mapProvince)
+    expect(document.querySelector('.iran-directory-row')).toHaveClass('is-active')
+    expect(document.querySelector('.iran-map-tooltip')).toHaveTextContent('تهران')
   })
 
   it('shows verified geographic fields and cities without inventing missing statistics', async () => {

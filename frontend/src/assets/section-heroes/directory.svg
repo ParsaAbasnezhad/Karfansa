@@ -1,27 +1,327 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 300" fill="none">
-  <rect width="560" height="300" fill="#14243A"/>
-  <path d="M0 241H560M0 181H560M0 121H560M0 61H560M70 0V300M150 0V300M230 0V300M310 0V300M390 0V300M470 0V300" stroke="#DDE9F2" stroke-opacity=".05"/>
-  <path d="M83 142 195 87 324 132 452 73M83 142l78 97 163-107M161 239l191-18 100-148M324 132l28 89" stroke="#8BA7BA" stroke-opacity=".42" stroke-width="1.5" stroke-dasharray="4 6"/>
-  <circle cx="83" cy="142" r="7" fill="#C9A76E"/><circle cx="161" cy="239" r="7" fill="#C9A76E"/><circle cx="452" cy="73" r="7" fill="#C9A76E"/><circle cx="352" cy="221" r="7" fill="#C9A76E"/>
-  <rect x="172" y="51" width="226" height="201" rx="15" fill="#253D56" stroke="#91A9BA" stroke-width="1.5"/>
-  <rect x="172" y="51" width="226" height="43" rx="15" fill="#344E68"/>
-  <path d="M172 78v16h226V78" fill="#344E68"/>
-  <rect x="187" y="67" width="76" height="5" rx="2.5" fill="#E3ECF1"/>
-  <circle cx="377" cy="72" r="4" fill="#C9A76E"/>
-  <circle cx="221" cy="131" r="24" fill="#6D90A8"/><circle cx="221" cy="125" r="8" fill="#DCE8EE"/><path d="M206 147c4-10 26-10 30 0" fill="#DCE8EE"/>
-  <rect x="259" y="112" width="94" height="7" rx="3.5" fill="#E7EEF2"/>
-  <rect x="259" y="128" width="66" height="5" rx="2.5" fill="#9DB3C3"/>
-  <rect x="259" y="142" width="83" height="5" rx="2.5" fill="#7693A8"/>
-  <path d="M190 171h190" stroke="#7894A9" stroke-opacity=".58"/>
-  <rect x="190" y="185" width="86" height="31" rx="7" fill="#1A3048"/>
-  <circle cx="206" cy="200.5" r="6" fill="#C9A76E"/><rect x="219" y="197" width="43" height="6" rx="3" fill="#C1D0D9"/>
-  <rect x="287" y="185" width="91" height="31" rx="7" fill="#1A3048"/>
-  <circle cx="303" cy="200.5" r="6" fill="#87AFC0"/><rect x="316" y="197" width="49" height="6" rx="3" fill="#C1D0D9"/>
-  <path d="M192 232h105M307 232h46" stroke="#A3B8C6" stroke-width="4" stroke-linecap="round"/>
-  <rect x="47" y="100" width="97" height="82" rx="10" fill="#304D67" stroke="#85A0B3"/>
-  <circle cx="74" cy="131" r="13" fill="#88A9BC"/><circle cx="74" cy="128" r="4" fill="#E0EAF0"/><path d="M66 140c2-5 14-5 16 0" fill="#E0EAF0"/>
-  <path d="M96 122h31M96 132h24M61 159h68" stroke="#CEDAE2" stroke-width="4" stroke-linecap="round"/>
-  <rect x="423" y="107" width="96" height="79" rx="10" fill="#304D67" stroke="#85A0B3"/>
-  <circle cx="449" cy="138" r="13" fill="#C9A76E"/><circle cx="449" cy="135" r="4" fill="#253D56"/><path d="M441 147c2-5 14-5 16 0" fill="#253D56"/>
-  <path d="M472 130h31M472 140h24M436 163h68" stroke="#CEDAE2" stroke-width="4" stroke-linecap="round"/>
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 560 300" fill="none">
+
+  <defs>
+    <radialGradient id="bg">
+      <stop stop-color="#29445F"/>
+      <stop offset="1" stop-color="#091625"/>
+    </radialGradient>
+
+    <linearGradient id="panel" x2="0" y2="1">
+      <stop stop-color="#35536F"/>
+      <stop offset="1" stop-color="#102438"/>
+    </linearGradient>
+
+    <linearGradient id="gold" x2=".8" y2="1">
+      <stop stop-color="#F5DDAE"/>
+      <stop offset=".5" stop-color="#C9A76E"/>
+      <stop offset="1" stop-color="#92703E"/>
+    </linearGradient>
+
+    <linearGradient id="edge">
+      <stop stop-color="#A7C0D3" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#45617A" stop-opacity=".3"/>
+    </linearGradient>
+
+    <pattern id="grid" width="28" height="28"
+             patternUnits="userSpaceOnUse">
+      <path d="M28 0H0V28"
+            stroke="#ADC5D7" stroke-opacity=".045"/>
+    </pattern>
+
+    <filter id="shadow" x="-40%" y="-40%"
+            width="180%" height="200%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10"
+                    flood-color="#020811"
+                    flood-opacity=".65"/>
+    </filter>
+
+    <filter id="glow" x="-100%" y="-100%"
+            width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <g id="person">
+      <circle r="22" fill="#29465E" stroke="#789AB3"/>
+      <circle cy="-6" r="8" fill="#B5C9D7"/>
+      <path d="M-16 17V12Q0-4 16 12V17Z"
+            fill="#A2B8CA"/>
+      <path d="M-6 5 0 15 6 5"
+            fill="#E0EAF1"/>
+      <path d="M0 8-2 14 0 18 2 14Z"
+            fill="#C9A76E"/>
+    </g>
+
+    <g id="company">
+      <rect x="-16" y="-21" width="32" height="42"
+            rx="4" fill="#29465E" stroke="#91ABBF"/>
+      <path d="M-9-13H-3M3-13H9
+               M-9-5H-3M3-5H9
+               M-9 3H-3M3 3H9"
+            stroke="#B3CADB" stroke-width="4"/>
+      <rect x="-4" y="11" width="8" height="10"
+            fill="#C9A76E"/>
+    </g>
+
+    <g id="verified">
+      <path d="M0-12 11-7V2Q9 10 0 14
+               Q-9 10-11 2V-7Z"
+            fill="url(#gold)" stroke="#F2D8A6"/>
+      <path d="M-5 0-1 4 6-4"
+            stroke="#24354A" stroke-width="2.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </g>
+  </defs>
+
+  <!-- Background -->
+  <rect width="560" height="300" fill="url(#bg)"/>
+  <rect width="560" height="300" fill="url(#grid)"/>
+
+  <!-- Network architecture -->
+  <g stroke="#7E9CB4" stroke-opacity=".12">
+    <ellipse cx="280" cy="150" rx="246" ry="116"/>
+    <ellipse cx="280" cy="150" rx="207" ry="95"/>
+    <ellipse cx="280" cy="150" rx="166" ry="73"/>
+  </g>
+
+  <!-- Business connections -->
+  <g stroke="#C9A76E" stroke-width="1.3"
+     stroke-opacity=".55" stroke-dasharray="4 5">
+
+    <path d="M102 90C160 90 167 135 280 150"/>
+    <path d="M96 218C155 218 180 170 280 150"/>
+    <path d="M458 81C400 81 389 120 280 150"/>
+    <path d="M466 222C400 222 389 180 280 150"/>
+    <path d="M102 90Q40 150 96 218"/>
+    <path d="M458 81Q520 150 466 222"/>
+
+  </g>
+
+  <!-- Network nodes -->
+  <g fill="#E8C78F" filter="url(#glow)">
+    <circle cx="160" cy="112" r="3"/>
+    <circle cx="155" cy="197" r="3"/>
+    <circle cx="403" cy="108" r="3"/>
+    <circle cx="405" cy="198" r="3"/>
+    <circle cx="65" cy="154" r="2.5"/>
+    <circle cx="497" cy="153" r="2.5"/>
+  </g>
+
+  <!-- Top left company card -->
+  <g transform="translate(32 48)" filter="url(#shadow)">
+    <rect width="128" height="84" rx="12"
+          fill="url(#panel)" stroke="url(#edge)"/>
+
+    <rect x="10" y="12" width="45" height="48"
+          rx="8" fill="#142B40"/>
+
+    <use href="#company"
+         transform="translate(32 36) scale(.78)"/>
+
+    <path d="M66 23H112"
+          stroke="#D5E2EB" stroke-width="4"
+          stroke-linecap="round"/>
+
+    <path d="M66 35H101M66 45H108"
+          stroke="#8FAABD" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <path d="M12 71H80"
+          stroke="#8FAABD" stroke-opacity=".3"/>
+
+    <circle cx="112" cy="70" r="4"
+            fill="#C9A76E"/>
+  </g>
+
+  <!-- Bottom left individual card -->
+  <g transform="translate(43 184)" filter="url(#shadow)">
+    <rect width="116" height="72" rx="11"
+          fill="url(#panel)" stroke="url(#edge)"/>
+
+    <use href="#person"
+         transform="translate(29 30) scale(.78)"/>
+
+    <path d="M56 20H100"
+          stroke="#D5E2EB" stroke-width="4"
+          stroke-linecap="round"/>
+
+    <path d="M56 32H90M56 42H98"
+          stroke="#8FAABD" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <path d="M12 59H103"
+          stroke="#A3BACC" stroke-opacity=".3"/>
+  </g>
+
+  <!-- Top right executive card -->
+  <g transform="translate(405 40)" filter="url(#shadow)">
+    <rect width="124" height="84" rx="12"
+          fill="url(#panel)" stroke="url(#edge)"/>
+
+    <use href="#person"
+         transform="translate(31 34) scale(.85)"/>
+
+    <path d="M62 23H109"
+          stroke="#D5E2EB" stroke-width="4"
+          stroke-linecap="round"/>
+
+    <path d="M62 36H98M62 46H106"
+          stroke="#8FAABD" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <use href="#verified"
+         transform="translate(109 68) scale(.55)"/>
+  </g>
+
+  <!-- Bottom right company card -->
+  <g transform="translate(409 182)" filter="url(#shadow)">
+    <rect width="120" height="76" rx="11"
+          fill="url(#panel)" stroke="url(#edge)"/>
+
+    <use href="#company"
+         transform="translate(28 32) scale(.8)"/>
+
+    <path d="M55 21H106"
+          stroke="#D5E2EB" stroke-width="4"
+          stroke-linecap="round"/>
+
+    <path d="M55 34H95M55 45H104"
+          stroke="#8FAABD" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <path d="M12 63H107"
+          stroke="#A3BACC" stroke-opacity=".3"/>
+  </g>
+
+  <!-- Central profile layers -->
+  <rect x="185" y="43" width="198" height="218"
+        rx="18" fill="#0C1D2E"
+        stroke="#55738C" opacity=".6"/>
+
+  <rect x="179" y="37" width="202" height="218"
+        rx="18" fill="#172E43"
+        stroke="#68869D"/>
+
+  <!-- Main business profile -->
+  <g filter="url(#shadow)">
+    <rect x="172" y="30" width="216" height="228"
+          rx="18" fill="url(#panel)"
+          stroke="url(#edge)" stroke-width="1.4"/>
+
+    <!-- Header -->
+    <path d="M190 30H370Q388 30 388 48V65H172V48
+             Q172 30 190 30Z"
+          fill="#42617B" opacity=".55"/>
+
+    <path d="M190 48H245"
+          stroke="#D8E4ED" stroke-width="4"
+          stroke-linecap="round"/>
+
+    <circle cx="350" cy="48" r="2" fill="#8EA8BC"/>
+    <circle cx="360" cy="48" r="2" fill="#8EA8BC"/>
+    <circle cx="370" cy="48" r="3" fill="#C9A76E"/>
+
+    <!-- Executive avatar -->
+    <circle cx="225" cy="112" r="34"
+            stroke="#C9A76E" stroke-opacity=".5"/>
+
+    <circle cx="225" cy="112" r="30"
+            fill="#142B40"/>
+
+    <use href="#person"
+         transform="translate(225 112) scale(1.25)"/>
+
+    <use href="#verified"
+         transform="translate(249 136) scale(.85)"/>
+
+    <!-- Profile information -->
+    <path d="M273 91H363"
+          stroke="#E2EDF4" stroke-width="6"
+          stroke-linecap="round"/>
+
+    <path d="M273 107H337"
+          stroke="#9DB6C9" stroke-width="4"
+          stroke-linecap="round"/>
+
+    <path d="M273 121H351"
+          stroke="#7696AE" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <rect x="273" y="134" width="57" height="12"
+          rx="6" fill="#C9A76E" fill-opacity=".15"
+          stroke="#C9A76E" stroke-opacity=".5"/>
+
+    <path d="M283 140H320"
+          stroke="#D9BA83" stroke-width="2"
+          stroke-linecap="round"/>
+
+    <!-- Divider -->
+    <path d="M189 161H371"
+          stroke="#A0B9CB" stroke-opacity=".25"/>
+
+    <!-- Business metrics -->
+    <rect x="188" y="174" width="86" height="42"
+          rx="8" fill="#10263B" stroke="#48657D"/>
+
+    <rect x="285" y="174" width="86" height="42"
+          rx="8" fill="#10263B" stroke="#48657D"/>
+
+    <!-- Portfolio icon -->
+    <rect x="199" y="187" width="18" height="14"
+          rx="3" stroke="#D5B47D" stroke-width="1.5"/>
+
+    <path d="M204 187V183H212V187M199 193H217"
+          stroke="#D5B47D" stroke-width="1.5"/>
+
+    <path d="M228 188H260M228 199H250"
+          stroke="#A7BFD0" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <!-- Growth icon -->
+    <path d="M297 201V184M297 201H316
+             M300 196 306 190 310 193 317 183"
+          stroke="#D5B47D" stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+
+    <path d="M326 188H358M326 199H348"
+          stroke="#A7BFD0" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <!-- Bottom action -->
+    <rect x="188" y="229" width="183" height="15"
+          rx="7.5" fill="url(#gold)"/>
+
+    <path d="M246 236.5H312"
+          stroke="#26394B" stroke-width="3"
+          stroke-linecap="round"/>
+
+    <path d="M355 233 360 236.5 355 240"
+          stroke="#26394B" stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+
+  </g>
+
+  <!-- Precision decorative corners -->
+  <g stroke="#8BA7BC" stroke-opacity=".3">
+    <path d="M20 42V20H42"/>
+    <path d="M518 20H540V42"/>
+    <path d="M20 258V280H42"/>
+    <path d="M518 280H540V258"/>
+  </g>
+
+  <g fill="#C9A76E">
+    <circle cx="20" cy="20" r="2"/>
+    <circle cx="540" cy="20" r="2"/>
+    <circle cx="20" cy="280" r="2"/>
+    <circle cx="540" cy="280" r="2"/>
+  </g>
+
 </svg>

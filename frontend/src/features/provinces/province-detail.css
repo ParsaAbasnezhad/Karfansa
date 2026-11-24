@@ -7,12 +7,18 @@
 
 .province-detail {
   display: grid;
+  min-width: 0;
   align-content: start;
   gap: 14px;
 }
 
 .province-detail > * {
+  min-width: 0;
   margin: 0;
+}
+
+.province-detail :where(p, a, strong, dd, dt, span, small) {
+  overflow-wrap: anywhere;
 }
 
 .province-detail > :empty {
@@ -390,11 +396,7 @@ html:has(.province-detail) {
   inset-inline-end: 0;
   width: 62%;
   height: 74px;
-  background: repeating-linear-gradient(
-    90deg,
-    rgb(96 193 229 / 0.5) 0 6px,
-    transparent 6px 14px
-  );
+  background: repeating-linear-gradient(90deg, rgb(96 193 229 / 0.5) 0 6px, transparent 6px 14px);
   content: '';
   mask-image: linear-gradient(to top left, #000 10%, transparent 75%);
   pointer-events: none;
@@ -1177,6 +1179,19 @@ html:has(.province-detail) {
   .province-map img {
     max-height: 300px;
   }
+
+  .province-detail-hero {
+    gap: 18px;
+  }
+
+  .province-detail-hero-copy {
+    flex: 1 1 320px;
+    min-width: 0;
+  }
+
+  .province-capital {
+    margin-inline: 0;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1184,6 +1199,10 @@ html:has(.province-detail) {
     flex-direction: column;
     gap: 18px;
     min-height: 0;
+  }
+
+  .province-detail {
+    gap: 12px;
   }
 
   .province-detail-hero::after {
@@ -1227,6 +1246,7 @@ html:has(.province-detail) {
 
   .province-quicknav a {
     flex: none;
+    min-height: 44px;
     padding: 10px 14px;
     scroll-snap-align: start;
     white-space: nowrap;
@@ -1253,7 +1273,13 @@ html:has(.province-detail) {
   }
 
   .province-stat-filters {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .province-stat-filters label:last-child {
+    grid-column: 1 / -1;
   }
 
   .province-stat-comparison .province-stat-heading {
@@ -1271,6 +1297,13 @@ html:has(.province-detail) {
 }
 
 @media (max-width: 560px) {
+  .province-detail {
+    gap: 10px;
+    margin-top: 12px;
+    margin-bottom: 40px;
+    padding-inline: 12px;
+  }
+
   .province-detail-hero,
   .province-content-card,
   .province-industries,
@@ -1278,9 +1311,117 @@ html:has(.province-detail) {
     border-radius: 18px;
   }
 
+  .province-detail-hero {
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .province-detail-hero h1 {
+    font-size: clamp(27px, 8vw, 34px);
+  }
+
+  .province-detail-hero-copy > p {
+    display: block;
+    max-width: none;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  .province-breadcrumb {
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+
+  .province-content-card,
+  .province-industries,
+  .province-economy-card {
+    padding: 14px;
+  }
+
+  .province-section-heading {
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .province-section-heading h2,
+  .province-cities-heading h2 {
+    font-size: 17px;
+  }
+
+  .province-overview-grid {
+    gap: 6px;
+  }
+
+  .province-stat {
+    padding: 9px;
+  }
+
+  .province-stat-label {
+    align-items: flex-start;
+  }
+
+  .province-economy-figures > div {
+    padding-inline: 5px;
+  }
+
+  .province-industries > .province-cities-heading > a {
+    min-height: 44px;
+    padding-inline: 12px;
+  }
+
+  .province-industry-body {
+    padding: 12px;
+  }
+
+  .province-industry-body > p,
+  .province-city-description {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  .province-industry-tags li {
+    max-width: 100%;
+  }
+
+  .province-industry-source {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .province-cities-heading {
+    align-items: flex-start;
+  }
+
+  .province-city-name {
+    flex-wrap: wrap;
+  }
+
+  .province-stat-chart-card,
+  .province-stat-comparison {
+    padding: 14px;
+  }
+
+  .province-stat-heading {
+    flex-wrap: wrap;
+  }
+
+  .province-stat-comparison .province-stat-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .province-stat-comparison label {
+    width: 100%;
+  }
+
   .province-detail-meta {
     flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
+    padding-top: 10px;
   }
 
   .province-detail-meta span + span {
@@ -1308,8 +1449,43 @@ html:has(.province-detail) {
   }
 }
 
+@media (max-width: 380px) {
+  .province-detail {
+    padding-inline: 10px;
+  }
+
+  .province-stat-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .province-stat-filters label:last-child {
+    grid-column: auto;
+  }
+
+  .province-economy-figures .province-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .province-economy-figures dt {
+    font-size: 10px;
+  }
+
+  .province-city-list li {
+    padding: 10px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:has(.province-detail) {
     scroll-behavior: auto;
+  }
+
+  .province-detail *,
+  .province-detail *::before,
+  .province-detail *::after {
+    animation: none !important;
+    scroll-behavior: auto;
+    transition: none !important;
   }
 }

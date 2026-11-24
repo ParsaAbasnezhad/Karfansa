@@ -1,35 +1,48 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
-import { apiGet } from '@/lib/api-client'
 import { useQuery } from '@tanstack/react-query'
-import { SectionHero } from '@/components/SectionHero'
-import provincesHeroImage from '@/assets/section-heroes/provinces.svg'
-import type { ProvinceSummary } from './types'
-import provinceMap from './iran-provinces-map.json'
+import { apiGet } from '@/lib/api-client'
+import { formatNumber } from '@/lib/format'
+import type { ProvinceDetail, ProvinceSummary } from './types'
 import './provinces.css'
+import './provinces-directory.css'
 
-const mapLabelOffsets: Record<string, [number, number]> = {
-  'west-azerbaijan': [-25, 4],
-  'east-azerbaijan': [30, -22],
-  ardabil: [40, 8],
-  'north-khorasan': [12, -9],
-  'razavi-khorasan': [18, 8],
-  gilan: [16, -12],
-  zanjan: [4, -15],
-  mazandaran: [20, -14],
-  golestan: [7, -13],
-  alborz: [18, -15],
-  tehran: [23, 12],
-  qom: [24, 19],
-  markazi: [-17, 16],
-  hamadan: [0, 15],
-  kurdistan: [-20, -1],
-  kermanshah: [-5, 16],
-  ilam: [-18, 18],
+const IranMapPanel = lazy(() =>
+  import('./IranMapPanel').then((module) => ({ default: module.IranMapPanel })),
+)
+
+const DESKTOP_QUERY = '(min-width: 768px)'
+
+function subscribeToDesktopViewport(onChange: () => void) {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => {}
+  const mediaQuery = window.matchMedia(DESKTOP_QUERY)
+  mediaQuery.addEventListener('change', onChange)
+  return () => mediaQuery.removeEventListener('change', onChange)
 }
 
+function isDesktopViewport() {
+  return typeof window !== 'undefined' && Boolean(window.matchMedia?.(DESKTOP_QUERY).matches)
+}
+
+function normalizePersianText(value: string) {
+  return value
+    .normalize('NFKC')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLocaleLowerCase('fa')
+}
+
+type CountResponse = { count: number }
+
 export function ProvincesPage() {
+  const showMap = useSyncExternalStore(subscribeToDesktopViewport, isDesktopViewport, () => false)
+  const [search, setSearch] = useState('')
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null)
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
+  const activeSlug = hoveredSlug ?? selectedSlug
 
   useEffect(() => {
     document.title = 'استان‌های ایران | کارفنسا'
@@ -40,26 +53,85 @@ export function ProvincesPage() {
     queryFn: ({ signal }) =>
       apiGet<ProvinceSummary[]>('/v1/geography/provinces/', { country: 'IR' }, signal),
   })
-  const published = provinces.data?.filter((province) => province.is_published) ?? []
+  const published = useMemo(
+    () => provinces.data?.filter((province) => province.is_published) ?? [],
+    [provinces.data],
+  )
+  const filtered = useMemo(() => {
+    const query = normalizePersianText(search)
+    if (!query) return published
+    return published.filter((province) => normalizePersianText(province.name_fa).includes(query))
+  }, [published, search])
+
+  const organizations = useQuery({
+    queryKey: ['province-intelligence', 'organization-count'],
+    queryFn: ({ signal }) =>
+      apiGet<CountResponse>('/v1/organizations/', { limit: 1, offset: 0 }, signal),
+  })
+  const opportunities = useQuery({
+    queryKey: ['province-intelligence', 'opportunity-count'],
+    queryFn: ({ signal }) =>
+      apiGet<CountResponse>('/v1/trade/opportunities/', { page_size: 1 }, signal),
+  })
+  const selectedProvince = useQuery({
+    queryKey: ['province-intelligence', 'detail', selectedSlug],
+    queryFn: ({ signal }) =>
+      apiGet<ProvinceDetail>(
+        `/v1/geography/provinces/${encodeURIComponent(selectedSlug ?? '')}/`,
+        undefined,
+        signal,
+      ),
+    enabled: Boolean(selectedSlug),
+    staleTime: 5 * 60 * 1000,
+  })
+  const selectedOrganizations = useQuery({
+    queryKey: ['province-intelligence', 'province-organizations', selectedSlug],
+    queryFn: ({ signal }) =>
+      apiGet<CountResponse>(
+        '/v1/organizations/',
+        { province: selectedSlug ?? undefined, limit: 1, offset: 0 },
+        signal,
+      ),
+    enabled: Boolean(selectedSlug),
+    staleTime: 5 * 60 * 1000,
+  })
+  const selectedOpportunities = useQuery({
+    queryKey: ['province-intelligence', 'province-opportunities', selectedSlug],
+    queryFn: ({ signal }) =>
+      apiGet<CountResponse>(
+        '/v1/trade/opportunities/',
+        { province: selectedSlug ?? undefined, page_size: 1 },
+        signal,
+      ),
+    enabled: Boolean(selectedSlug),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const selected = published.find((province) => province.slug === selectedSlug)
 
   return (
-    <div className="provinces-page" dir="rtl">
-      <SectionHero
-        className="provinces-hero"
-        visualVariant="provinces"
-        eyebrow="شناخت سرزمین ایران"
-        title="هر استان، دنیایی از فرصت"
-        description="جغرافیا، شهرها و ظرفیت‌های اقتصادی استان‌های ایران را یک‌جا کشف کنید."
-        image={provincesHeroImage}
-        meta={
-          !provinces.isPending && !provinces.isError ? (
-            <>
-              <span className="provinces-hero-count">{formatPersianNumber(published.length)}</span>
-              <span>استان برای شناختن</span>
-            </>
-          ) : undefined
-        }
-      />
+    <main className="provinces-page province-intelligence-page" dir="rtl">
+      <header className="province-intelligence-header">
+        <div className="province-intelligence-title">
+          <span className="provinces-eyebrow">سامانهٔ هوشمندی جغرافیایی کارفنسا</span>
+          <h1>اطلس اقتصادی استان‌های ایران</h1>
+          <p>ظرفیت‌های منطقه‌ای و فرصت‌های تجاری را بر پایهٔ داده‌های ثبت‌شده بررسی کنید.</p>
+        </div>
+        <dl className="province-intelligence-stats" aria-label="نمای کلی داده‌های اقتصادی">
+          <div className="province-intelligence-stat">
+            <dt>استان‌های منتشرشده</dt>
+            <dd>{provinces.isSuccess ? formatNumber(published.length) : '—'}</dd>
+          </div>
+          <div className="province-intelligence-stat">
+            <dt>کسب‌وکارهای فعال</dt>
+            <dd>{organizations.isSuccess ? formatNumber(organizations.data.count) : '—'}</dd>
+          </div>
+          <div className="province-intelligence-stat">
+            <dt>فرصت‌های تجاری منتشرشده</dt>
+            <dd>{opportunities.isSuccess ? formatNumber(opportunities.data.count) : '—'}</dd>
+          </div>
+        </dl>
+      </header>
 
       {provinces.isPending ? (
         <p className="provinces-state">در حال دریافت فهرست استان‌ها…</p>
@@ -71,174 +143,142 @@ export function ProvincesPage() {
           </button>
         </div>
       ) : published.length ? (
-        <section className="iran-map-section" aria-label="نقشه و فهرست استان‌های ایران">
-          <div className="iran-map-panel">
-            <div className="iran-map-heading">
-              <div>
-                <span className="provinces-eyebrow">نقشهٔ تعاملی ایران</span>
-                <h2>برای دیدن هر استان، روی نقشه بزنید</h2>
-              </div>
-              <span className="iran-map-total">{formatPersianNumber(published.length)} استان</span>
-            </div>
-            <div className="iran-map-canvas">
-              <svg
-                className="iran-map-svg"
-                viewBox="0 0 640 570"
-                role="group"
-                aria-label="نقشهٔ تعاملی استان‌های ایران"
-                onPointerLeave={() => setHoveredSlug(null)}
-              >
-                <defs>
-                  <linearGradient id="iran-map-fill" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#dbe5ff" />
-                    <stop offset="100%" stopColor="#9bb7ff" />
-                  </linearGradient>
-                  <linearGradient id="iran-map-active" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#9bb7ff" />
-                    <stop offset="100%" stopColor="#1d4ed8" />
-                  </linearGradient>
-                  <filter id="iran-map-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow
-                      dx="0"
-                      dy="2"
-                      stdDeviation="2.5"
-                      floodColor="#1d4ed8"
-                      floodOpacity=".14"
-                    />
-                  </filter>
-                </defs>
-                <g className="iran-map-regions">
-                  {provinceMap.provinces.map((region) => {
-                    const province = published.find((item) => item.slug === region.slug)
-                    if (!province) return null
-                    const isHovered = hoveredSlug === province.slug
-                    return (
-                      <Link
-                        key={region.slug}
-                        className={`iran-map-link${isHovered ? ' is-hovered' : ''}`}
-                        to={`/provinces/${province.slug}/`}
-                        aria-label={`مشاهدهٔ استان ${province.name_fa}`}
-                        onPointerEnter={() => setHoveredSlug(province.slug)}
-                        onFocus={() => setHoveredSlug(province.slug)}
-                        onBlur={() => setHoveredSlug(null)}
-                      >
-                        <path
-                          className="iran-map-region"
-                          d={region.path}
-                          fill={isHovered ? 'url(#iran-map-active)' : 'url(#iran-map-fill)'}
-                          filter="url(#iran-map-shadow)"
-                        >
-                          <title>{province.name_fa}</title>
-                        </path>
-                      </Link>
-                    )
-                  })}
-                </g>
-                <g className="iran-map-labels">
-                  {provinceMap.provinces.map((region) => {
-                    const province = published.find((item) => item.slug === region.slug)
-                    if (!province) return null
-                    const width = Math.max(42, province.name_fa.length * 7.2 + 16)
-                    const isHovered = hoveredSlug === province.slug
-                    const [offsetX, offsetY] = mapLabelOffsets[region.slug] ?? [0, 0]
-                    return (
-                      <Link
-                        key={region.slug}
-                        className={`iran-map-label${isHovered ? ' is-hovered' : ''}`}
-                        to={`/provinces/${province.slug}/`}
-                        aria-label={`مشاهدهٔ استان ${province.name_fa}`}
-                        onPointerEnter={() => setHoveredSlug(province.slug)}
-                        onFocus={() => setHoveredSlug(province.slug)}
-                        onBlur={() => setHoveredSlug(null)}
-                      >
-                        <g transform={`translate(${region.x} ${region.y})`}>
-                          {(offsetX !== 0 || offsetY !== 0) && (
-                            <line
-                              className="iran-map-label-leader"
-                              x1="0"
-                              y1="0"
-                              x2={offsetX * 0.62}
-                              y2={offsetY * 0.62}
-                            />
-                          )}
-                          <rect
-                            x={offsetX - width / 2}
-                            y={offsetY - 10}
-                            width={width}
-                            height="20"
-                            rx="7"
-                            className="iran-map-label-bg"
-                          />
-                          <text
-                            className="iran-map-label-text"
-                            textAnchor="middle"
-                            x={offsetX}
-                            y={offsetY + 4}
-                          >
-                            {province.name_fa}
-                          </text>
-                        </g>
-                      </Link>
-                    )
-                  })}
-                </g>
-              </svg>
-            </div>
-            <footer className="iran-map-attribution">
-              <span>برای بازشدن صفحهٔ استان، ناحیه یا نام آن را انتخاب کنید.</span>
-              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-                © مشارکت‌کنندگان OpenStreetMap
-              </a>
-            </footer>
-          </div>
+        <section
+          className={`iran-map-section${showMap ? ' has-map' : ' directory-only'}`}
+          aria-label={showMap ? 'اطلس و فهرست استان‌های ایران' : 'فهرست استان‌های ایران'}
+        >
+          {showMap && (
+            <Suspense fallback={<div className="iran-map-loading" aria-hidden="true" />}>
+              <IranMapPanel
+                provinces={published}
+                hoveredSlug={hoveredSlug}
+                selectedSlug={selectedSlug}
+                activeSlug={activeSlug}
+                selectedDetail={selectedProvince.data}
+                organizationCount={
+                  selectedOrganizations.isSuccess ? selectedOrganizations.data.count : undefined
+                }
+                opportunityCount={
+                  selectedOpportunities.isSuccess ? selectedOpportunities.data.count : undefined
+                }
+                onHover={setHoveredSlug}
+              />
+            </Suspense>
+          )}
+
           <aside className="iran-province-directory" aria-label="فهرست استان‌ها">
             <div className="iran-directory-heading">
-              <span className="provinces-eyebrow">استان‌های ایران</span>
-              <h2>
-                {hoveredSlug
-                  ? published.find((province) => province.slug === hoveredSlug)?.name_fa
-                  : 'یک مقصد انتخاب کنید'}
-              </h2>
-              <p>
-                {hoveredSlug
-                  ? 'برای ورود به صفحهٔ معرفی استان کلیک کنید.'
-                  : 'نام هر استان را انتخاب کنید یا از روی نقشه وارد شوید.'}
-              </p>
+              <span className="provinces-eyebrow">پایگاه منطقه‌ای</span>
+              <h2>استان‌ها</h2>
+              <p>{formatNumber(published.length)} محدودهٔ اقتصادی برای بررسی</p>
             </div>
-            <nav className="iran-directory-list">
-              {published.map((province, index) => (
-                <Link
-                  className={`iran-directory-link${hoveredSlug === province.slug ? ' is-hovered' : ''}`}
-                  key={province.id}
-                  to={`/provinces/${province.slug}/`}
-                  onPointerEnter={() => setHoveredSlug(province.slug)}
-                  onPointerLeave={() => setHoveredSlug(null)}
-                  onFocus={() => setHoveredSlug(province.slug)}
-                  onBlur={() => setHoveredSlug(null)}
-                >
-                  <span>{formatPersianNumber(index + 1)}</span>
-                  <strong>{province.name_fa}</strong>
-                  <i aria-hidden="true">←</i>
-                </Link>
-              ))}
+
+            <label className="province-search">
+              <span className="province-search-icon" aria-hidden="true">
+                ⌕
+              </span>
+              <span className="sr-only">جست‌وجوی استان</span>
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="جست‌وجو در استان‌ها"
+                autoComplete="off"
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch('')} aria-label="پاک‌کردن جست‌وجو">
+                  ×
+                </button>
+              )}
+            </label>
+
+            <nav className="iran-directory-list" aria-label="استان‌های منتشرشده">
+              {filtered.map((province, index) => {
+                const isActive = activeSlug === province.slug
+                const isSelected = selectedSlug === province.slug
+                return (
+                  <div
+                    className={`iran-directory-row${isActive ? ' is-active' : ''}${isSelected ? ' is-selected' : ''}`}
+                    key={province.id}
+                    onPointerEnter={() => setHoveredSlug(province.slug)}
+                    onPointerLeave={() => setHoveredSlug(null)}
+                    onFocus={() => setHoveredSlug(province.slug)}
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) setHoveredSlug(null)
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="iran-directory-select"
+                      aria-pressed={isSelected}
+                      onClick={() => setSelectedSlug(isSelected ? null : province.slug)}
+                    >
+                      <span className="iran-directory-index">{formatNumber(index + 1)}</span>
+                      <span className="iran-directory-pin" aria-hidden="true">
+                        <svg viewBox="0 0 20 20">
+                          <path d="M10 18s6-5.3 6-10a6 6 0 1 0-12 0c0 4.7 6 10 6 10Z" />
+                          <circle cx="10" cy="8" r="2" />
+                        </svg>
+                      </span>
+                      <strong>{province.name_fa}</strong>
+                      {isSelected &&
+                        selectedOrganizations.isSuccess &&
+                        selectedOpportunities.isSuccess && (
+                          <span
+                            className="iran-directory-count"
+                            aria-label={`${formatNumber(selectedOrganizations.data.count)} کسب‌وکار فعال، ${formatNumber(selectedOpportunities.data.count)} فرصت تجاری`}
+                            title="کسب‌وکار فعال · فرصت تجاری"
+                          >
+                            {formatNumber(selectedOrganizations.data.count)} ·{' '}
+                            {formatNumber(selectedOpportunities.data.count)}
+                          </span>
+                      )}
+                    </button>
+                    <Link
+                      className="iran-directory-link"
+                      to={`/provinces/${province.slug}/`}
+                      aria-label={`مشاهدهٔ صفحهٔ ${province.name_fa}`}
+                    >
+                      <span aria-hidden="true">←</span>
+                    </Link>
+                  </div>
+                )
+              })}
+              {!filtered.length && (
+                <p className="province-search-empty">استانی با این نام پیدا نشد.</p>
+              )}
             </nav>
-            <a
-              className="iran-map-all-link"
-              href="https://www.openstreetmap.org/copyright"
-              target="_blank"
-              rel="noreferrer"
-            >
-              دربارهٔ داده‌های نقشه <span aria-hidden="true">↗</span>
-            </a>
+
+            {selected && (
+              <div className="province-selected-summary" aria-live="polite">
+                <strong>{selected.name_fa}</strong>
+                <div>
+                  <span>
+                    کسب‌وکار فعال:{' '}
+                    {selectedOrganizations.isSuccess
+                      ? formatNumber(selectedOrganizations.data.count)
+                      : '—'}
+                  </span>
+                  <span>
+                    فرصت تجاری:{' '}
+                    {selectedOpportunities.isSuccess
+                      ? formatNumber(selectedOpportunities.data.count)
+                      : '—'}
+                  </span>
+                  {selectedProvince.isSuccess && (
+                    <span>
+                      شاخص اقتصادی ثبت‌شده: {formatNumber(selectedProvince.data.statistics.length)}
+                    </span>
+                  )}
+                </div>
+                <Link to={`/provinces/${selected.slug}/`}>مشاهدهٔ شناسنامهٔ استان ←</Link>
+              </div>
+            )}
           </aside>
         </section>
       ) : (
         <p className="provinces-state">هنوز استان منتشرشده‌ای در دسترس نیست.</p>
       )}
-    </div>
+    </main>
   )
-}
-
-function formatPersianNumber(value: number) {
-  return new Intl.NumberFormat('fa-IR').format(value)
 }

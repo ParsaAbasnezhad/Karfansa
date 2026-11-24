@@ -612,3 +612,27 @@ body:has(.provinces-page) {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 767px) {
+  .iran-map-panel {
+    display: none;
+  }
+
+  .iran-map-section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .iran-province-directory {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .iran-directory-list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .iran-map-all-link {
+    display: none;
+  }
+}
