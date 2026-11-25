@@ -1,0 +1,428 @@
+.business-os .biz-profile-panel {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.biz-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line);
+}
+
+.biz-profile-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid #d8e2f5;
+  border-radius: 12px;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.biz-profile-avatar > svg {
+  width: 23px;
+  height: 23px;
+}
+
+.biz-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.biz-profile-identity-copy {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.biz-profile-identity-copy small,
+.biz-profile-completion > div:first-child > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.biz-profile-identity-copy strong {
+  max-width: 100%;
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.biz-profile-completion {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.biz-profile-completion > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.biz-profile-completion > div:first-child strong {
+  color: var(--navy);
+  font-size: 12px;
+}
+
+.biz-profile-progress {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e5eaf2;
+}
+
+.biz-profile-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+  transition: width 180ms ease;
+}
+
+.biz-profile-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.biz-profile-checklist li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.biz-profile-checklist li.is-done {
+  color: #167451;
+}
+
+.biz-profile-checklist svg {
+  width: 13px;
+  height: 13px;
+}
+
+.business-os .biz-profile-form {
+  min-width: 0;
+}
+
+.business-os .biz-profile-section {
+  min-width: 0;
+  grid-column: 1 / -1;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.business-os .biz-profile-section > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.business-os .biz-profile-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.business-os .biz-profile-section > summary::after {
+  content: '+';
+  margin-inline-start: auto;
+  color: var(--blue);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.business-os .biz-profile-section[open] > summary::after {
+  content: '−';
+}
+
+.biz-profile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  padding: 0 12px 12px;
+}
+
+.biz-profile-fields > .is-wide {
+  grid-column: 1 / -1;
+}
+
+.business-os .biz-profile-fields label {
+  min-width: 0;
+}
+
+.business-os .biz-profile-form .biz-profile-province {
+  grid-column: 1 / -1;
+}
+
+.business-os .biz-profile-visibility {
+  display: flex !important;
+  align-items: center;
+  flex-direction: row !important;
+  gap: 9px !important;
+  min-height: 44px;
+}
+
+.business-os .biz-profile-visibility input {
+  flex: none;
+}
+
+.business-os .biz-profile-form label,
+.business-os .biz-profile-image label {
+  min-width: 0;
+}
+
+.business-os .biz-profile-form textarea {
+  line-height: 1.8;
+}
+
+.business-os .biz-profile-save {
+  min-width: 150px;
+}
+
+.biz-success {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--up-bg);
+  color: #176a50;
+  font-size: 12px;
+}
+
+.biz-profile-image {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: end;
+  gap: 10px !important;
+  min-width: 0;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+
+.biz-profile-subheading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.biz-profile-avatar.is-small {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border-radius: 9px;
+}
+
+.biz-profile-avatar.is-small svg {
+  width: 18px;
+  height: 18px;
+}
+
+.biz-profile-subheading h3 {
+  margin: 0 !important;
+  color: var(--fg);
+  font-size: 12px !important;
+}
+
+.biz-profile-subheading p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.biz-profile-file-name {
+  grid-column: 1 / -1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.business-os .biz-profile-file {
+  position: relative;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.business-os .biz-profile-file > span {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.business-os .biz-profile-file input[type='file'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.business-os .biz-profile-file:focus-within > span {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.business-os .biz-profile-image .biz-button {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .business-os {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .business-os .biz-profile-panel {
+    gap: 13px;
+    padding: 13px;
+  }
+
+  .business-os .biz-card form.biz-profile-form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 11px;
+  }
+
+  .biz-profile-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .biz-profile-fields > .is-wide,
+  .business-os .biz-profile-form .biz-profile-province {
+    grid-column: auto;
+  }
+
+  .business-os .biz-profile-form label:has(textarea) {
+    grid-column: auto;
+  }
+
+  @media (max-width: 800px) {
+    .business-os {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .business-os .bos-focused-detail {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 11px;
+    }
+
+    .business-os .bos-desktop-summary {
+      display: none;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 800px) {
+    .business-os .biz-card form.biz-profile-form {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .biz-profile-fields {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .business-os .biz-profile-image {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .business-os .biz-profile-image .biz-button {
+      grid-column: auto;
+    }
+  }
+
+  .business-os .biz-card input,
+  .business-os .biz-card select,
+  .business-os .biz-card textarea {
+    min-height: 44px;
+    padding: 9px 11px;
+    font-size: 16px;
+  }
+
+  .business-os .biz-card textarea {
+    min-height: 88px;
+  }
+
+  .business-os .biz-card input[type='checkbox'] {
+    min-height: 20px;
+    width: 20px;
+  }
+
+  .business-os .biz-card .biz-button {
+    min-height: 44px;
+    width: 100%;
+    font-size: 13px !important;
+  }
+
+  .biz-profile-image {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .biz-profile-subheading,
+  .biz-profile-file-name,
+  .business-os .biz-profile-image .biz-button {
+    grid-column: auto;
+  }
+
+  .business-os .bos-section-nav .bos-nav-item {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .business-os .biz-profile-checklist {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .business-os .biz-profile-identity-copy strong {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .business-os .biz-profile-progress > span {
+    transition: none;
+  }
+}

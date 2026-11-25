@@ -43,12 +43,12 @@ function ActionCard({
   )
   if (href)
     return (
-      <Link className={`account-action ${accent}`} to={href}>
+      <Link className={`account-action management-card ${accent}`} to={href}>
         {contents}
       </Link>
     )
   return (
-    <button className={`account-action ${accent}`} type="button" onClick={onClick}>
+    <button className={`account-action management-card ${accent}`} type="button" onClick={onClick}>
       {contents}
     </button>
   )
@@ -104,7 +104,7 @@ function AccountMetric({
   loading?: boolean
 }) {
   return (
-    <article className={`account-metric ${tone}`}>
+    <article className={`account-metric management-card ${tone}`}>
       <span className="account-metric-icon">
         <Icon name={icon} />
       </span>
@@ -270,64 +270,51 @@ export function AccountPage() {
   const profileProgress =
     ([user.first_name, user.last_name, user.province_id, user.city_id].filter(Boolean).length / 4) *
     100
-  const displayName = fullName || user.email
   const recentItems = recentInquiries.data?.results ?? []
-  const profileInitial = fullName || user.email
+  const startProfileEditing = () => {
+    setProfileEditing(true)
+    requestAnimationFrame(() =>
+      document.getElementById('account-profile')?.scrollIntoView({ behavior: 'smooth' }),
+    )
+  }
 
   return (
     <section className="account-page" dir="rtl">
       <div className="account-workspace">
-        <header className="account-topbar">
-          <div className="account-page-title">
-            <div>
-              <span className="account-breadcrumb">فضای کاربری / حساب من</span>
-              <h1>نمای کلی</h1>
-            </div>
+        <header className="management-page-header account-page-header">
+          <div>
+            <span className="management-eyebrow">کارفنسا / فضای مدیریت</span>
+            <h1>حساب کاربری</h1>
+            <p>اطلاعات شخصی، فعالیت‌ها و پشتیبانی را از اینجا دنبال کنید.</p>
           </div>
-          <div className="account-topbar-user">
-            <span className="account-topbar-avatar">{profileInitial.slice(0, 1)}</span>
-            <span>
-              <b>{displayName}</b>
-              <small>{activeIdentity?.label ?? 'حساب شخصی'}</small>
-            </span>
-            <Link to="/business" aria-label="مدیریت کسب‌وکار و هویت فعال">
-              <Icon name="sliders" />
-            </Link>
-          </div>
+          <button
+            className="management-button account-profile-edit"
+            type="button"
+            onClick={startProfileEditing}
+          >
+            <Icon name="user" />
+            {profileComplete ? 'ویرایش اطلاعات' : 'تکمیل پروفایل'}
+          </button>
         </header>
 
         <div className="account-dashboard-content">
-          <header className="account-welcome">
+          <section className="account-welcome management-card">
             <div className="account-welcome-copy">
-              <span className="account-eyebrow">کارفنسا · فضای کاری</span>
               <h2>خوش آمدید، {fullName || 'به کارفنسا'}</h2>
               <p>
                 {activeIdentity
                   ? `در حال مدیریت ${activeIdentity.label} هستید. فعالیت‌ها و درخواست‌های خود را از اینجا دنبال کنید.`
                   : 'اطلاعات حساب و مسیرهای همکاری خود را در یک نگاه مدیریت کنید.'}
               </p>
-              <div className="account-welcome-actions">
-                <button
-                  className="account-primary-button"
-                  type="button"
-                  onClick={() => navigate('/business')}
-                >
-                  {activeIdentity ? 'مدیریت هویت فعال' : 'انتخاب یا ثبت کسب‌وکار'}
-                  <Icon name="arrow-l" />
-                </button>
-                {activeIdentity && (
-                  <span className="account-identity-chip">
-                    <Icon name={activeIdentity.kind === 'organization' ? 'building' : 'user'} />
-                    {activeIdentity.label}
-                    <small>{statusLabels[activeIdentity.verification_status] ?? 'هویت فعال'}</small>
-                  </span>
-                )}
-              </div>
             </div>
-            <span className="account-welcome-mark" aria-hidden="true">
-              <Icon name="route" />
-            </span>
-          </header>
+            {activeIdentity && (
+              <span className="account-identity-chip management-badge">
+                <Icon name={activeIdentity.kind === 'organization' ? 'building' : 'user'} />
+                {activeIdentity.label}
+                <small>{statusLabels[activeIdentity.verification_status] ?? 'هویت فعال'}</small>
+              </span>
+            )}
+          </section>
 
           <section className="account-metrics" aria-label="خلاصه فعالیت">
             {activeIdentity && (
@@ -386,7 +373,7 @@ export function AccountPage() {
           </section>
 
           {!activeIdentity && identities.isSuccess && (
-            <section className="account-identity-empty">
+            <section className="account-identity-empty management-card">
               <span>
                 <Icon name="building" />
               </span>
@@ -396,14 +383,14 @@ export function AccountPage() {
                   برای مشاهده آمار محصولات و همکاری‌ها، یک هویت را در داشبورد کسب‌وکار انتخاب کنید.
                 </p>
               </div>
-              <Link className="account-secondary-button" to="/business">
+              <Link className="account-secondary-button management-button" to="/business">
                 مشاهده کسب‌وکارها
               </Link>
             </section>
           )}
 
           <section
-            className="account-summary"
+            className="account-summary management-card"
             id="account-summary"
             aria-label="پروفایل و حساب کاربری"
           >
@@ -435,25 +422,12 @@ export function AccountPage() {
               <span>عضو از</span>
               <strong>{formatShortDate(user.date_joined)}</strong>
             </div>
-            <span className={`account-profile-state${profileComplete ? ' is-complete' : ''}`}>
+            <span
+              className={`account-profile-state management-badge${profileComplete ? ' is-complete' : ''}`}
+            >
               <Icon name={profileComplete ? 'badge-check' : 'user'} />
               {profileComplete ? 'پروفایل تکمیل‌شده' : 'نیازمند تکمیل'}
             </span>
-            <button
-              className="account-profile-edit"
-              type="button"
-              onClick={() => {
-                setProfileEditing(true)
-                requestAnimationFrame(() =>
-                  document
-                    .getElementById('account-profile')
-                    ?.scrollIntoView({ behavior: 'smooth' }),
-                )
-              }}
-            >
-              {profileComplete ? 'ویرایش اطلاعات' : 'تکمیل پروفایل'}
-              <Icon name="arrow-l" />
-            </button>
           </section>
 
           <section className="account-section" aria-labelledby="account-actions-title">
@@ -470,20 +444,6 @@ export function AccountPage() {
                 title="هدف من در کارفنسا"
                 description="هدف‌های خود را ببینید و تغییر دهید"
                 onClick={() => setIntentOpen(true)}
-                accent="is-blue"
-              />
-              <ActionCard
-                icon="building"
-                title="داشبورد کسب‌وکار"
-                description="هویت شرکت یا فعالیت فردی را مدیریت کنید"
-                href="/business"
-                accent="is-blue"
-              />
-              <ActionCard
-                icon="mail"
-                title="درخواست‌های همکاری"
-                description="درخواست‌های دریافتی و ارسالی را پیگیری کنید"
-                href="/account/inquiries"
                 accent="is-blue"
               />
               {activeIdentity && business.data?.can_publish && (
@@ -535,7 +495,7 @@ export function AccountPage() {
 
           {(!profileComplete || profileEditing) && (
             <section
-              className="account-panel"
+              className="account-panel management-card"
               id="account-profile"
               aria-labelledby="account-profile-title"
             >
@@ -636,7 +596,7 @@ export function AccountPage() {
                   </p>
                 )}
                 <button
-                  className="account-primary-button"
+                  className="account-primary-button management-button"
                   type="submit"
                   disabled={saveProfile.isPending}
                 >
@@ -648,7 +608,7 @@ export function AccountPage() {
 
           <div className="account-lower-grid">
             <section
-              className="account-panel account-activity"
+              className="account-panel account-activity management-card"
               aria-labelledby="account-activity-title"
             >
               <div className="account-panel-heading">
@@ -699,7 +659,9 @@ export function AccountPage() {
                           {item.target_title} · {formatShortDate(item.created_at)}
                         </small>
                       </span>
-                      <span className="account-activity-status">{item.status_display}</span>
+                      <span className="account-activity-status management-badge">
+                        {item.status_display}
+                      </span>
                       {item.unread && <i aria-label="خوانده‌نشده" />}
                     </Link>
                   ))}
@@ -707,7 +669,7 @@ export function AccountPage() {
               )}
             </section>
             <section
-              className="account-panel account-support"
+              className="account-panel account-support management-card"
               aria-labelledby="account-support-title"
             >
               <div className="account-panel-heading">
@@ -759,7 +721,9 @@ export function AccountPage() {
                           {formatShortDate(ticket.last_message_at ?? ticket.created_at)}
                         </small>
                       </span>
-                      <span className={`account-ticket-status is-${ticket.status}`}>
+                      <span
+                        className={`account-ticket-status management-badge is-${ticket.status}`}
+                      >
                         {ticket.status_display}
                       </span>
                       {ticket.has_unread && <span className="account-unread-pill">جدید</span>}
@@ -768,11 +732,14 @@ export function AccountPage() {
                 </div>
               )}
               <div className="account-support-actions">
-                <Link className="account-primary-button" to="/account/support?new=1">
+                <Link
+                  className="account-primary-button management-button"
+                  to="/account/support?new=1"
+                >
                   <Icon name="send" />
                   ثبت تیکت جدید
                 </Link>
-                <Link className="account-secondary-button" to="/account/support">
+                <Link className="account-secondary-button management-button" to="/account/support">
                   همه درخواست‌ها
                 </Link>
               </div>

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { ManagementCard, ManagementStatusBadge } from '@/components/management/ManagementLayout'
 import { formatNumber, formatShortDate } from '@/lib/format'
 import { BusinessIcon, type BusinessIconName } from './BusinessIcons'
 import { statusLabels } from './BusinessDashboardStatus'
@@ -87,7 +88,18 @@ export function EmptyState({
 }
 
 export function Status({ value, label }: { value: string; label?: string }) {
-  return <span className={`bos-status is-${value}`}>{label ?? statusLabels[value] ?? value}</span>
+  const tone = ['verified', 'approved', 'replied', 'active'].includes(value)
+    ? 'success'
+    : ['rejected', 'suspended', 'removed'].includes(value)
+      ? 'danger'
+      : ['new', 'pending'].includes(value)
+        ? 'warning'
+        : 'info'
+  return (
+    <ManagementStatusBadge tone={tone} className={`bos-status is-${value}`}>
+      {label ?? statusLabels[value] ?? value}
+    </ManagementStatusBadge>
+  )
 }
 
 export function Metric({
@@ -104,7 +116,7 @@ export function Metric({
   highlight?: boolean
 }) {
   return (
-    <article className={`bos-metric${highlight ? ' is-highlight' : ''}`}>
+    <ManagementCard as="article" className={`bos-metric${highlight ? ' is-highlight' : ''}`}>
       <div className="bos-metric-top">
         <span>{label}</span>
         <BusinessIcon name={icon} />
@@ -113,7 +125,7 @@ export function Metric({
         {value === null ? '—' : formatNumber(value)}
       </strong>
       <small>{detail}</small>
-    </article>
+    </ManagementCard>
   )
 }
 
@@ -136,7 +148,7 @@ export function ListingsPanel({
   return (
     <section className="bos-panel bos-listings-panel">
       <PanelHeading
-        eyebrow="CATALOG"
+        eyebrow="فهرست آگهی‌ها"
         title="محصولات و خدمات"
         action={
           full ? (
@@ -213,7 +225,7 @@ export function TradePanel({
   return (
     <section className="bos-panel bos-trade-panel">
       <PanelHeading
-        eyebrow="TRADE DESK"
+        eyebrow="فرصت‌های تجاری"
         title="فرصت‌های تجاری"
         action={
           !full && (
@@ -277,7 +289,7 @@ export function InquiriesPanel({
   return (
     <section className="bos-panel bos-inquiries-panel">
       <PanelHeading
-        eyebrow="CUSTOMER DESK"
+        eyebrow="درخواست‌های مشتریان"
         title="درخواست‌های مشتریان"
         action={
           !full && (
@@ -342,7 +354,7 @@ export function SubmittedPanel({
 }) {
   return (
     <section className="bos-panel bos-submitted-panel">
-      <PanelHeading eyebrow="ACCOUNT REQUESTS" title="درخواست‌های ارسالی حساب" />
+      <PanelHeading eyebrow="درخواست‌های حساب" title="درخواست‌های ارسالی حساب" />
       <p className="bos-muted">درخواست‌های خریدی که با حساب کاربری خود فرستاده‌اید.</p>
       {loading ? (
         <div className="bos-skeleton bos-row-skeleton" />
@@ -467,7 +479,7 @@ export function ActivityPanel({
     .slice(0, 5)
   return (
     <section className="bos-panel bos-timeline-panel">
-      <PanelHeading eyebrow="RECENT ACTIVITY" title="آخرین فعالیت‌ها" />
+      <PanelHeading eyebrow="فعالیت اخیر" title="آخرین فعالیت‌ها" />
       {loading ? (
         <div className="bos-skeleton bos-row-skeleton" />
       ) : events.length ? (

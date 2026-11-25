@@ -10,6 +10,7 @@ import {
   type Location,
 } from 'react-router-dom'
 import { RootLayout } from '@/components/layout/RootLayout'
+import { ManagementLayout } from '@/components/management/ManagementLayout'
 import { HomePage } from '@/features/home/HomePage'
 import { NotFoundPage } from '@/features/search/NotFoundPage'
 import { SearchPage } from '@/features/search/SearchPage'
@@ -166,7 +167,18 @@ function AppRoutes() {
     <>
       <div ref={siteRef} className={loginOpen ? 'site-under-auth' : undefined}>
         <Routes location={siteLocation}>
-          <Route path="/business" element={<BusinessDashboardPage />} />
+          <Route element={<ManagementLayout />}>
+            <Route path="/business" element={<BusinessDashboardPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route
+              path="/account/inquiries"
+              element={
+                <Suspense fallback={<p dir="rtl">در حال بارگذاری درخواست‌ها…</p>}>
+                  <InquiryDashboardPage />
+                </Suspense>
+              }
+            />
+          </Route>
           <Route path="/" element={<RootLayout />}>
             <Route index element={<HomePage />} />
             <Route path="about" element={<AboutPage />} />
@@ -198,10 +210,7 @@ function AppRoutes() {
             <Route path="services/listings/new" element={<ServicesListingFormPage />} />
             <Route path="services/listings/:listingId/edit" element={<ServicesListingFormPage />} />
             <Route path="services/listings/:slug" element={<ServicesProductDetailPage />} />
-            <Route
-              path="services/sellers/:sellerId"
-              element={<SellerLegacyRedirect />}
-            />
+            <Route path="services/sellers/:sellerId" element={<SellerLegacyRedirect />} />
             <Route path="services/dashboard" element={<ServicesDashboardPage />} />
             <Route path="companies" element={<CompaniesPage />} />
             <Route path="companies/:slug" element={<CompanyProfilePage />} />
@@ -221,14 +230,15 @@ function AppRoutes() {
                 </Suspense>
               }
             />
-            <Route path="transportation" element={<Navigate to="/transportation/companies" replace />} />
+            <Route
+              path="transportation"
+              element={<Navigate to="/transportation/companies" replace />}
+            />
             <Route path="transport" element={<Navigate to="/transportation/companies" replace />} />
             <Route path="transport/register" element={<Navigate to="/join" replace />} />
             <Route path="individuals" element={<IndividualsPage />} />
             <Route path="individuals/:individualId" element={<IndividualProfilePage />} />
             <Route path="search" element={<SearchPage />} />
-            <Route path="account" element={<AccountPage />} />
-            <Route path="account/inquiries" element={<Suspense fallback={<p dir="rtl">در حال بارگذاری درخواست‌ها…</p>}><InquiryDashboardPage /></Suspense>} />
             <Route path="join" element={<JoinPage />} />
             <Route path="register-company" element={<Navigate to="/join" replace />} />
             <Route path="account/support" element={<SupportCenterPage />} />

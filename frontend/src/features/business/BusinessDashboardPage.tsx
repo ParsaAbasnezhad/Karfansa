@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
-import { NotificationBell } from '@/features/inquiries/NotificationBell'
 import { ApiError, apiGet, apiPost } from '@/lib/api-client'
-import { formatLongDate, formatNumber } from '@/lib/format'
+import { formatNumber } from '@/lib/format'
 import { BusinessIcon, type BusinessIconName } from './BusinessIcons'
 import { OpportunityForm, ProfilePanel } from './BusinessForms'
+import { BusinessVerificationPanel } from './BusinessVerificationPanel'
 import {
   ActivityPanel,
   EmptyState,
@@ -100,9 +100,31 @@ function profileChecklist(kind: string, record?: Profile) {
         label: 'شماره تماس',
         done: Boolean(String(record?.phone || record?.representative_phone || '').trim()),
       },
+      { label: 'راه ارتباطی ایمیلی', done: Boolean(String(record?.email ?? '').trim()) },
+      { label: 'معرفی شرکت', done: Boolean(String(record?.description ?? '').trim()) },
     ]
   }
-  return [{ label: 'نام نمایشی', done: String(record?.display_name ?? '').trim().length >= 2 }]
+  return [
+    { label: 'نام نمایشی', done: String(record?.display_name ?? '').trim().length >= 2 },
+    { label: 'عنوان حرفه‌ای', done: Boolean(String(record?.professional_title ?? '').trim()) },
+    { label: 'استان فعالیت', done: Boolean(record?.province_id) },
+    {
+      label: 'راه ارتباطی',
+      done: Boolean(String(record?.public_phone || record?.public_email || '').trim()),
+    },
+    { label: 'معرفی کوتاه', done: Boolean(String(record?.bio ?? '').trim()) },
+  ]
+}
+
+function isProfileReady(kind: string, record?: Profile) {
+  if (kind === 'organization') {
+    return Boolean(
+      String(record?.name ?? '').trim() &&
+      record?.province_id &&
+      String(record?.phone || record?.representative_phone || '').trim(),
+    )
+  }
+  return String(record?.display_name ?? '').trim().length >= 2
 }
 
 function LoadingState() {
@@ -113,12 +135,6 @@ function LoadingState() {
       aria-busy="true"
       aria-label="در حال بارگذاری داشبورد"
     >
-      <div className="bos-loading-rail">
-        <div className="bos-skeleton bos-skeleton-brand" />
-        <div className="bos-skeleton" />
-        <div className="bos-skeleton" />
-        <div className="bos-skeleton" />
-      </div>
       <div className="bos-loading-body">
         <div className="bos-skeleton bos-skeleton-title" />
         <div className="bos-loading-metrics">
@@ -140,11 +156,6 @@ export function BusinessDashboardPage() {
   const queryClient = useQueryClient()
   const [params, setParams] = useSearchParams()
   const [error, setError] = useState('')
-  const [collapsed, setCollapsed] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const menuButtonRef = useRef<HTMLButtonElement>(null)
-  const drawerCloseRef = useRef<HTMLButtonElement>(null)
-  const drawerWasOpenRef = useRef(false)
   const [rangeDays, setRangeDays] = useState<7 | 30>(7)
   const sectionValue = params.get('section')
   const section: Section = [
@@ -162,39 +173,7 @@ export function BusinessDashboardPage() {
     if (next === 'overview') search.delete('section')
     else search.set('section', next)
     setParams(search)
-    setDrawerOpen(false)
   }
-
-  useEffect(() => {
-    if (drawerOpen) drawerCloseRef.current?.focus()
-    else if (drawerWasOpenRef.current) menuButtonRef.current?.focus()
-    drawerWasOpenRef.current = drawerOpen
-    if (!drawerOpen) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setDrawerOpen(false)
-        return
-      }
-      if (event.key !== 'Tab') return
-      const elements = Array.from(
-        drawerCloseRef.current
-          ?.closest('aside')
-          ?.querySelectorAll<HTMLElement>('a, button, select') ?? [],
-      ).filter((element) => element.getClientRects().length > 0)
-      if (!elements.length) return
-      const first = elements[0]
-      const last = elements[elements.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [drawerOpen])
 
   const identities = useQuery({
     queryKey: ['business', 'identities'],
@@ -335,7 +314,7 @@ export function BusinessDashboardPage() {
           <span className="bos-mark">
             <BusinessIcon name="briefcase" />
           </span>
-          <span className="bos-eyebrow">KARFANSA BUSINESS OS</span>
+          <span className="bos-eyebrow">فضای مدیریت کارفنسا</span>
           <h1>مرکز مدیریت کسب‌وکار</h1>
           <p>برای مدیریت هویت تجاری، محصولات و درخواست‌ها وارد حساب خود شوید.</p>
           <AppLink className="bos-primary" href="/login">
@@ -385,7 +364,19 @@ export function BusinessDashboardPage() {
     ? Math.round((checklist.filter((item) => item.done).length / checklist.length) * 100)
     : null
   const status = statusLabels[data.verification_status] ?? 'هویت انتخاب نشده'
-  const displayName = user.first_name || user.email || user.phone || 'حساب کاربری'
+  const focusedSection = section === 'profile' || section === 'verification'
+  const pageTitle =
+    section === 'profile'
+      ? 'پروفایل کسب‌وکار'
+      : section === 'verification'
+        ? 'تأیید و مدارک'
+        : 'مرکز مدیریت کسب‌وکار'
+  const pageDescription =
+    section === 'profile'
+      ? `اطلاعات و تصویر ${data.label || 'هویت فعال'} را مدیریت کنید.`
+      : section === 'verification'
+        ? `وضعیت بررسی و مدارک ${data.label || 'هویت فعال'} را دنبال کنید.`
+        : `فعالیت‌ها، فرصت‌ها و عملکرد ${data.label || 'کسب‌وکار'} را دنبال کنید.`
   const publicProfilePath =
     data.kind === 'organization'
       ? profile.data?.slug
@@ -425,585 +416,454 @@ export function BusinessDashboardPage() {
   )
 
   return (
-    <div
-      className={`business-os${collapsed ? ' is-collapsed' : ''}${drawerOpen ? ' is-drawer-open' : ''}`}
-      dir="rtl"
-    >
-      <button
-        className="bos-drawer-scrim"
-        type="button"
-        aria-label="بستن فهرست"
-        tabIndex={drawerOpen ? 0 : -1}
-        onClick={() => setDrawerOpen(false)}
-      />
-      <aside
-        className="bos-sidebar"
-        role={drawerOpen ? 'dialog' : undefined}
-        aria-modal={drawerOpen || undefined}
-        aria-label="ناوبری کسب‌وکار"
-      >
-        <div className="bos-brand-row">
-          <div className="bos-mark">
-            <BusinessIcon name="briefcase" />
-          </div>
-          <div className="bos-brand-text">
-            <strong>KARFANSA</strong>
-            <span>BUSINESS OS</span>
-          </div>
+    <div className={`business-os is-${section}-section`} dir="rtl">
+      <header className="management-page-header">
+        <div>
+          <span className="management-page-kicker">فضای مدیریت / کسب‌وکار</span>
+          <h1>{pageTitle}</h1>
+          <p>{pageDescription}</p>
+        </div>
+        <div className="bos-header-actions">
+          <Status value={data.verification_status} label={status} />
+          <div className="bos-identity-wrap">{identitySelector}</div>
+        </div>
+      </header>
+      <nav className="bos-section-nav" aria-label="بخش‌های کسب‌وکار">
+        {nav.map((item) => (
           <button
-            ref={drawerCloseRef}
+            key={item.id}
             type="button"
-            className="bos-sidebar-close"
-            aria-label="بستن فهرست"
-            onClick={() => setDrawerOpen(false)}
+            className={`bos-nav-item${section === item.id ? ' is-active' : ''}`}
+            aria-current={section === item.id ? 'page' : undefined}
+            onClick={() => setSection(item.id)}
           >
-            <BusinessIcon name="close" />
+            <BusinessIcon name={item.icon} />
+            <span>{item.label}</span>
+            {item.id === 'inquiries' && data.inquiries_new > 0 && (
+              <em>{formatNumber(data.inquiries_new)}</em>
+            )}
           </button>
-        </div>
-        <div className="bos-identity-wrap">{identitySelector}</div>
-        <div className="bos-sidebar-scroll">
-          <div className="bos-nav-group">
-            <span className="bos-nav-caption">فضای کاری</span>
-            <nav aria-label="فضای کاری">
-              {nav.slice(0, data.can_manage_trade ? 4 : 3).map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  title={collapsed ? item.label : undefined}
-                  className={`bos-nav-item${section === item.id ? ' is-active' : ''}`}
-                  aria-current={section === item.id ? 'page' : undefined}
-                  onClick={() => setSection(item.id)}
-                >
-                  <BusinessIcon name={item.icon} />
-                  <span>{item.label}</span>
-                  {item.id === 'inquiries' && data.inquiries_new > 0 && (
-                    <em>{formatNumber(data.inquiries_new)}</em>
-                  )}
-                </button>
-              ))}
-            </nav>
-          </div>
-          <div className="bos-nav-group">
-            <span className="bos-nav-caption">مدیریت</span>
-            <nav aria-label="مدیریت کسب‌وکار">
-              {nav.slice(data.can_manage_trade ? 4 : 3).map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  title={collapsed ? item.label : undefined}
-                  className={`bos-nav-item${section === item.id ? ' is-active' : ''}`}
-                  aria-current={section === item.id ? 'page' : undefined}
-                  onClick={() => setSection(item.id)}
-                >
-                  <BusinessIcon name={item.icon} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-        <div className="bos-sidebar-footer">
-          <Link
-            to="/account"
-            className="bos-account-link"
-            title={collapsed ? 'حساب کاربری' : undefined}
-          >
-            <BusinessIcon name="settings" />
-            <span>حساب کاربری</span>
-            <BusinessIcon name="arrow-up-left" className="bos-external" />
-          </Link>
-          <button
-            className="bos-collapse"
-            type="button"
-            title={collapsed ? 'باز کردن نوار کناری' : 'جمع کردن نوار کناری'}
-            aria-label={collapsed ? 'باز کردن نوار کناری' : 'جمع کردن نوار کناری'}
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            <BusinessIcon name={collapsed ? 'chevron-left' : 'chevron-right'} />
-            <span>جمع کردن نوار</span>
-          </button>
-        </div>
-      </aside>
-
-      <div className="bos-main">
-        <div className="bos-topbar">
-          <div className="bos-topbar-start">
-            <button
-              ref={menuButtonRef}
-              className="bos-mobile-menu"
-              type="button"
-              aria-label="باز کردن فهرست"
-              aria-expanded={drawerOpen}
-              onClick={() => setDrawerOpen(true)}
-            >
-              <BusinessIcon name="menu" />
+        ))}
+      </nav>
+      <div className="bos-content" id="business-content">
+        {error && (
+          <div className="bos-alert" role="alert">
+            <BusinessIcon name="warning" />
+            {error}
+            <button type="button" aria-label="بستن پیام" onClick={() => setError('')}>
+              <BusinessIcon name="close" />
             </button>
-            <span className="bos-breadcrumb">
-              فضای کاری <BusinessIcon name="chevron-left" />{' '}
-              {nav.find((item) => item.id === section)?.label ?? 'نمای مدیریتی'}
-            </span>
           </div>
-          <div className="bos-topbar-end">
-            <span className="bos-date">
-              <BusinessIcon name="calendar" />
-              {formatLongDate(new Date())}
-            </span>
-            <NotificationBell enabled />
-            <details className="bos-account-menu">
-              <summary aria-label="منوی حساب کاربری">
-                <span>{displayName.slice(0, 1)}</span>
-                <BusinessIcon name="chevron-down" />
-              </summary>
-              <div>
-                <strong>{displayName}</strong>
-                <small>{user.email || user.phone}</small>
-                <Link to="/account">
-                  <BusinessIcon name="user" /> حساب کاربری
-                </Link>
-                <Link to="/">
-                  <BusinessIcon name="external" /> بازگشت به سایت
-                </Link>
-              </div>
-            </details>
-          </div>
-        </div>
-        <main className="bos-content" id="business-content">
-          <header className="bos-hero">
-            <div>
-              <span className="bos-eyebrow">KARFANSA / BUSINESS OS</span>
-              <h1>مرکز مدیریت کسب‌وکار</h1>
-              <p>نمای کلی فعالیت‌ها، فرصت‌ها و عملکرد کسب‌وکار شما</p>
-              <div className="bos-hero-meta">
-                <span>
-                  <BusinessIcon name={data.kind === 'organization' ? 'building' : 'user'} />
-                  {data.label}
-                </span>
-                <Status value={data.verification_status} label={status} />
-              </div>
-            </div>
-            <div className="bos-hero-aside">
-              <span>هویت فعال</span>
-              <strong>{data.kind === 'organization' ? 'حساب شرکتی' : 'حساب فردی'}</strong>
-              <small>{formatLongDate(new Date())}</small>
-            </div>
-          </header>
-          {error && (
-            <div className="bos-alert" role="alert">
-              <BusinessIcon name="warning" />
-              {error}
-              <button type="button" aria-label="بستن پیام" onClick={() => setError('')}>
-                <BusinessIcon name="close" />
-              </button>
-            </div>
-          )}
-          {!data.kind ? (
-            <section className="bos-panel bos-no-identity">
-              <EmptyState
-                icon="building"
-                title="هنوز هویتی ثبت نشده"
-                description="برای شروع، هویت شرکتی یا فردی خود را بسازید."
-              />
-              <AppLink className="bos-primary" href="/join">
-                ایجاد هویت <BusinessIcon name="arrow-left" />
-              </AppLink>
-            </section>
-          ) : (
-            <>
-              {section === 'overview' && (
-                <>
-                  <div className="bos-section-title">
-                    <div>
-                      <span className="bos-eyebrow">EXECUTIVE OVERVIEW</span>
-                      <h2>
-                        نمای مدیریتی <span>/ {data.label}</span>
-                      </h2>
-                    </div>
-                    <span className="bos-live-label">
-                      <i /> داده‌های فعلی حساب
-                    </span>
-                  </div>
-                  <div className="bos-kpis">
-                    <Metric
-                      icon="package"
-                      label="محصولات فعال"
-                      value={listings.isSuccess ? publishedProducts : null}
-                      detail="تأییدشده و در دسترس"
-                    />
-                    <Metric
-                      icon="briefcase"
-                      label="خدمات فعال"
-                      value={listings.isSuccess ? publishedServices : null}
-                      detail="تأییدشده و در دسترس"
-                    />
-                    {data.can_manage_trade && (
-                      <Metric
-                        icon="trade"
-                        label="فرصت‌های منتشرشده"
-                        value={opportunities.isSuccess ? publishedOpportunities : null}
-                        detail={`${formatNumber(data.opportunities_total)} فرصت ثبت‌شده`}
-                      />
-                    )}
-                    <Metric
-                      icon="inbox"
-                      label="درخواست‌های جدید"
-                      value={data.inquiries_new}
-                      detail="نیازمند بررسی"
-                      highlight
-                    />
-                    <Metric
-                      icon="clock"
-                      label="در انتظار رسیدگی"
-                      value={received.isSuccess && listings.isSuccess ? pendingInquiries : null}
-                      detail="جدید یا خوانده‌شده"
-                    />
-                  </div>
-                  <div className="bos-command">
-                    <div>
-                      <span className="bos-command-icon">
-                        <BusinessIcon name="spark" />
-                      </span>
-                      <div>
-                        <strong>اقدام سریع</strong>
-                        <small>کارهای مهم را از همین‌جا آغاز کنید</small>
-                      </div>
-                    </div>
-                    <div className="bos-command-actions">
-                      {canPublish && (
-                        <Link to="/services/listings/new?kind=product&next=business">
-                          <BusinessIcon name="plus" /> افزودن محصول
-                        </Link>
-                      )}
-                      {canPublish && (
-                        <Link to="/services/listings/new?kind=service&next=business">
-                          <BusinessIcon name="plus" /> افزودن خدمت
-                        </Link>
-                      )}
-                      {data.can_manage_trade && (
-                        <button type="button" onClick={() => setSection('trade')}>
-                          <BusinessIcon name="trade" /> ثبت فرصت تجاری
-                        </button>
-                      )}
-                      {data.can_edit_profile && (
-                        <button type="button" onClick={() => setSection('profile')}>
-                          <BusinessIcon name="edit" /> ویرایش پروفایل
-                        </button>
-                      )}
-                      <button type="button" onClick={() => setSection('inquiries')}>
-                        <BusinessIcon name="inbox" /> مدیریت درخواست‌ها
-                      </button>
-                    </div>
-                  </div>
-                  <div className="bos-workspace">
-                    <section className="bos-panel bos-activity-panel">
-                      <PanelHeading
-                        eyebrow="BUSINESS PERFORMANCE"
-                        title="فعالیت درخواست‌ها"
-                        action={
-                          <div className="bos-range" role="group" aria-label="بازه زمانی">
-                            <button
-                              type="button"
-                              className={rangeDays === 7 ? 'is-active' : ''}
-                              aria-pressed={rangeDays === 7}
-                              onClick={() => setRangeDays(7)}
-                            >
-                              ۷ روز
-                            </button>
-                            <button
-                              type="button"
-                              className={rangeDays === 30 ? 'is-active' : ''}
-                              aria-pressed={rangeDays === 30}
-                              onClick={() => setRangeDays(30)}
-                            >
-                              ۳۰ روز
-                            </button>
-                          </div>
-                        }
-                      />
-                      <InquiryChart
-                        inquiries={scopedInquiries}
-                        days={rangeDays}
-                        loading={received.isLoading || listings.isLoading}
-                        error={received.isError || listings.isError}
-                      />
-                    </section>
-                    <section className="bos-panel bos-profile-panel">
-                      <PanelHeading
-                        eyebrow="BUSINESS IDENTITY"
-                        title="پروفایل کسب‌وکار"
-                        action={
-                          <button
-                            className="bos-text-action"
-                            type="button"
-                            onClick={() => setSection('profile')}
-                          >
-                            مشاهده <BusinessIcon name="arrow-left" />
-                          </button>
-                        }
-                      />
-                      <div className="bos-profile-state">
-                        <div className="bos-profile-score">
-                          <strong>
-                            {completion === null ? '—' : `${formatNumber(completion)}٪`}
-                          </strong>
-                          <span>تکمیل اطلاعات لازم</span>
-                        </div>
-                        <Status value={data.verification_status} />
-                      </div>
-                      <div
-                        className="bos-progress"
-                        role="progressbar"
-                        aria-label="تکمیل اطلاعات لازم"
-                        aria-valuenow={completion ?? 0}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                      >
-                        <span style={{ width: `${completion ?? 0}%` }} />
-                      </div>
-                      {profile.isError ? (
-                        <p className="bos-error">دریافت اطلاعات پروفایل انجام نشد.</p>
-                      ) : (
-                        <ul className="bos-checklist">
-                          {checklist.map((item) => (
-                            <li key={item.label} className={item.done ? 'is-done' : ''}>
-                              <BusinessIcon name={item.done ? 'check' : 'clock'} />
-                              {item.label}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {data.rejection_reason && (
-                        <p className="bos-error">{data.rejection_reason}</p>
-                      )}
-                      {publicProfilePath && (
-                        <Link className="bos-inline-action" to={publicProfilePath}>
-                          نمایش پروفایل عمومی <BusinessIcon name="arrow-up-left" />
-                        </Link>
-                      )}
-                    </section>
-                    <ListingsPanel
-                      listings={allListings}
-                      loading={listings.isLoading}
-                      error={listings.isError}
-                      canPublish={canPublish}
-                      full={false}
-                      onAll={() => setSection('listings')}
-                    />
-                    {data.can_manage_trade && (
-                      <TradePanel
-                        opportunities={opportunities.data ?? []}
-                        loading={opportunities.isLoading}
-                        error={opportunities.isError}
-                        full={false}
-                        onAll={() => setSection('trade')}
-                      />
-                    )}
-                    <InquiriesPanel
-                      inquiries={scopedInquiries}
-                      loading={received.isLoading || listings.isLoading}
-                      error={received.isError || listings.isError}
-                      full={false}
-                      onAll={() => setSection('inquiries')}
-                    />
-                    <ActivityPanel
-                      listings={allListings}
-                      inquiries={scopedInquiries}
-                      loading={listings.isLoading || received.isLoading}
-                    />
-                  </div>
-                </>
-              )}
-              {section !== 'overview' && (
+        )}
+        {!data.kind ? (
+          <section className="bos-panel bos-no-identity">
+            <EmptyState
+              icon="building"
+              title="هنوز هویتی ثبت نشده"
+              description="برای شروع، هویت شرکتی یا فردی خود را بسازید."
+            />
+            <AppLink className="bos-primary" href="/join">
+              ایجاد هویت <BusinessIcon name="arrow-left" />
+            </AppLink>
+          </section>
+        ) : (
+          <>
+            {section === 'overview' && (
+              <>
                 <div className="bos-section-title">
                   <div>
-                    <span className="bos-eyebrow">BUSINESS WORKSPACE</span>
-                    <h2>{nav.find((item) => item.id === section)?.label}</h2>
+                    <span className="bos-eyebrow">نمای کلی</span>
+                    <h2>
+                      نمای مدیریتی <span>/ {data.label}</span>
+                    </h2>
                   </div>
-                  <button className="bos-back" type="button" onClick={() => setSection('overview')}>
-                    <BusinessIcon name="chevron-right" /> بازگشت به نمای مدیریتی
-                  </button>
+                  <span className="bos-live-label">
+                    <i /> داده‌های فعلی حساب
+                  </span>
                 </div>
-              )}
-              {section === 'profile' && (
-                <div className="bos-detail-grid">
+                <div className="bos-kpis">
+                  <Metric
+                    icon="package"
+                    label="محصولات فعال"
+                    value={listings.isSuccess ? publishedProducts : null}
+                    detail="تأییدشده و در دسترس"
+                  />
+                  <Metric
+                    icon="briefcase"
+                    label="خدمات فعال"
+                    value={listings.isSuccess ? publishedServices : null}
+                    detail="تأییدشده و در دسترس"
+                  />
+                  {data.can_manage_trade && (
+                    <Metric
+                      icon="trade"
+                      label="فرصت‌های منتشرشده"
+                      value={opportunities.isSuccess ? publishedOpportunities : null}
+                      detail={`${formatNumber(data.opportunities_total)} فرصت ثبت‌شده`}
+                    />
+                  )}
+                  <Metric
+                    icon="inbox"
+                    label="درخواست‌های جدید"
+                    value={data.inquiries_new}
+                    detail="نیازمند بررسی"
+                    highlight
+                  />
+                  <Metric
+                    icon="clock"
+                    label="در انتظار رسیدگی"
+                    value={received.isSuccess && listings.isSuccess ? pendingInquiries : null}
+                    detail="جدید یا خوانده‌شده"
+                  />
+                </div>
+                <div className="bos-command">
+                  <div>
+                    <span className="bos-command-icon">
+                      <BusinessIcon name="spark" />
+                    </span>
+                    <div>
+                      <strong>اقدام سریع</strong>
+                      <small>کارهای مهم را از همین‌جا آغاز کنید</small>
+                    </div>
+                  </div>
+                  <div className="bos-command-actions">
+                    {canPublish && (
+                      <Link to="/services/listings/new?kind=product&next=business">
+                        <BusinessIcon name="plus" /> افزودن محصول
+                      </Link>
+                    )}
+                    {canPublish && (
+                      <Link to="/services/listings/new?kind=service&next=business">
+                        <BusinessIcon name="plus" /> افزودن خدمت
+                      </Link>
+                    )}
+                    {data.can_manage_trade && (
+                      <button type="button" onClick={() => setSection('trade')}>
+                        <BusinessIcon name="trade" /> ثبت فرصت تجاری
+                      </button>
+                    )}
+                    {data.can_edit_profile && (
+                      <button type="button" onClick={() => setSection('profile')}>
+                        <BusinessIcon name="edit" /> ویرایش پروفایل
+                      </button>
+                    )}
+                    <button type="button" onClick={() => setSection('inquiries')}>
+                      <BusinessIcon name="inbox" /> درخواست‌های مشتریان
+                    </button>
+                  </div>
+                </div>
+                <div className="bos-workspace">
+                  <section className="bos-panel bos-activity-panel">
+                    <PanelHeading
+                      eyebrow="عملکرد کسب‌وکار"
+                      title="فعالیت درخواست‌ها"
+                      action={
+                        <div className="bos-range" role="group" aria-label="بازه زمانی">
+                          <button
+                            type="button"
+                            className={rangeDays === 7 ? 'is-active' : ''}
+                            aria-pressed={rangeDays === 7}
+                            onClick={() => setRangeDays(7)}
+                          >
+                            ۷ روز
+                          </button>
+                          <button
+                            type="button"
+                            className={rangeDays === 30 ? 'is-active' : ''}
+                            aria-pressed={rangeDays === 30}
+                            onClick={() => setRangeDays(30)}
+                          >
+                            ۳۰ روز
+                          </button>
+                        </div>
+                      }
+                    />
+                    <InquiryChart
+                      inquiries={scopedInquiries}
+                      days={rangeDays}
+                      loading={received.isLoading || listings.isLoading}
+                      error={received.isError || listings.isError}
+                    />
+                  </section>
                   <section className="bos-panel bos-profile-panel">
-                    <PanelHeading title="وضعیت پروفایل" />
+                    <PanelHeading
+                      eyebrow="هویت کسب‌وکار"
+                      title="پروفایل کسب‌وکار"
+                      action={
+                        <button
+                          className="bos-text-action"
+                          type="button"
+                          onClick={() => setSection('profile')}
+                        >
+                          مشاهده <BusinessIcon name="arrow-left" />
+                        </button>
+                      }
+                    />
                     <div className="bos-profile-state">
                       <div className="bos-profile-score">
                         <strong>
                           {completion === null ? '—' : `${formatNumber(completion)}٪`}
                         </strong>
-                        <span>اطلاعات لازم</span>
+                        <span>تکمیل اطلاعات لازم</span>
                       </div>
                       <Status value={data.verification_status} />
                     </div>
-                    <div className="bos-progress">
+                    <div
+                      className="bos-progress"
+                      role="progressbar"
+                      aria-label="تکمیل اطلاعات لازم"
+                      aria-valuenow={completion ?? 0}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    >
                       <span style={{ width: `${completion ?? 0}%` }} />
                     </div>
-                    <ul className="bos-checklist">
-                      {checklist.map((item) => (
-                        <li key={item.label} className={item.done ? 'is-done' : ''}>
-                          <BusinessIcon name={item.done ? 'check' : 'clock'} />
-                          {item.label}
-                        </li>
-                      ))}
-                    </ul>
+                    {profile.isError ? (
+                      <p className="bos-error">دریافت اطلاعات پروفایل انجام نشد.</p>
+                    ) : (
+                      <ul className="bos-checklist">
+                        {checklist.map((item) => (
+                          <li key={item.label} className={item.done ? 'is-done' : ''}>
+                            <BusinessIcon name={item.done ? 'check' : 'clock'} />
+                            {item.label}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {data.rejection_reason && <p className="bos-error">{data.rejection_reason}</p>}
                     {publicProfilePath && (
                       <Link className="bos-inline-action" to={publicProfilePath}>
                         نمایش پروفایل عمومی <BusinessIcon name="arrow-up-left" />
                       </Link>
                     )}
                   </section>
-                  {data.can_edit_profile ? (
-                    <ProfilePanel
-                      key={identityKey}
-                      kind={data.kind}
-                      id={data.id}
-                      canSubmit={data.can_submit_verification}
-                    />
-                  ) : (
-                    <section className="bos-panel">
-                      <EmptyState
-                        icon="shield"
-                        title="دسترسی ویرایش ندارید"
-                        description="نقش فعلی شما اجازه ویرایش پروفایل را نمی‌دهد."
-                      />
-                    </section>
-                  )}
-                </div>
-              )}
-              {section === 'verification' && (
-                <div className="bos-detail-grid">
-                  <section className="bos-panel">
-                    <PanelHeading title="وضعیت تأیید" />
-                    <Status value={data.verification_status} />
-                    <p className="bos-muted">
-                      وضعیت فعلی هویت {data.kind === 'organization' ? 'شرکتی' : 'فردی'} شما در
-                      فرایند بررسی.
-                    </p>
-                    {data.rejection_reason && <p className="bos-error">{data.rejection_reason}</p>}
-                    {data.verification_status === 'suspended' && (
-                      <p className="bos-error">
-                        این هویت تعلیق شده است و با ارسال دوباره فعال نمی‌شود.
-                      </p>
-                    )}
-                  </section>
-                  {data.can_edit_profile && (
-                    <ProfilePanel
-                      key={identityKey}
-                      kind={data.kind}
-                      id={data.id}
-                      canSubmit={data.can_submit_verification}
+                  <ListingsPanel
+                    listings={allListings}
+                    loading={listings.isLoading}
+                    error={listings.isError}
+                    canPublish={canPublish}
+                    full={false}
+                    onAll={() => setSection('listings')}
+                  />
+                  {data.can_manage_trade && (
+                    <TradePanel
+                      opportunities={opportunities.data ?? []}
+                      loading={opportunities.isLoading}
+                      error={opportunities.isError}
+                      full={false}
+                      onAll={() => setSection('trade')}
                     />
                   )}
-                </div>
-              )}
-              {section === 'listings' && (
-                <ListingsPanel
-                  listings={allListings}
-                  loading={listings.isLoading}
-                  error={listings.isError}
-                  canPublish={canPublish}
-                  full
-                  onAll={() => setSection('listings')}
-                />
-              )}
-              {section === 'inquiries' && (
-                <div className="bos-inquiry-workspace">
-                    <Link className="bos-action-link" to="/account/inquiries?tab=received">باز کردن مرکز درخواست‌های همکاری ←</Link>
                   <InquiriesPanel
                     inquiries={scopedInquiries}
                     loading={received.isLoading || listings.isLoading}
                     error={received.isError || listings.isError}
-                    full
+                    full={false}
                     onAll={() => setSection('inquiries')}
                   />
-                  <SubmittedPanel
-                    inquiries={submitted.data ?? []}
-                    loading={submitted.isLoading}
-                    error={submitted.isError}
+                  <ActivityPanel
+                    listings={allListings}
+                    inquiries={scopedInquiries}
+                    loading={listings.isLoading || received.isLoading}
                   />
                 </div>
-              )}
-              {section === 'trade' && data.can_manage_trade && (
-                <div className="bos-detail-grid">
-                  <TradePanel
-                    opportunities={opportunities.data ?? []}
-                    loading={opportunities.isLoading}
-                    error={opportunities.isError}
-                    full
-                    onAll={() => setSection('trade')}
+              </>
+            )}
+            {section !== 'overview' && (
+              <div className={`bos-section-title${focusedSection ? ' is-focused' : ''}`}>
+                <div>
+                  <span className="bos-eyebrow">بخش کسب‌وکار</span>
+                  <h2>{nav.find((item) => item.id === section)?.label}</h2>
+                </div>
+                <button className="bos-back" type="button" onClick={() => setSection('overview')}>
+                  <BusinessIcon name="chevron-right" /> بازگشت به نمای مدیریتی
+                </button>
+              </div>
+            )}
+            {section === 'profile' && (
+              <div className="bos-detail-grid bos-focused-detail">
+                <section className="bos-panel bos-profile-panel bos-desktop-summary">
+                  <PanelHeading title="وضعیت پروفایل" />
+                  <div className="bos-profile-state">
+                    <div className="bos-profile-score">
+                      <strong>{completion === null ? '—' : `${formatNumber(completion)}٪`}</strong>
+                      <span>اطلاعات لازم</span>
+                    </div>
+                    <Status value={data.verification_status} />
+                  </div>
+                  <div className="bos-progress">
+                    <span style={{ width: `${completion ?? 0}%` }} />
+                  </div>
+                  <ul className="bos-checklist">
+                    {checklist.map((item) => (
+                      <li key={item.label} className={item.done ? 'is-done' : ''}>
+                        <BusinessIcon name={item.done ? 'check' : 'clock'} />
+                        {item.label}
+                      </li>
+                    ))}
+                  </ul>
+                  {publicProfilePath && (
+                    <Link className="bos-inline-action" to={publicProfilePath}>
+                      نمایش پروفایل عمومی <BusinessIcon name="arrow-up-left" />
+                    </Link>
+                  )}
+                </section>
+                {data.can_edit_profile ? (
+                  <ProfilePanel
+                    key={identityKey}
+                    kind={data.kind}
+                    id={data.id}
+                    completion={completion}
+                    checklist={checklist}
                   />
-                  <section className="bos-panel bos-form-panel">
-                    <OpportunityForm
-                      busy={createOpportunity.isPending}
-                      onSubmit={(body) => createOpportunity.mutate(body)}
+                ) : (
+                  <section className="bos-panel">
+                    <EmptyState
+                      icon="shield"
+                      title="دسترسی ویرایش ندارید"
+                      description="نقش فعلی شما اجازه ویرایش پروفایل را نمی‌دهد."
                     />
                   </section>
-                </div>
-              )}
-              {section === 'members' && data.can_manage_members && (
-                <section className="bos-panel bos-members-panel">
-                  <PanelHeading eyebrow="TEAM ACCESS" title="اعضا و دسترسی‌ها" />
-                  {members.isLoading ? (
-                    <div className="bos-skeleton bos-row-skeleton" />
-                  ) : members.isError ? (
-                    <p className="bos-error">دریافت اعضا انجام نشد.</p>
-                  ) : members.data?.length ? (
-                    <ul className="bos-row-list">
-                      {members.data.map((member) => (
-                        <li key={member.id}>
-                          <span className="bos-row-symbol">
-                            <BusinessIcon name="user" />
-                          </span>
-                          <span className="bos-row-main">
-                            <strong>{member.display_name}</strong>
-                            <small>{memberRoles[member.role] ?? member.role}</small>
-                          </span>
-                          <Status
-                            value={member.status}
-                            label={memberStatuses[member.status] ?? member.status}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <EmptyState
-                      icon="users"
-                      title="عضوی ثبت نشده"
-                      description="اعضای شرکت در این بخش نمایش داده می‌شوند."
-                    />
+                )}
+              </div>
+            )}
+            {section === 'verification' && (
+              <div className="bos-detail-grid bos-focused-detail">
+                <section className="bos-panel bos-desktop-summary">
+                  <PanelHeading title="وضعیت تأیید" />
+                  <Status value={data.verification_status} />
+                  <p className="bos-muted">
+                    وضعیت فعلی هویت {data.kind === 'organization' ? 'شرکتی' : 'فردی'} شما در فرایند
+                    بررسی.
+                  </p>
+                  {data.rejection_reason && <p className="bos-error">{data.rejection_reason}</p>}
+                  {data.verification_status === 'suspended' && (
+                    <p className="bos-error">
+                      این هویت تعلیق شده است و با ارسال دوباره فعال نمی‌شود.
+                    </p>
                   )}
-                  <form
-                    className="bos-invite"
-                    onSubmit={(event) => {
-                      event.preventDefault()
-                      const email = String(
-                        new FormData(event.currentTarget).get('email') ?? '',
-                      ).trim()
-                      if (email) invite.mutate(email)
-                      event.currentTarget.reset()
-                    }}
-                  >
-                    <label htmlFor="bos-invite-email">دعوت عضو با ایمیل</label>
-                    <div>
-                      <input
-                        id="bos-invite-email"
-                        name="email"
-                        type="email"
-                        required
-                        dir="ltr"
-                        placeholder="name@company.com"
-                      />
-                      <button className="bos-primary" disabled={invite.isPending}>
-                        {invite.isPending ? 'در حال ارسال…' : 'ارسال دعوت'}
-                      </button>
-                    </div>
-                  </form>
                 </section>
-              )}
-            </>
-          )}
-        </main>
+                <BusinessVerificationPanel
+                  key={identityKey}
+                  kind={data.kind}
+                  id={data.id}
+                  canSubmit={data.can_submit_verification}
+                  verificationStatus={data.verification_status}
+                  rejectionReason={data.rejection_reason}
+                  completion={completion}
+                  profileReady={isProfileReady(data.kind, profile.data)}
+                  onEditProfile={() => setSection('profile')}
+                />
+              </div>
+            )}
+            {section === 'listings' && (
+              <ListingsPanel
+                listings={allListings}
+                loading={listings.isLoading}
+                error={listings.isError}
+                canPublish={canPublish}
+                full
+                onAll={() => setSection('listings')}
+              />
+            )}
+            {section === 'inquiries' && (
+              <div className="bos-inquiry-workspace">
+                <Link className="bos-action-link" to="/account/inquiries?tab=received">
+                  باز کردن مرکز درخواست‌های همکاری ←
+                </Link>
+                <InquiriesPanel
+                  inquiries={scopedInquiries}
+                  loading={received.isLoading || listings.isLoading}
+                  error={received.isError || listings.isError}
+                  full
+                  onAll={() => setSection('inquiries')}
+                />
+                <SubmittedPanel
+                  inquiries={submitted.data ?? []}
+                  loading={submitted.isLoading}
+                  error={submitted.isError}
+                />
+              </div>
+            )}
+            {section === 'trade' && data.can_manage_trade && (
+              <div className="bos-detail-grid">
+                <TradePanel
+                  opportunities={opportunities.data ?? []}
+                  loading={opportunities.isLoading}
+                  error={opportunities.isError}
+                  full
+                  onAll={() => setSection('trade')}
+                />
+                <section className="bos-panel bos-form-panel">
+                  <OpportunityForm
+                    busy={createOpportunity.isPending}
+                    onSubmit={(body) => createOpportunity.mutate(body)}
+                  />
+                </section>
+              </div>
+            )}
+            {section === 'members' && data.can_manage_members && (
+              <section className="bos-panel bos-members-panel">
+                <PanelHeading eyebrow="تیم و دسترسی" title="اعضا و دسترسی‌ها" />
+                {members.isLoading ? (
+                  <div className="bos-skeleton bos-row-skeleton" />
+                ) : members.isError ? (
+                  <p className="bos-error">دریافت اعضا انجام نشد.</p>
+                ) : members.data?.length ? (
+                  <ul className="bos-row-list">
+                    {members.data.map((member) => (
+                      <li key={member.id}>
+                        <span className="bos-row-symbol">
+                          <BusinessIcon name="user" />
+                        </span>
+                        <span className="bos-row-main">
+                          <strong>{member.display_name}</strong>
+                          <small>{memberRoles[member.role] ?? member.role}</small>
+                        </span>
+                        <Status
+                          value={member.status}
+                          label={memberStatuses[member.status] ?? member.status}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState
+                    icon="users"
+                    title="عضوی ثبت نشده"
+                    description="اعضای شرکت در این بخش نمایش داده می‌شوند."
+                  />
+                )}
+                <form
+                  className="bos-invite"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    const email = String(
+                      new FormData(event.currentTarget).get('email') ?? '',
+                    ).trim()
+                    if (email) invite.mutate(email)
+                    event.currentTarget.reset()
+                  }}
+                >
+                  <label htmlFor="bos-invite-email">دعوت عضو با ایمیل</label>
+                  <div>
+                    <input
+                      id="bos-invite-email"
+                      name="email"
+                      type="email"
+                      required
+                      dir="ltr"
+                      placeholder="name@company.com"
+                    />
+                    <button className="bos-primary" disabled={invite.isPending}>
+                      {invite.isPending ? 'در حال ارسال…' : 'ارسال دعوت'}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
