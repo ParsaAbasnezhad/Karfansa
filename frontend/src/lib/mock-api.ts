@@ -2,6 +2,13 @@
 // Only loaded when VITE_USE_MOCK=true (dynamic import in api-client.ts).
 import * as data from './mock-data'
 import { ApiError, type QueryParams } from './api-client'
+import type {
+  AnalysisAuthor,
+  AnalysisCategory,
+  AnalysisDetailResponse,
+  AnalysisPage,
+  AnalysisReport,
+} from '@/features/analysis/types'
 import type { SearchResponse, SearchResult } from './types'
 
 const clone = <T>(value: unknown): T => JSON.parse(JSON.stringify(value)) as T
@@ -9,46 +16,6 @@ const str = (v: QueryParams[string], fallback: string) =>
   v == null || v === '' ? fallback : String(v)
 const num = (v: QueryParams[string], fallback: number) =>
   v == null || v === '' ? fallback : Number(v)
-
-function rssNews(params: QueryParams) {
-  const topic = str(params.topic, '')
-  const query = str(params.q, '').trim()
-  const page = num(params.page, 1)
-  const pageSize = num(params.page_size, 12)
-  const topics = [...new Set(data.slides.map((slide) => slide.category))]
-  const filtered = data.slides
-    .map((slide) => ({
-      id: slide.id,
-      title: slide.title,
-      summary: slide.excerpt,
-      source_name: 'منابع خبری نمونه',
-      topic: slide.category,
-      original_url: slide.url,
-      image_url: slide.image ?? '',
-      published_at: slide.published_at,
-      fetched_at: slide.published_at,
-      score: 82,
-    }))
-    .filter((item) => (!topic || item.topic === topic) && (!query || item.title.includes(query)))
-  const start = (page - 1) * pageSize
-  return {
-    results: filtered.slice(start, start + pageSize),
-    topics,
-    count: filtered.length,
-    page,
-    page_size: pageSize,
-    total_pages: Math.ceil(filtered.length / pageSize),
-  }
-}
-
-function rssHeadlines() {
-  const { results } = rssNews({ page_size: 12 })
-  return {
-    featured: results[0] ?? null,
-    minis: results.slice(1, 3),
-    latest: results.slice(0, 6),
-  }
-}
 
 function marketQuotes() {
   const categories: Record<string, string> = {
@@ -105,32 +72,6 @@ function marketOverview() {
 function search(query: string): SearchResponse {
   const q = query.trim()
   const pool: SearchResult[] = [
-    ...data.slides.map((s) => ({
-      id: s.id,
-      category: s.category,
-      title: s.title,
-      excerpt: s.excerpt,
-      published_at: s.published_at,
-      url: s.url,
-      image: s.image,
-    })),
-    ...data.companyNews.map((n) => ({
-      id: 100 + n.id,
-      category: n.company_name,
-      title: n.title,
-      excerpt: '',
-      published_at: n.published_at,
-      url: n.url,
-      image: n.image,
-    })),
-    ...data.headlines.latest.map((l) => ({
-      id: 200 + l.id,
-      category: l.category,
-      title: l.title,
-      excerpt: '',
-      published_at: l.published_at,
-      url: l.url,
-    })),
     ...data.analysis.articles.map((a) => ({
       id: 300 + a.id,
       category: a.category,
@@ -149,8 +90,123 @@ function search(query: string): SearchResponse {
   return { query: q, count: results.length, results }
 }
 
+function analysisReports(): AnalysisReport[] {
+  const categoryNames = [...new Set(data.analysis.articles.map((item) => item.category))]
+  const categories: Record<string, AnalysisCategory> = Object.fromEntries(
+    categoryNames.map((name) => [
+      name,
+      {
+        slug: name.replace(/[\s‌]+/g, '-'),
+        name,
+        description: '',
+        report_count: data.analysis.articles.filter((item) => item.category === name).length,
+      },
+    ]),
+  )
+  const authors: Record<string, AnalysisAuthor> = Object.fromEntries(
+    data.analysis.articles.map((item) => [
+      item.author,
+      {
+        full_name: item.author,
+        position: 'تحلیلگر اقتصادی',
+        biography: '',
+        profile_image: null,
+        report_count: data.analysis.articles.filter((report) => report.author === item.author).length,
+      },
+    ]),
+  )
+  return [
+    {
+      id: String(data.analysis.hero.id),
+      slug: `analysis-${data.analysis.hero.id}`,
+      title: data.analysis.hero.title,
+      short_description: data.analysis.hero.excerpt,
+      cover_image: data.analysis.hero.image,
+      category: null,
+      report_type: 'economic_analysis',
+      author: {
+        full_name: data.analysis.hero.author,
+        position: 'تحلیلگر اقتصادی',
+        biography: '',
+        profile_image: null,
+        report_count: 1,
+      },
+      published_at: new Date().toISOString(),
+      is_featured: true,
+      view_count: 0,
+      download_count: 0,
+      reading_minutes: data.analysis.hero.read_minutes,
+    },
+    ...data.analysis.articles.map((item) => ({
+      id: String(item.id),
+      slug: `analysis-${item.id}`,
+      title: item.title,
+      short_description: item.excerpt,
+      cover_image: null,
+      category: categories[item.category],
+      report_type: item.kind === 'report' ? 'quarterly_report' : 'economic_analysis',
+      author: authors[item.author],
+      published_at: item.published_at,
+      is_featured: false,
+      view_count: 0,
+      download_count: 0,
+      reading_minutes: item.read_minutes,
+    })),
+  ]
+}
+
 const routes: Record<string, (p: QueryParams) => unknown> = {
-  '/v1/news/': rssNews,
+  // Slides are managed in Django; mock mode has no authored slide content.
+  '/v1/home/slides/': () => ({ results: [] }),
+  // Public opportunities are database managed; mock mode does not seed them.
+  '/v1/trade/opportunities/': () => ({
+    results: [],
+    count: 0,
+    page: 1,
+    page_size: 6,
+    total_pages: 0,
+  }),
+  '/v1/analysis/': (p) => {
+    const searchText = str(p.search, '').trim()
+    const category = str(p.category, '')
+    const reportType = str(p.report_type, '')
+    const page = num(p.page, 1)
+    const pageSize = num(p.page_size, 12)
+    const reports = analysisReports()
+      .filter((report) => !category || report.category?.slug === category)
+      .filter((report) => !reportType || report.report_type === reportType)
+      .filter(
+        (report) =>
+          !searchText ||
+          `${report.title} ${report.short_description} ${report.author?.full_name ?? ''}`.includes(
+            searchText,
+          ),
+      )
+    if (str(p.ordering, 'latest') === 'oldest') reports.reverse()
+    const result: AnalysisPage = {
+      items: reports.slice((page - 1) * pageSize, page * pageSize),
+      count: reports.length,
+      page,
+      page_size: pageSize,
+      total_pages: Math.ceil(reports.length / pageSize),
+    }
+    return result
+  },
+  '/v1/analysis/featured/': () => analysisReports().filter((report) => report.is_featured),
+  '/v1/analysis/categories/': () => {
+    const categories = new Map<string, AnalysisCategory>()
+    for (const report of analysisReports()) {
+      if (report.category) categories.set(report.category.slug, report.category)
+    }
+    return [...categories.values()]
+  },
+  '/v1/analysis/authors/': () => {
+    const authors = new Map<string, AnalysisAuthor>()
+    for (const report of analysisReports()) {
+      if (report.author) authors.set(report.author.full_name, report.author)
+    }
+    return [...authors.values()]
+  },
   '/v1/market/overview/': () => marketOverview(),
   '/v1/market/quotes/': (p) => {
     const category = str(p.category, '')
@@ -172,17 +228,6 @@ const routes: Record<string, (p: QueryParams) => unknown> = {
       results: quote.history.slice(-num(p.limit, 100)),
     }
   },
-  '/ticker/': () => ({ results: data.ticker }),
-  '/v1/home/slides/': () => ({
-    results: data.slides.map((slide) => ({
-      id: slide.id,
-      title: slide.title,
-      short_text: slide.excerpt,
-      description: slide.excerpt,
-      image: slide.image,
-      created_at: slide.published_at,
-    })),
-  }),
   '/markets/': () => ({ results: data.markets }),
   '/transport-companies/': (p) => {
     const type = str(p.type, 'all')
@@ -194,15 +239,6 @@ const routes: Record<string, (p: QueryParams) => unknown> = {
         : data.transportCompanies.filter((c) => c.type === type)
     return { counts: data.transportCounts, results: list.slice(0, num(p.limit, 6)) }
   },
-  '/company-news/': (p) => {
-    const category = str(p.category, 'all')
-    const list =
-      category === 'all'
-        ? data.companyNews
-        : data.companyNews.filter((n) => n.category === category)
-    return { counts: data.companyNewsCounts, results: list.slice(0, num(p.limit, 8)) }
-  },
-  '/v1/news/headlines/': rssHeadlines,
   '/analysis/': (p) => {
     const kind = str(p.kind, 'all')
     return {
@@ -229,11 +265,34 @@ const routes: Record<string, (p: QueryParams) => unknown> = {
 
 export function mockGet<T>(path: string, params: QueryParams = {}): Promise<T> {
   const handler = routes[path]
-  if (!handler) return Promise.reject(new ApiError(404))
-  return Promise.resolve(clone<T>(handler(params)))
+  if (handler) return Promise.resolve(clone<T>(handler(params)))
+  const detail = path.match(/^\/v1\/analysis\/([^/]+)\/$/)
+  if (detail) {
+    const report = analysisReports().find((item) => item.slug === decodeURIComponent(detail[1]))
+    if (!report) return Promise.reject(new ApiError(404))
+    const result: AnalysisDetailResponse = {
+      report: {
+        ...report,
+        content: `<p>${report.short_description}</p>`,
+        seo_title: report.title,
+        seo_description: report.short_description,
+        attachments: [],
+      },
+      related: analysisReports().filter((item) => item.slug !== report.slug).slice(0, 3),
+    }
+    return Promise.resolve(clone<T>(result))
+  }
+  return Promise.reject(new ApiError(404))
 }
 
 export function mockPost<T>(path: string, body: unknown): Promise<T> {
+  if (path === '/v1/intents/guest') {
+    const payload = body as { goals?: string[] }
+    if (!payload.goals?.length) {
+      return Promise.reject(new ApiError(400, { error: { message: 'یک هدف انتخاب کنید.' } }))
+    }
+    return Promise.resolve({ saved: true } as T)
+  }
   if (path === '/v1/support/tickets/' || path.startsWith('/v1/support/tickets/')) {
     return Promise.resolve({
       ticket_number: 'KF-20260101-ABC123',
@@ -282,13 +341,6 @@ export function mockPost<T>(path: string, body: unknown): Promise<T> {
   }
   if (path === '/v1/auth/password-reset' || path === '/v1/auth/password-reset/confirm') {
     return Promise.resolve({ message: 'درخواست ثبت شد.' } as T)
-  }
-  if (path === '/newsletter/') {
-    const email = (body as { email?: string } | null)?.email ?? ''
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      return Promise.reject(new ApiError(400))
-    }
-    return Promise.resolve({ ok: true } as T)
   }
   return Promise.reject(new ApiError(404))
 }

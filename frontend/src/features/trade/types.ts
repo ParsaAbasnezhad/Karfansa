@@ -30,6 +30,7 @@ export type TradeOpportunity = {
   review_status: 'pending' | 'approved' | 'rejected'
   review_status_display: string
   is_published: boolean
+  inquiry_available?: boolean
   relevance_score: number
   last_reviewed_at: string | null
   created_at: string

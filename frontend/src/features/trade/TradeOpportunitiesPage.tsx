@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
+import { SectionHero } from '@/components/SectionHero'
+import tradeHeroImage from '@/assets/section-heroes/trade.svg'
 import { useProvinceCities } from '@/features/account/geography'
 import { useAuth } from '@/features/auth/useAuth'
 import { ApiError, apiGet, apiPost } from '@/lib/api-client'
 import { formatNumber, formatShortDate } from '@/lib/format'
-import { TradeCtaArt, TradeEmptyArt, TradeHeroArt, TradeTypeIcon } from './TradeArt'
+import { TradeCtaArt, TradeEmptyArt, TradeTypeIcon } from './TradeArt'
 import type {
   TradeOpportunity,
   TradeOpportunitySearchPage,
@@ -124,7 +126,9 @@ function OpportunityCard({
         {item.company && (
           <div>
             <dt>شرکت مرتبط</dt>
-            <dd>{item.company.name}</dd>
+            <dd>
+              <Link to={`/companies/${encodeURIComponent(item.company.slug)}`}>{item.company.name}</Link>
+            </dd>
           </div>
         )}
       </dl>
@@ -480,21 +484,21 @@ export function TradeOpportunitiesPage() {
 
   return (
     <div className="trade-page" dir="rtl">
-      <header className="trade-hero">
-        <div className="trade-hero-copy">
-          <span>شبکهٔ فرصت‌های کارفنسا</span>
-          <h1>فرصت‌های تجارت و صادرات</h1>
-          <p>فرصت‌های واقعی خرید، فروش و همکاری را بر اساس اطلاعات بررسی‌شده پیدا کنید.</p>
-          <div className="trade-hero-tags">
+      <SectionHero
+        className="trade-hero"
+        visualVariant="trade"
+        eyebrow="شبکهٔ فرصت‌های کارفنسا"
+        title="فرصت‌های تجارت و صادرات"
+        description="فرصت‌های واقعی خرید، فروش و همکاری را بر اساس اطلاعات بررسی‌شده پیدا کنید."
+        image={tradeHeroImage}
+        meta={
+          <>
             <span>صادرات و واردات</span>
             <span>بازارهای هدف</span>
             <span>فرصت‌های تأییدشده</span>
-          </div>
-        </div>
-        <div className="trade-hero-art">
-          <TradeHeroArt />
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <div className="trade-discovery-layout">
         <section className="trade-filter-panel" aria-label="فیلتر و جستجوی فرصت‌ها">

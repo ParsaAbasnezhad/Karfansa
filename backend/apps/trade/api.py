@@ -79,7 +79,9 @@ def opportunity_data(item: TradeOpportunity) -> dict[str, object]:
         "valid_until": item.valid_until,
         "review_status": item.review_status,
         "review_status_display": item.get_review_status_display(),
+        "rejection_reason": item.rejection_reason,
         "is_published": item.is_published,
+        "inquiry_available": bool(item.company_id or item.created_by_id),
         "relevance_score": item.relevance_score,
         "last_reviewed_at": item.last_reviewed_at,
         "created_at": item.created_at,
@@ -160,6 +162,7 @@ def list_opportunities(
     province: str = "",
     product: str = "",
     industry: str = "",
+    company: str = "",
     opportunity_type: OpportunityType | None = None,
     q: str = "",
     ordering: str = Query("newest", pattern="^(newest|relevance)$"),  # type: ignore[type-arg]
@@ -172,6 +175,7 @@ def list_opportunities(
         industry=industry.strip(),
         opportunity_type=opportunity_type or "",
         query=q.strip(),
+        company=company.strip(),
         ordering=ordering,
     )
     count = opportunities.count()
@@ -282,6 +286,16 @@ def search_opportunities(
             "quantity_unit": interpretation.quantity_unit,
         },
     }
+
+
+@router.get(
+    "/opportunities/{slug}/",
+    response=TradeOpportunityOut,
+    operation_id="trade_opportunity_detail",
+)
+def get_opportunity(request: HttpRequest, slug: str) -> dict[str, object]:
+    opportunity = get_object_or_404(selectors.public_opportunities(), slug=slug)
+    return opportunity_data(opportunity)
 
 
 @router.get(

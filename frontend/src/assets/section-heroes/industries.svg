@@ -1,0 +1,354 @@
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 560 300" fill="none">
+
+  <defs>
+    <radialGradient id="bg" cx=".5" cy=".45" r=".85">
+      <stop stop-color="#28435D"/>
+      <stop offset=".55" stop-color="#14243A"/>
+      <stop offset="1" stop-color="#091625"/>
+    </radialGradient>
+
+    <linearGradient id="platform" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#304C65"/>
+      <stop offset="1" stop-color="#152B40"/>
+    </linearGradient>
+
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#45647F"/>
+      <stop offset="1" stop-color="#20384F"/>
+    </linearGradient>
+
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#29455E"/>
+      <stop offset="1" stop-color="#14283C"/>
+    </linearGradient>
+
+    <linearGradient id="roof" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#7695AD"/>
+      <stop offset="1" stop-color="#3B5872"/>
+    </linearGradient>
+
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F2D8A3"/>
+      <stop offset=".5" stop-color="#C9A76E"/>
+      <stop offset="1" stop-color="#92703E"/>
+    </linearGradient>
+
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8CB8D2"/>
+      <stop offset=".4" stop-color="#355E7B"/>
+      <stop offset="1" stop-color="#10263B"/>
+    </linearGradient>
+
+    <pattern id="grid" width="32" height="32"
+             patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32"
+            stroke="#A3BDD2" stroke-opacity=".055"/>
+    </pattern>
+
+    <filter id="shadow" x="-30%" y="-40%"
+            width="160%" height="200%">
+      <feDropShadow dx="0" dy="10"
+                    stdDeviation="9"
+                    flood-color="#020810"
+                    flood-opacity=".65"/>
+    </filter>
+
+    <filter id="glow" x="-100%" y="-100%"
+            width="300%" height="300%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Industrial container -->
+    <g id="container">
+      <path d="M0 8 17 0 66 12 49 20Z"
+            fill="#7794AA"/>
+      <path d="M0 8 49 20V48L0 36Z"
+            fill="url(#front)"/>
+      <path d="M49 20 66 12V40L49 48Z"
+            fill="url(#side)"/>
+      <path d="M6 13V35M13 15V37M20 17V39
+               M27 18V41M34 20V43M41 22V45"
+            stroke="#A5BACB"
+            stroke-opacity=".4"
+            stroke-width="1.4"/>
+      <path d="M0 8 49 20 66 12M49 20V48"
+            stroke="#ADC2D1"
+            stroke-opacity=".55"/>
+    </g>
+
+    <!-- Truck wheel -->
+    <g id="wheel">
+      <circle r="10" fill="#091521" stroke="#456079"/>
+      <circle r="6" fill="#294359" stroke="#8DA5B7"/>
+      <circle r="2.5" fill="#C9A76E"/>
+    </g>
+  </defs>
+
+  <!-- Background -->
+  <rect width="560" height="300" fill="url(#bg)"/>
+  <rect width="560" height="300" fill="url(#grid)"/>
+
+  <!-- Ambient architectural rings -->
+  <ellipse cx="280" cy="155" rx="244" ry="112"
+           stroke="#789DBA" stroke-opacity=".09"/>
+  <ellipse cx="280" cy="155" rx="218" ry="96"
+           stroke="#789DBA" stroke-opacity=".07"/>
+
+  <!-- Industrial platform -->
+  <g filter="url(#shadow)">
+    <path d="M32 213 206 146 529 205 354 281 32 225Z"
+          fill="#0B1B2C"/>
+    <path d="M32 213 354 269 529 193V205L354 281 32 225Z"
+          fill="#102338" stroke="#45617A"/>
+    <path d="M32 213 206 134 529 193 354 269Z"
+          fill="url(#platform)"
+          stroke="#7391A9" stroke-width="1.2"/>
+  </g>
+
+  <!-- Industrial ground markings -->
+  <path d="M72 214 354 259 490 200"
+        stroke="#90A9BD" stroke-opacity=".2"/>
+  <path d="M234 169 465 210"
+        stroke="#D5B67D" stroke-opacity=".5"
+        stroke-width="1.5" stroke-dasharray="7 6"/>
+
+  <!-- Chimneys -->
+  <g stroke-linejoin="round">
+    <path d="M93 130V51L108 44V123Z"
+          fill="url(#front)" stroke="#7896AD"/>
+    <path d="M108 44 121 48V119L108 123Z"
+          fill="url(#side)" stroke="#7896AD"/>
+    <path d="M93 51 108 44 121 48 106 55Z"
+          fill="#829DB1"/>
+    <path d="M93 65 108 59 121 63"
+          stroke="#D9B675" stroke-width="3"/>
+
+    <path d="M177 111V32L191 26V105Z"
+          fill="url(#front)" stroke="#7896AD"/>
+    <path d="M191 26 204 30V101L191 105Z"
+          fill="url(#side)" stroke="#7896AD"/>
+    <path d="M177 32 191 26 204 30 190 36Z"
+          fill="#829DB1"/>
+    <path d="M177 47 191 41 204 45"
+          stroke="#D9B675" stroke-width="3"/>
+  </g>
+
+  <!-- Main factory -->
+  <g filter="url(#shadow)" stroke-linejoin="round">
+
+    <!-- Front facade -->
+    <path d="M66 127 113 97 153 135
+             200 105 243 143V218L66 189Z"
+          fill="url(#front)"
+          stroke="#8AA4B8" stroke-width="1.2"/>
+
+    <!-- Side facade -->
+    <path d="M243 143 292 120V194L243 218Z"
+          fill="url(#side)"
+          stroke="#7793AA"/>
+
+    <!-- Sawtooth roofs -->
+    <path d="M66 127 113 97 162 74 115 104Z"
+          fill="url(#roof)" stroke="#A0B7C9"/>
+
+    <path d="M113 97 153 135 202 112 162 74Z"
+          fill="#3D5D77" stroke="#7899B1"/>
+
+    <path d="M153 135 200 105 249 82 202 112Z"
+          fill="url(#roof)" stroke="#A0B7C9"/>
+
+    <path d="M200 105 243 143 292 120 249 82Z"
+          fill="#3D5D77" stroke="#7899B1"/>
+
+    <!-- Metallic roof edge -->
+    <path d="M66 127 113 97 153 135 200 105 243 143"
+          stroke="url(#gold)" stroke-width="2.3"/>
+
+    <!-- Roof solar panels -->
+    <path d="M128 103 143 96 166 117 151 124Z"
+          fill="#18354D" stroke="#83B4D0"/>
+    <path d="M140 98 162 119M139 113 155 106"
+          stroke="#83B4D0" stroke-opacity=".65"/>
+
+    <path d="M215 111 230 104 254 125 239 132Z"
+          fill="#18354D" stroke="#83B4D0"/>
+    <path d="M227 106 249 127M226 121 242 114"
+          stroke="#83B4D0" stroke-opacity=".65"/>
+
+    <!-- Factory windows -->
+    <path d="M81 144 120 150V178L81 172Z"
+          fill="url(#glass)" stroke="#8FAABD"/>
+    <path d="M100 147V175M81 158 120 164"
+          stroke="#A4C3D8" stroke-opacity=".55"/>
+
+    <path d="M132 153 171 159V187L132 181Z"
+          fill="url(#glass)" stroke="#8FAABD"/>
+    <path d="M151 156V184M132 167 171 173"
+          stroke="#A4C3D8" stroke-opacity=".55"/>
+
+    <!-- Loading entrance -->
+    <path d="M185 164 229 171V215L185 208Z"
+          fill="#102439" stroke="#8DA8BC"/>
+    <path d="M190 175 224 181M190 183 224 189
+             M190 191 224 197M190 199 224 205"
+          stroke="#6988A1" stroke-opacity=".65"/>
+
+    <!-- Side windows -->
+    <path d="M254 153 280 140V164L254 177Z"
+          fill="url(#glass)" stroke="#7396B0"/>
+    <path d="M267 147V170"
+          stroke="#A4C3D8" stroke-opacity=".5"/>
+
+    <!-- Exterior industrial lighting -->
+    <path d="M189 158 225 164"
+          stroke="#E6C58A" stroke-width="2.5"
+          stroke-linecap="round" filter="url(#glow)"/>
+  </g>
+
+  <!-- Warehouse -->
+  <g stroke-linejoin="round">
+    <path d="M305 119 352 96 424 110 377 134Z"
+          fill="url(#roof)" stroke="#8CA9BD"/>
+    <path d="M305 119 377 134V180L305 165Z"
+          fill="url(#front)" stroke="#7895AC"/>
+    <path d="M377 134 424 110V156L377 180Z"
+          fill="url(#side)" stroke="#7895AC"/>
+
+    <path d="M305 119 377 134 424 110"
+          stroke="#C9A76E" stroke-width="1.8"/>
+
+    <path d="M318 138 340 142V170L318 165Z
+             M349 144 366 148V176L349 172Z"
+          fill="#10273C" stroke="#7897AE"/>
+
+    <path d="M389 140 413 128V145L389 157Z"
+          fill="url(#glass)" stroke="#7897AE"/>
+  </g>
+
+  <!-- Container stacks -->
+  <g filter="url(#shadow)">
+    <use href="#container" x="319" y="169"/>
+    <use href="#container" x="376" y="182"/>
+    <use href="#container" x="336" y="140"/>
+
+    <!-- Premium gold container -->
+    <g transform="translate(393 153)">
+      <path d="M0 8 17 0 66 12 49 20Z"
+            fill="#E2C38D"/>
+      <path d="M0 8 49 20V48L0 36Z"
+            fill="url(#gold)"/>
+      <path d="M49 20 66 12V40L49 48Z"
+            fill="#92703E"/>
+      <path d="M6 13V35M13 15V37M20 17V39
+               M27 18V41M34 20V43M41 22V45"
+            stroke="#765B35" stroke-opacity=".65"/>
+      <path d="M0 8 49 20 66 12M49 20V48"
+            stroke="#F3D9AA" stroke-opacity=".7"/>
+    </g>
+  </g>
+
+  <!-- Industrial crane -->
+  <g stroke-linejoin="round">
+    <!-- Base -->
+    <path d="M464 190 480 182 499 187 483 195Z"
+          fill="#7896AD" stroke="#9CB3C4"/>
+
+    <!-- Tower -->
+    <path d="M471 185V62L483 56V179Z"
+          fill="url(#gold)" stroke="#DCC18D"/>
+    <path d="M483 56 491 60V183L483 179Z"
+          fill="#96713F"/>
+
+    <!-- Tower lattice -->
+    <path d="M472 72 482 83 472 94 482 105
+             472 116 482 127 472 138 482 149
+             472 160 482 171"
+          stroke="#725934" stroke-width="1.5"/>
+
+    <!-- Crane boom -->
+    <path d="M350 65 483 40 524 49 391 76Z"
+          fill="url(#gold)" stroke="#E5CA98"/>
+
+    <path d="M350 65V75L391 86 524 59V49L391 76Z"
+          fill="#92703E" stroke="#C9A76E"/>
+
+    <!-- Boom lattice -->
+    <path d="M360 68 375 78 389 62 404 72
+             419 56 434 66 449 50 464 60
+             479 44 494 54 509 48"
+          stroke="#725934" stroke-width="1.5"/>
+
+    <!-- Crane suspension -->
+    <path d="M483 40V23L350 65M483 23 524 49"
+          stroke="#A8BDCD" stroke-width="1.3"/>
+
+    <!-- Trolley -->
+    <rect x="398" y="77" width="15" height="7"
+          rx="2" fill="#DCC18D"/>
+
+    <!-- Hoist -->
+    <path d="M405 84V124"
+          stroke="#C6D5E0" stroke-width="1.5"/>
+    <path d="M405 124V130Q405 138 412 134"
+          stroke="#E7C588" stroke-width="2.5"
+          stroke-linecap="round"/>
+
+    <!-- Signal light -->
+    <circle cx="483" cy="23" r="2.8"
+            fill="#F4D59A" filter="url(#glow)"/>
+  </g>
+
+  <!-- Logistics truck: corrected consistent axonometric projection -->
+  <g transform="translate(132 213)" stroke-linejoin="round" stroke-width=".8">
+    <path d="M0 8 176 40 207 25 31 -7Z" fill="#07131F" opacity=".5"/>
+    <g transform="matrix(1 .18 0 1 0 0)">
+      <path d="M3 -7H168V4H3Z" fill="#0B1724"/>
+      <g fill="#08131E" stroke="#506B80">
+        <ellipse cx="18" cy="5" rx="7" ry="9"/><ellipse cx="34" cy="5" rx="7" ry="9"/><ellipse cx="50" cy="5" rx="7" ry="9"/><ellipse cx="124" cy="5" rx="7" ry="9"/>
+      </g>
+      <g fill="#8199AB" stroke="#233A4E"><ellipse cx="18" cy="5" rx="3.5" ry="5"/><ellipse cx="34" cy="5" rx="3.5" ry="5"/><ellipse cx="50" cy="5" rx="3.5" ry="5"/><ellipse cx="124" cy="5" rx="3.5" ry="5"/></g>
+      <path d="M0 -45H118V-10H0Z" fill="url(#front)" stroke="#A2B8CA"/>
+      <path d="M0 -45 24 -61H142L118 -45Z" fill="#8DA8BC" stroke="#B7CBD9"/>
+      <path d="M118 -45 142 -61V-26L118 -10Z" fill="url(#side)" stroke="#7897AD"/>
+      <path d="M5 -40V-15M13 -40V-15M21 -40V-15M29 -40V-15M37 -40V-15M45 -40V-15M53 -40V-15M61 -40V-15M69 -40V-15M77 -40V-15M85 -40V-15M93 -40V-15M101 -40V-15M109 -40V-15" stroke="#A2B8CA" opacity=".4"/>
+      <path d="M3 -17H115" stroke="#C9A76E" stroke-width="1.8"/>
+      <path d="M133 -38Q133 -45 140 -45H159L169 -30V2H133Z" fill="url(#gold)" stroke="#E6C998"/>
+      <path d="M140 -45 164 -61H183L159 -45Z" fill="#E5C994" stroke="#F0D5A3"/>
+      <path d="M159 -45 183 -61 193 -46V-14L169 2V-30Z" fill="#987541" stroke="#D8B982"/>
+      <path d="M138 -37H154L163 -25H138Z" fill="url(#glass)" stroke="#B5C9D7"/>
+      <path d="M163 -43 182 -56 189 -45 170 -32Z" fill="url(#glass)" stroke="#B5C9D7"/>
+      <path d="M172 -25 190 -37V-20L172 -8Z" fill="#14283C"/>
+      <path d="M174 -22 188 -31M174 -18 188 -27M174 -14 188 -23" stroke="#7897AD"/>
+      <path d="M169 -3 193 -19V-14L169 2Z" fill="#344E64"/>
+      <path d="M171 -5 176 -8M187 -16 191 -19" stroke="#FFF0C9" stroke-width="2"/>
+      <path d="M138 -20H160V-8M151 -17H157" stroke="#87683E" fill="none"/>
+      <path d="M141 2A10 10 0 0 1 161 2" fill="#172B3D"/>
+      <ellipse cx="151" cy="5" rx="7" ry="9" fill="#08131E" stroke="#506B80"/>
+      <ellipse cx="151" cy="5" rx="3.5" ry="5" fill="#8199AB" stroke="#233A4E"/>
+    </g>
+  </g>
+
+  <!-- Ground-level lights -->
+  <g fill="#D9B675">
+    <circle cx="48" cy="214" r="2"/>
+    <circle cx="353" cy="264" r="2"/>
+    <circle cx="513" cy="196" r="2"/>
+  </g>
+
+  <!-- Fine decorative accents -->
+  <path d="M28 43H72M28 43V70"
+        stroke="#819DB5" stroke-opacity=".3"/>
+  <path d="M493 267H532V240"
+        stroke="#819DB5" stroke-opacity=".3"/>
+  <circle cx="28" cy="43" r="2.5"
+          fill="#C9A76E"/>
+  <circle cx="532" cy="267" r="2.5"
+          fill="#C9A76E"/>
+
+</svg>

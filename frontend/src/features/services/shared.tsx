@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { SectionHero } from '@/components/SectionHero'
+import servicesHero from '@/assets/section-heroes/services.svg'
 import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
 import { useIranProvinces, useProvinceCities } from '@/features/account/geography'
@@ -64,15 +66,33 @@ export function ErrorState({ error }: { error: unknown }) {
 }
 
 export function ServiceHero({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <SectionHero
+        as="section"
+        className="svc-hero svc-hero-compact"
+        visualVariant="services"
+        image={servicesHero}
+        eyebrow="بازار محصولات کارفنسا"
+        title="محصول ایرانی، مستقیم از تولیدکننده"
+        description="بازار فروش محصولات کشاورزی، دامی و صنایع‌دستی برای فروش داخلی و صادرات."
+        primaryAction={<Link className="svc-button" to="/services/dashboard">ثبت محصول</Link>}
+      />
+    )
+  }
+
   return (
-    <section className={`svc-hero${compact ? ' svc-hero-compact' : ''}`}>
-      <div>
-        <span className="svc-eyebrow">بازار محصولات کارفنسا</span>
-        <h1>محصول ایرانی، مستقیم از تولیدکننده</h1>
-        <p>بازار فروش محصولات کشاورزی، دامی و صنایع‌دستی برای فروش داخلی و صادرات.</p>
-      </div>
-      <Link className="svc-button svc-button-light" to="/services/dashboard">ثبت محصول</Link>
-    </section>
+    <SectionHero
+      as="section"
+      className="svc-hero"
+      visualVariant="services"
+      image={servicesHero}
+      eyebrow="بازار محصولات کارفنسا"
+      title="از تولیدکننده تا بازارهای جهانی"
+      description="محصولات ایرانی را کشف کنید، مستقیم با تولیدکنندگان و تأمین‌کنندگان ارتباط بگیرید و فرصت‌های جدید تجارت را بسازید."
+      primaryAction={<a className="svc-button" href="#svc-listings">مشاهده محصولات</a>}
+      secondaryAction={<Link className="svc-button svc-button-secondary" to="/services/dashboard">ثبت محصول</Link>}
+    />
   )
 }
 
@@ -176,6 +196,8 @@ export function InquiryList({ inquiries }: { inquiries: ProductInquiry[] }) {
 export function ListingForm({ listing }: { listing?: ProductListing }) {
   const { data: user } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const listingKind = params.get('kind') === 'service' ? 'service' : 'product'
   const queryClient = useQueryClient()
   const categories = useQuery({
     queryKey: ['services', 'categories'],
@@ -201,7 +223,9 @@ export function ListingForm({ listing }: { listing?: ProductListing }) {
     },
     onSuccess: async (saved) => {
       await queryClient.invalidateQueries({ queryKey: ['services'] })
-      navigate('/services/dashboard', { state: { savedStatus: saved.status } })
+      navigate(params.get('next') === 'business' ? '/business' : '/services/dashboard', {
+        state: { savedStatus: saved.status },
+      })
     },
   })
   const allCategories = flattenCategories(categories.data ?? [])
@@ -236,6 +260,7 @@ export function ListingForm({ listing }: { listing?: ProductListing }) {
         packaging: String(form.get('packaging') ?? '').trim(),
         specifications,
         submit_for_review: form.get('submit_for_review') === 'on',
+        listing_kind: listing?.listing_kind ?? listingKind,
       },
       files,
     })
@@ -244,7 +269,13 @@ export function ListingForm({ listing }: { listing?: ProductListing }) {
   if (!user) return <p className="svc-login-note"><AppLink href="/login">برای ثبت محصول وارد حساب شوید.</AppLink></p>
   return (
     <form className="svc-form-card svc-listing-form" onSubmit={submit} key={listing?.id ?? 'new-listing'}>
-      <h1>{listing ? 'ویرایش محصول' : 'ثبت محصول جدید'}</h1>
+      <h1>
+        {listing
+          ? 'ویرایش آگهی'
+          : listingKind === 'service'
+            ? 'ثبت خدمت جدید'
+            : 'ثبت محصول جدید'}
+      </h1>
       <p>پس از ارسال، محصول برای بررسی مدیران فرستاده می‌شود.</p>
       <label>نام محصول<input name="title" minLength={3} maxLength={180} required defaultValue={listing?.title} /></label>
       <label>معرفی محصول<textarea name="description" minLength={10} maxLength={5000} required rows={5} defaultValue={listing?.description} /></label>

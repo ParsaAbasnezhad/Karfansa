@@ -5,6 +5,7 @@ description = "Karfansa backend: Django + Django Ninja modular monolith"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "django>=5.2,<5.3",
+    "django-unfold>=0.110.1,<0.111",
     "django-ninja>=1.4,<2",
     "pydantic>=2.8,<3",
     "psycopg[binary]>=3.2,<4",
@@ -14,7 +15,6 @@ dependencies = [
     "gunicorn>=23,<24",
     "argon2-cffi>=23,<26",
     "pillow>=11.0",
-    "feedparser>=6.0,<7",
     "requests>=2.32,<3",
     "google-genai>=2.34.0",
 ]

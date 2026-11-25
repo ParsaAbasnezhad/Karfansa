@@ -1,19 +1,26 @@
 from django.contrib.auth import login, logout
+from django.db import transaction
 from django.http import HttpRequest
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_protect
 from ninja import Router, Status
 from ninja.decorators import decorate_view
 
+from apps.accounts.phone import login_with_phone, register_with_phone, request_phone_otp
 from apps.accounts.schemas import (
     EmailIn,
     MessageOut,
     PasswordLoginIn,
     PasswordResetConfirmIn,
     PasswordResetIn,
+    PhoneLoginIn,
+    PhoneOtpIn,
+    PhoneRegisterIn,
+    PhoneRegistrationOut,
     ProfileOut,
     ProfileUpdateIn,
     RegisterIn,
+    RegistrationOut,
     UserOut,
     VerifyIn,
 )
@@ -27,6 +34,7 @@ from apps.accounts.services import (
 )
 from apps.core.errors import ApiError
 from apps.geography.models import City, Province
+from apps.intents.services import claim_guest_intent
 
 router = Router()
 
@@ -36,13 +44,18 @@ def csrf_token(request: HttpRequest) -> dict[str, str]:
     return {"message": get_token(request)}
 
 
-@router.post("/register", response={201: MessageOut})
+@router.post("/register", response={201: RegistrationOut})
 @decorate_view(csrf_protect)
-def register(request: HttpRequest, payload: RegisterIn) -> Status[dict[str, str]]:
-    register_user(**payload.dict())
+def register(request: HttpRequest, payload: RegisterIn) -> Status[RegistrationOut]:
+    with transaction.atomic():
+        user = register_user(email=payload.email, phone=payload.phone, password=payload.password)
+        claimed = claim_guest_intent(user, payload.guest_intent_token)
     return Status(
         201,
-        {"message": "ثبت‌نام با موفقیت انجام شد. حالا با ایمیل و گذرواژه وارد شوید."},
+        RegistrationOut(
+            message="ثبت‌نام با موفقیت انجام شد. حالا با ایمیل و گذرواژه وارد شوید.",
+            intent_claimed=claimed,
+        ),
     )
 
 
@@ -66,6 +79,43 @@ def request_password_reset(request: HttpRequest, payload: PasswordResetIn) -> di
 def confirm_password_reset(request: HttpRequest, payload: PasswordResetConfirmIn) -> dict[str, str]:
     reset_password(payload.email, payload.code, payload.password)
     return {"message": "گذرواژه با موفقیت تغییر کرد. حالا وارد شوید."}
+
+
+@router.post("/phone/otp", response=MessageOut)
+@decorate_view(csrf_protect)
+def request_phone_code(request: HttpRequest, payload: PhoneOtpIn) -> dict[str, str]:
+    request_phone_otp(payload.phone, payload.email)
+    return {"message": "اگر ارسال کد ممکن باشد، کد تأیید ارسال می‌شود."}
+
+
+@router.post("/phone/register", response={201: PhoneRegistrationOut})
+@decorate_view(csrf_protect)
+def register_with_phone_code(
+    request: HttpRequest, payload: PhoneRegisterIn
+) -> Status[PhoneRegistrationOut]:
+    with transaction.atomic():
+        user = register_with_phone(
+            phone=payload.phone,
+            code=payload.code,
+            email=payload.email,
+            password=payload.password,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+        )
+        claimed = claim_guest_intent(user, payload.guest_intent_token)
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    return Status(
+        201,
+        PhoneRegistrationOut(email=user.email, phone=user.phone, intent_claimed=claimed),
+    )
+
+
+@router.post("/phone/login", response=UserOut)
+@decorate_view(csrf_protect)
+def login_with_phone_code(request: HttpRequest, payload: PhoneLoginIn) -> UserOut:
+    user = login_with_phone(payload.phone, payload.code)
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    return UserOut(email=user.email, phone=user.phone)
 
 
 @router.post("/login", response=MessageOut)

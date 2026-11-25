@@ -1,0 +1,43 @@
+/* Trade opportunity detail — complements the shared kd-* detail system */
+
+.trade-detail {
+  min-width: 0;
+}
+
+.trade-detail .trade-detail-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: 18px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--blue-soft);
+  color: var(--navy);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.trade-detail .trade-detail-back:hover {
+  background: var(--blue);
+  color: #fff;
+}
+
+.trade-detail a:focus-visible,
+.trade-detail button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.trade-detail .kd-hero--opportunity .kd-hero-lead {
+  -webkit-line-clamp: 1;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trade-detail .trade-detail-back {
+    transition: none;
+  }
+}

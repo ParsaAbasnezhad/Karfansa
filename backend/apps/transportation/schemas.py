@@ -10,6 +10,7 @@ class TransportModeOut(Schema):
     code: str
     name_fa: str
     name_en: str
+    company_count: int = 0
 
 
 class VehicleTypeOut(Schema):
@@ -21,12 +22,15 @@ class VehicleTypeOut(Schema):
 class TransportCompanyFilters(Schema):
     search: str | None = None
     province: str | None = None
+    city: str | None = None
     transport_type: str | None = None
     service_province: str | None = None
+    coverage: str | None = None
     customs_services: bool | None = None
     tracking_available: bool | None = None
     insurance_available: bool | None = None
     is_verified: bool | None = None
+    ordering: str | None = None
 
 
 class TransportCompanyListOut(Schema):
@@ -38,10 +42,17 @@ class TransportCompanyListOut(Schema):
     province: ProvinceRef | None
     city: CityRef | None
     transport_types: list[TransportModeOut]
+    description: str
+    cover_image: str | None
     tracking_available: bool
     insurance_available: bool
     customs_services: bool
     is_verified: bool
+    fleet_capacity: str
+
+    @staticmethod
+    def resolve_cover_image(obj: TransportCompany) -> str | None:
+        return obj.cover_image.url if obj.cover_image else None
 
     @staticmethod
     def resolve_logo(obj: TransportCompany) -> str | None:
@@ -49,15 +60,10 @@ class TransportCompanyListOut(Schema):
 
 
 class TransportCompanyDetailOut(TransportCompanyListOut):
-    cover_image: str | None
-    description: str
-    national_id: str
-    registration_number: str
     vehicle_types: list[VehicleTypeOut]
     service_provinces: list[ProvinceOut]
     origin_countries: list[CountryOut]
     destination_countries: list[CountryOut]
-    fleet_capacity: str
     address: str
     phone: str
     mobile: str
@@ -65,6 +71,7 @@ class TransportCompanyDetailOut(TransportCompanyListOut):
     website: str
     whatsapp: str
     telegram: str
+    instagram: str
 
     @staticmethod
     def resolve_cover_image(obj: TransportCompany) -> str | None:

@@ -31,6 +31,37 @@ class SellerOut(Schema):
     province_name: str | None
     city_name: str | None
     is_public: bool
+    professional_title: str = ""
+    profile_image: str | None = None
+    cover_image: str | None = None
+    is_verified: bool = False
+    listings_count: int = 0
+    organization_slug: str | None = None
+
+
+class IndividualDirectoryOut(Schema):
+    id: int
+    display_name: str
+    professional_title: str
+    bio: str
+    profile_image: str | None
+    cover_image: str | None
+    province_id: int | None
+    city_id: int | None
+    province_name: str | None
+    city_name: str | None
+    province_slug: str | None
+    is_public: bool
+    is_verified: bool
+    listings_count: int
+
+
+class IndividualPageOut(Schema):
+    results: list[IndividualDirectoryOut]
+    count: int
+    page: int
+    page_size: int
+    total_pages: int
 
 
 class SpecificationIn(Schema):
@@ -55,6 +86,7 @@ class ListingIn(Schema):
     packaging: str = Field(default="", max_length=500)
     specifications: list[SpecificationIn] = Field(default_factory=list, max_length=30)
     submit_for_review: bool = True
+    listing_kind: str = "product"
 
 
 class ListingOut(Schema):
@@ -66,6 +98,10 @@ class ListingOut(Schema):
     category_name: str
     category_slug: str
     seller: SellerOut
+    listing_kind: str = "product"
+    organization_id: str | None = None
+    organization_name: str | None = None
+    organization_slug: str | None = None
     province_id: int
     province_name: str
     province_slug: str

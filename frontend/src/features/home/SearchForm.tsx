@@ -36,7 +36,7 @@ export function SearchForm({ variant, onDone }: Props) {
           type="search"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="جستجو در اخبار و شرکت‌ها..."
+          placeholder="جستجو در شرکت‌ها و فرصت‌های تجاری..."
           aria-label="جستجو"
         />
       </form>
@@ -51,7 +51,7 @@ export function SearchForm({ variant, onDone }: Props) {
         type="search"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="جستجو در اخبار، شرکت‌ها و نمادهای بورسی..."
+        placeholder="جستجو در شرکت‌ها، فرصت‌های تجاری و نمادهای بورسی..."
         aria-label="جستجو"
       />
       <kbd>/</kbd>

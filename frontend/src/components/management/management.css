@@ -1,0 +1,531 @@
+/* Shared management shell and controls for profile, business, and inquiries. */
+.management-shell {
+  --management-ink: var(--fg);
+  --management-muted: var(--muted);
+  --management-border: var(--line);
+  --management-surface: var(--surface);
+  --management-accent: var(--blue);
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--management-ink);
+  font-family: var(--font);
+}
+
+.management-shell * {
+  box-sizing: border-box;
+}
+
+.management-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgb(255 255 255 / 0.97);
+  border-bottom: 1px solid var(--management-border);
+  box-shadow: 0 2px 12px rgb(15 28 90 / 0.035);
+}
+
+.management-header-inner,
+.management-nav-inner {
+  width: min(100%, 1240px);
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+
+.management-header-inner {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.management-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--navy);
+}
+
+.management-brand img {
+  display: block;
+  width: 56px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.management-brand-copy {
+  display: grid;
+  line-height: 1.35;
+}
+
+.management-brand-copy strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.management-brand-copy small {
+  color: var(--management-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.management-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.management-site-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--management-border);
+  border-radius: 9px;
+  color: var(--fg-soft);
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.management-site-link:hover {
+  color: var(--management-accent);
+  background: var(--blue-tint);
+  border-color: #cbd7ef;
+}
+
+.management-site-link .i {
+  width: 15px;
+  height: 15px;
+}
+
+.management-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid #cbd7ef;
+  border-radius: 10px;
+  background: var(--blue-soft);
+  color: var(--navy-2);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.management-nav {
+  border-top: 1px solid #f0f2f8;
+}
+
+.management-nav-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.management-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 17px;
+  border-bottom: 2px solid transparent;
+  color: var(--fg-soft);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.management-nav-link:hover {
+  color: var(--management-accent);
+  background: var(--blue-tint);
+}
+
+.management-nav-link.is-active {
+  color: var(--navy-2);
+  border-bottom-color: var(--management-accent);
+  background: linear-gradient(0deg, var(--blue-tint), transparent 80%);
+}
+
+.management-nav-link .i {
+  width: 17px;
+  height: 17px;
+}
+
+.management-nav-short {
+  display: none;
+}
+
+.management-main {
+  width: min(100%, 1240px);
+  min-width: 0;
+  margin-inline: auto;
+  padding: 24px 20px 56px;
+}
+
+.management-main > * {
+  animation: none;
+}
+
+.management-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-width: 0;
+  margin: 0 0 20px;
+}
+
+.management-page-heading {
+  min-width: 0;
+}
+
+.management-eyebrow,
+.management-page-kicker {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--management-accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.management-page-header h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(22px, 2vw, 27px);
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.management-page-header p {
+  margin: 2px 0 0;
+  color: var(--management-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.management-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: none;
+}
+
+.management-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: 700 12.5px/1.5 var(--font);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.management-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.management-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.management-button.is-sm {
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+}
+
+.management-button.is-primary {
+  background: var(--management-accent);
+  border-color: var(--management-accent);
+  color: #fff;
+}
+
+.management-button.is-primary:hover:not(:disabled) {
+  background: var(--blue-hover);
+  border-color: var(--blue-hover);
+}
+
+.management-button.is-secondary {
+  background: var(--management-surface);
+  border-color: #cbd5e8;
+  color: var(--navy-2);
+}
+
+.management-button.is-secondary:hover:not(:disabled),
+.management-button.is-ghost:hover:not(:disabled) {
+  background: var(--blue-tint);
+  border-color: #b9c9e7;
+}
+
+.management-button.is-ghost {
+  background: transparent;
+  color: var(--navy-2);
+}
+
+.management-button.is-danger {
+  background: #fff4f4;
+  border-color: #f3c9cc;
+  color: #a92a33;
+}
+
+.management-button.is-danger:hover:not(:disabled) {
+  background: #ffe9eb;
+}
+
+.management-card {
+  min-width: 0;
+  border: 1px solid var(--management-border);
+  border-radius: 12px;
+  background: var(--management-surface);
+  box-shadow: 0 2px 12px rgb(15 28 90 / 0.035);
+}
+
+.management-status,
+.management-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 2px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.management-badge {
+  color: var(--fg-soft);
+  background: var(--chip);
+}
+
+.management-status.is-neutral {
+  color: var(--fg-soft);
+  background: var(--chip);
+  border-color: var(--line);
+}
+.management-status.is-info {
+  color: #2451a3;
+  background: var(--blue-soft);
+  border-color: #cedcf5;
+}
+.management-status.is-success {
+  color: #087451;
+  background: var(--up-bg);
+  border-color: #c4e9d5;
+}
+.management-status.is-warning {
+  color: #915d14;
+  background: #fff4df;
+  border-color: #f1dfba;
+}
+.management-status.is-danger {
+  color: #aa3540;
+  background: var(--down-bg);
+  border-color: #f3cbd0;
+}
+
+.management-table-wrap {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.management-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--management-ink);
+  font-size: 12px;
+  text-align: right;
+}
+
+.management-table th,
+.management-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--management-border);
+  vertical-align: middle;
+}
+
+.management-table th {
+  background: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.management-table tbody tr:hover {
+  background: var(--blue-tint);
+}
+
+.management-filters {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.management-field {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: var(--fg-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.management-field small {
+  color: var(--management-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.management-field .management-field-error {
+  color: var(--down);
+}
+
+.management-field input,
+.management-field select,
+.management-field textarea,
+.management-filters input,
+.management-filters select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e8;
+  border-radius: 9px;
+  background: var(--management-surface);
+  color: var(--management-ink);
+  font: 500 12.5px/1.6 var(--font);
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.management-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.management-field input:focus,
+.management-field select:focus,
+.management-field textarea:focus,
+.management-filters input:focus,
+.management-filters select:focus {
+  border-color: var(--management-accent);
+  box-shadow: 0 0 0 3px rgb(29 78 216 / 0.1);
+}
+
+@media (max-width: 700px) {
+  .management-header-inner,
+  .management-nav-inner {
+    padding-inline: 16px;
+  }
+  .management-header-inner {
+    min-height: 58px;
+  }
+  .management-brand img {
+    width: 48px;
+    height: 42px;
+  }
+  .management-brand-copy strong {
+    font-size: 13px;
+  }
+  .management-brand-copy small {
+    font-size: 10px;
+  }
+  .management-site-link span {
+    display: none;
+  }
+  .management-site-link {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+  .management-header-actions {
+    gap: 8px;
+  }
+  .management-nav-inner {
+    gap: 0;
+  }
+  .management-nav-link {
+    flex: 1;
+    min-width: 0;
+    padding: 0 4px;
+    gap: 5px;
+    font-size: 11.5px;
+  }
+  .management-nav-link .i {
+    width: 15px;
+    height: 15px;
+  }
+  .management-nav-label {
+    display: none;
+  }
+  .management-nav-short {
+    display: inline;
+  }
+  .management-main {
+    padding: 18px 16px 42px;
+  }
+  .management-page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .management-page-header h1 {
+    font-size: 22px;
+  }
+  .management-page-actions {
+    justify-content: flex-start;
+    flex: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .management-brand-copy small {
+    display: none;
+  }
+  .management-nav-link {
+    font-size: 10.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .management-shell *,
+  .management-shell *::before,
+  .management-shell *::after {
+    scroll-behavior: auto;
+    transition-duration: 0.01ms !important;
+  }
+}

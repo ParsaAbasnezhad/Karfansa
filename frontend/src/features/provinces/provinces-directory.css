@@ -1,0 +1,660 @@
+.province-intelligence-page {
+  --p-navy: #142638;
+  --p-steel: #57718a;
+  --p-steel-light: #8299ae;
+  --p-gold: #b89a5a;
+  --p-gold-soft: #f3eddf;
+
+  width: min(1280px, 100%);
+  margin: clamp(20px, 3vw, 36px) auto 64px;
+  padding-inline: clamp(16px, 3vw, 28px);
+}
+
+.province-intelligence-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+  align-items: end;
+  gap: clamp(24px, 4vw, 56px);
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--p-line);
+}
+
+.province-intelligence-title h1 {
+  margin-top: 8px;
+  color: var(--p-navy);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.4;
+}
+
+.province-intelligence-title > p {
+  margin-top: 6px;
+  color: var(--p-muted);
+  font-size: 13px;
+}
+
+.province-intelligence-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--p-line);
+  background: #fff;
+}
+
+.province-intelligence-stat {
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.province-intelligence-stat + .province-intelligence-stat {
+  border-right: 1px solid var(--p-line);
+}
+
+.province-intelligence-stat dt {
+  color: var(--p-muted);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.province-intelligence-stat dd {
+  margin: 2px 0 0;
+  color: var(--p-navy);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+
+.province-intelligence-page .iran-map-section {
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+  align-items: stretch;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.province-intelligence-page .iran-map-panel,
+.province-intelligence-page .iran-province-directory {
+  min-width: 0;
+  border: 1px solid var(--p-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.province-intelligence-page .iran-map-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--p-navy);
+  color: #f4f3ef;
+}
+
+.province-intelligence-page .iran-map-heading {
+  align-items: center;
+  padding: 0 2px 12px;
+}
+
+.province-intelligence-page .iran-map-heading .provinces-eyebrow {
+  color: #d3bd8b;
+}
+
+.province-intelligence-page .iran-map-heading h2 {
+  margin: 2px 0 0;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.province-intelligence-page .iran-map-total {
+  padding: 4px 9px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 4px;
+  background: transparent;
+  color: #e6d5aa;
+}
+
+.province-intelligence-page .iran-map-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background-color: #1c3043;
+  background-image:
+    linear-gradient(rgb(166 185 201 / 7%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(166 185 201 / 7%) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.province-intelligence-page .iran-map-svg {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-height: 530px;
+  margin-inline: auto;
+  overflow: visible;
+}
+
+.province-intelligence-page .iran-map-grid {
+  fill: url(#iran-map-grid);
+  pointer-events: none;
+}
+
+.province-intelligence-page .iran-map-link {
+  cursor: pointer;
+  outline: none;
+}
+
+.province-intelligence-page .iran-map-region {
+  fill: #688096;
+  stroke: #1d3348;
+  stroke-width: 1.2px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition:
+    fill 180ms ease,
+    stroke 180ms ease,
+    stroke-width 180ms ease;
+}
+
+.province-intelligence-page .iran-map-link:hover .iran-map-region,
+.province-intelligence-page .iran-map-link.is-hovered .iran-map-region,
+.province-intelligence-page .iran-map-link:focus-visible .iran-map-region {
+  fill: #b89a5a;
+  stroke: #f2e7ca;
+  stroke-width: 1.7px;
+}
+
+.province-intelligence-page .iran-map-link.is-selected .iran-map-region {
+  fill: #c4a765;
+  stroke: #fff0c8;
+  stroke-width: 2px;
+}
+
+.province-intelligence-page .iran-map-link:focus-visible .iran-map-region {
+  stroke: #fff;
+  stroke-width: 2.5px;
+}
+
+.province-intelligence-page .iran-map-active-label {
+  fill: #fff;
+  font-family: var(--font, inherit);
+  font-size: 12px;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: #172a3d;
+  stroke-linejoin: round;
+  stroke-width: 4px;
+  pointer-events: none;
+}
+
+.province-intelligence-page .iran-map-tooltip {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 12px;
+  width: min(220px, calc(100% - 24px));
+  padding: 10px 12px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-right: 2px solid var(--p-gold);
+  background: #132638;
+  color: #fff;
+  pointer-events: none;
+}
+
+.iran-map-tooltip-kicker {
+  display: block;
+  color: #d3bd8b;
+  font-size: 9px;
+}
+
+.iran-map-tooltip > strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+}
+
+.iran-map-tooltip dl {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding-top: 7px;
+  border-top: 1px solid rgb(255 255 255 / 14%);
+}
+
+.iran-map-tooltip dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+}
+
+.iran-map-tooltip dt {
+  color: #bdc9d3;
+}
+
+.iran-map-tooltip dd {
+  margin: 0;
+  color: #f0dfb8;
+  font-variant-numeric: tabular-nums;
+}
+
+.iran-map-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 2px 0;
+  color: #c0cbd4;
+  font-size: 10px;
+}
+
+.iran-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.iran-map-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.iran-map-legend i {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #9aabba;
+  background: #688096;
+}
+
+.iran-map-legend i.is-hovered {
+  border-color: #f2e7ca;
+  background: var(--p-gold);
+}
+
+.iran-map-attribution {
+  color: #9cabb8;
+}
+
+.province-intelligence-page .iran-province-directory {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: #fff;
+  color: var(--p-ink);
+}
+
+.province-intelligence-page .iran-directory-heading {
+  min-height: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--p-line);
+}
+
+.province-intelligence-page .iran-directory-heading h2 {
+  margin-top: 2px;
+  color: var(--p-navy);
+  font-size: 17px;
+}
+
+.province-intelligence-page .iran-directory-heading p {
+  margin-top: 2px;
+  color: var(--p-muted);
+  font-size: 11px;
+}
+
+.province-search {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0 10px;
+  border: 1px solid var(--p-line);
+  background: #f8f9fa;
+  color: var(--p-muted);
+}
+
+.province-intelligence-page .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.province-search:focus-within {
+  border-color: var(--p-steel);
+  box-shadow: 0 0 0 2px rgb(87 113 138 / 12%);
+}
+
+.province-search-icon {
+  flex: none;
+  color: var(--p-gold);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.province-search input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--p-ink);
+  font: inherit;
+  font-size: 12px;
+}
+
+.province-search input::placeholder {
+  color: #7d8992;
+}
+
+.province-search > button {
+  flex: none;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--p-muted);
+  font-size: 18px;
+}
+
+.province-intelligence-page .iran-directory-list {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 2px 8px;
+  min-height: 0;
+  max-height: 548px;
+  overflow: auto;
+  margin: 10px -4px 0;
+  padding: 2px 4px 4px;
+  scrollbar-color: #c3cbd1 transparent;
+  scrollbar-width: thin;
+}
+
+.iran-directory-row {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.iran-directory-select {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  flex: 1;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 5px;
+  border: 0;
+  background: transparent;
+  color: #334454;
+  text-align: right;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.iran-directory-index {
+  flex: none;
+  width: 19px;
+  color: #8a969f;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.iran-directory-pin {
+  display: grid;
+  flex: none;
+  width: 16px;
+  place-items: center;
+  color: var(--p-steel);
+}
+
+.iran-directory-pin svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+}
+
+.iran-directory-select strong {
+  overflow: hidden;
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iran-directory-count {
+  flex: none;
+  color: var(--p-steel);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.iran-directory-row.is-active .iran-directory-select,
+.iran-directory-row.is-selected .iran-directory-select {
+  background: #f7f4ec;
+  color: var(--p-navy);
+}
+
+.iran-directory-row.is-active .iran-directory-pin,
+.iran-directory-row.is-selected .iran-directory-pin {
+  color: var(--p-gold);
+}
+
+.iran-directory-row.is-selected {
+  border-bottom-color: #d8c99e;
+}
+
+.iran-directory-link {
+  display: grid;
+  flex: none;
+  width: 30px;
+  place-items: center;
+  color: var(--p-steel);
+  font-size: 13px;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.iran-directory-link:hover,
+.iran-directory-link:focus-visible {
+  background: var(--p-navy);
+  color: #fff;
+}
+
+.province-selected-summary {
+  margin-top: 10px;
+  padding: 10px;
+  border-right: 2px solid var(--p-gold);
+  background: #f7f6f2;
+}
+
+.province-selected-summary > strong {
+  color: var(--p-navy);
+  font-size: 12px;
+}
+
+.province-selected-summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 4px;
+  color: var(--p-muted);
+  font-size: 10px;
+}
+
+.province-selected-summary > a {
+  display: inline-block;
+  margin-top: 5px;
+  color: var(--p-steel);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.province-selected-summary > a:hover {
+  color: var(--p-navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.province-search-empty {
+  grid-column: 1 / -1;
+  padding: 20px 8px;
+  color: var(--p-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.iran-map-loading {
+  min-height: 520px;
+  border: 1px solid var(--p-line);
+  background: var(--p-navy);
+}
+
+.province-intelligence-page :is(a, button, input):focus-visible {
+  outline: 2px solid var(--p-gold);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .province-intelligence-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .province-intelligence-page .iran-map-section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .province-intelligence-page .iran-map-canvas {
+    min-height: 360px;
+  }
+
+  .province-intelligence-page .iran-map-svg {
+    width: min(100%, 560px);
+  }
+
+  .province-intelligence-page .iran-province-directory {
+    min-height: 420px;
+  }
+
+  .province-intelligence-page .iran-directory-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-height: 320px;
+  }
+}
+
+@media (max-width: 767px) {
+  .province-intelligence-page {
+    width: 100%;
+    margin-block: 14px 36px;
+    padding-inline: max(14px, env(safe-area-inset-left, 0px));
+  }
+
+  .province-intelligence-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding-bottom: 14px;
+  }
+
+  .province-intelligence-title h1 {
+    font-size: clamp(22px, 6vw, 28px);
+  }
+
+  .province-intelligence-title > p {
+    max-width: 50ch;
+    font-size: 12px;
+  }
+
+  .province-intelligence-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .province-intelligence-stat {
+    padding: 8px;
+  }
+
+  .province-intelligence-stat dt {
+    min-height: 34px;
+    font-size: 9px;
+  }
+
+  .province-intelligence-stat dd {
+    font-size: 18px;
+  }
+
+  .province-intelligence-page .iran-map-section {
+    display: block;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 14px;
+  }
+
+  .province-intelligence-page .iran-map-panel,
+  .province-intelligence-page .iran-map-loading {
+    display: none;
+  }
+
+  .province-intelligence-page .iran-province-directory {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+  }
+
+  .province-intelligence-page .iran-directory-list {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: none;
+    overflow: visible;
+    margin-bottom: 0;
+  }
+
+  .iran-directory-select {
+    min-height: 46px;
+  }
+
+  .iran-directory-select strong {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .province-intelligence-page {
+    padding-inline: 12px;
+  }
+
+  .province-intelligence-stat {
+    padding-inline: 6px;
+  }
+
+  .province-intelligence-stat dt {
+    font-size: 8px;
+  }
+
+  .province-intelligence-page .iran-directory-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .province-intelligence-page *,
+  .province-intelligence-page *::before,
+  .province-intelligence-page *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -14,15 +14,30 @@ def list_public_organizations(
     *,
     search: str | None = None,
     province: str | None = None,
+    city: str | None = None,
     industry: str | None = None,
     organization_type: str | None = None,
     is_verified: bool | None = None,
 ) -> QuerySet[Organization]:
     queryset = _public()
     if search:
-        queryset = queryset.filter(Q(name__icontains=search) | Q(english_name__icontains=search))
+        queryset = queryset.filter(
+            Q(name__icontains=search)
+            | Q(english_name__icontains=search)
+            | Q(description__icontains=search)
+        )
     if province:
-        queryset = queryset.filter(province__slug=province)
+        queryset = (
+            queryset.filter(province_id=int(province))
+            if province.isdigit()
+            else queryset.filter(province__slug=province)
+        )
+    if city:
+        queryset = (
+            queryset.filter(city_id=int(city))
+            if city.isdigit()
+            else queryset.filter(city__slug=city)
+        )
     if industry:
         queryset = queryset.filter(industry__slug=industry)
     if organization_type:

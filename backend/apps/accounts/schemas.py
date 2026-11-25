@@ -8,6 +8,7 @@ class RegisterIn(Schema):
     email: str
     phone: str
     password: str
+    guest_intent_token: str | None = None
 
 
 class EmailIn(Schema):
@@ -34,6 +35,31 @@ class PasswordResetConfirmIn(Schema):
     password: str
 
 
+class PhoneOtpIn(Schema):
+    phone: str
+    email: str = ""
+
+
+class PhoneRegisterIn(Schema):
+    phone: str
+    code: str
+    email: str
+    password: str
+    first_name: str
+    last_name: str
+    guest_intent_token: str | None = None
+
+
+class RegistrationOut(Schema):
+    message: str
+    intent_claimed: bool
+
+
+class PhoneLoginIn(Schema):
+    phone: str
+    code: str
+
+
 class MessageOut(Schema):
     message: str
 
@@ -41,6 +67,10 @@ class MessageOut(Schema):
 class UserOut(Schema):
     email: str
     phone: str
+
+
+class PhoneRegistrationOut(UserOut):
+    intent_claimed: bool
 
 
 class ProfileOut(UserOut):

@@ -1,10 +1,12 @@
-
 from datetime import timedelta
 
 from django.contrib import admin, messages
 from django.db import transaction
 from django.utils import timezone
 from django.utils.html import format_html
+
+from apps.core.admin import ModerationModelAdmin, status_badge
+from apps.organizations.audit import audit
 
 from .models import (
     OpportunityLevel,
@@ -14,7 +16,8 @@ from .models import (
 
 
 @admin.register(TradeOpportunity)
-class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class TradeOpportunityAdmin(ModerationModelAdmin):  # type: ignore[type-arg]
+    moderation_permission = "trade.moderate_tradeopportunity"
 
     # --------------------------------------------------
     # List configuration
@@ -52,6 +55,7 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         "description",
         "target_market",
         "source",
+        "rejection_reason",
         "company__name",
         "product__name_fa",
         "service_listing__title",
@@ -93,6 +97,9 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     )
 
     readonly_fields = (
+        "review_status",
+        "rejection_reason",
+        "is_published",
         "published_at",
         "last_reviewed_at",
         "last_reviewed_by",
@@ -153,6 +160,7 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 "fields": (
                     "created_by",
                     "review_status",
+                    "rejection_reason",
                     "relevance_score",
                 ),
             },
@@ -181,6 +189,7 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         "approve_and_publish",
         "approve_without_publishing",
         "reject_and_unpublish",
+        "request_changes",
         "unpublish_opportunities",
         "expire_opportunities",
     )
@@ -244,7 +253,7 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
         return format_html(
             '<span style="background:{};color:{};'
-            'padding:4px 10px;border-radius:6px;'
+            "padding:4px 10px;border-radius:6px;"
             'font-size:11px;font-weight:600;white-space:nowrap;">'
             "{}</span>",
             background,
@@ -254,91 +263,72 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
     @admin.display(description="وضعیت بررسی", ordering="review_status")
     def review_badge(self, obj: TradeOpportunity):
-        styles = {
-            OpportunityReviewStatus.PENDING: (
-                "در انتظار بررسی",
-                "#92400e",
-                "#fef3c7",
-            ),
-            OpportunityReviewStatus.APPROVED: (
-                "تأییدشده",
-                "#15803d",
-                "#dcfce7",
-            ),
-            OpportunityReviewStatus.REJECTED: (
-                "ردشده",
-                "#b91c1c",
-                "#fee2e2",
-            ),
+        states = {
+            OpportunityReviewStatus.PENDING: "pending",
+            OpportunityReviewStatus.APPROVED: "approved",
+            OpportunityReviewStatus.REJECTED: "rejected",
         }
-
-        label, color, background = styles.get(
-            obj.review_status,
-            ("نامشخص", "#64748b", "#f1f5f9"),
-        )
-
-        return format_html(
-            '<span style="background:{};color:{};'
-            'padding:4px 10px;border-radius:6px;'
-            'font-size:11px;font-weight:600;">{}</span>',
-            background,
-            color,
-            label,
+        return status_badge(
+            obj.get_review_status_display(),
+            states.get(obj.review_status, "neutral"),
         )
 
     @admin.display(description="وضعیت انتشار")
     def publication_badge(self, obj: TradeOpportunity):
         if obj.is_expired:
-            label, color, background = (
-                "منقضی",
-                "#b91c1c",
-                "#fee2e2",
-            )
+            label, state = "منقضی", "rejected"
         elif obj.is_published:
-            label, color, background = (
-                "منتشرشده",
-                "#15803d",
-                "#dcfce7",
-            )
+            label, state = "منتشرشده", "approved"
         else:
-            label, color, background = (
-                "پیش‌نویس",
-                "#64748b",
-                "#f1f5f9",
-            )
-
-        return format_html(
-            '<span style="background:{};color:{};'
-            'padding:4px 10px;border-radius:6px;'
-            'font-size:11px;font-weight:600;">{}</span>',
-            background,
-            color,
-            label,
-        )
+            label, state = "پیش‌نویس", "neutral"
+        return status_badge(label, state)
 
     # --------------------------------------------------
     # Review tracking
     # --------------------------------------------------
 
     def save_model(self, request, obj, form, change):
-        review_fields = {
-            "review_status",
-            "is_published",
-            "opportunity_level",
-            "relevance_score",
-        }
-
-        if change and review_fields.intersection(form.changed_data):
-            obj.last_reviewed_at = timezone.now()
-            obj.last_reviewed_by = request.user
-
+        materially_changed = False
+        if change:
+            original = TradeOpportunity.objects.get(pk=obj.pk)
+            content_fields = {
+                "title",
+                "province",
+                "city",
+                "product",
+                "service_listing",
+                "industry",
+                "opportunity_type",
+                "description",
+                "target_market",
+                "required_volume",
+                "volume_unit",
+                "min_value",
+                "max_value",
+                "currency",
+                "company",
+                "source",
+                "source_url",
+                "valid_until",
+            }
+            materially_changed = (
+                original.review_status == OpportunityReviewStatus.APPROVED
+                and bool(content_fields.intersection(form.changed_data))
+            )
+        if materially_changed:
+            obj.review_status = OpportunityReviewStatus.PENDING
+            obj.is_published = False
+            obj.published_at = None
+            obj.rejection_reason = ""
         super().save_model(request, obj, form, change)
+        if materially_changed:
+            audit(request.user, "trade.content_revised", obj)
 
     # --------------------------------------------------
     # Approve and publish
     # --------------------------------------------------
 
-    @admin.action(description="✓ تأیید و انتشار فرصت‌های انتخاب‌شده")
+    @admin.action(description="✓ تأیید و انتشار فرصت‌های انتخاب‌شده", permissions=["moderate"])
     def approve_and_publish(self, request, queryset):
         published = expired = 0
 
@@ -346,18 +336,25 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             for opportunity in queryset:
                 opportunity.review_status = OpportunityReviewStatus.APPROVED
                 opportunity.is_published = not opportunity.is_expired
+                opportunity.published_at = timezone.now() if opportunity.is_published else None
+                opportunity.rejection_reason = ""
                 opportunity.last_reviewed_at = timezone.now()
                 opportunity.last_reviewed_by = request.user
 
                 opportunity.save()
+                audit(
+                    request.user,
+                    "trade.approved",
+                    opportunity,
+                    published=opportunity.is_published,
+                )
 
                 published += int(opportunity.is_published)
                 expired += int(opportunity.is_expired)
 
         self.message_user(
             request,
-            f"{published} فرصت منتشر شد؛ "
-            f"{expired} فرصت منقضی تأیید شد اما منتشر نشد.",
+            f"{published} فرصت منتشر شد؛ {expired} فرصت منقضی تأیید شد اما منتشر نشد.",
             messages.SUCCESS,
         )
 
@@ -365,7 +362,7 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     # Approve without publishing
     # --------------------------------------------------
 
-    @admin.action(description="✓ تأیید بدون انتشار")
+    @admin.action(description="✓ تأیید بدون انتشار", permissions=["moderate"])
     def approve_without_publishing(self, request, queryset):
         updated = 0
 
@@ -373,10 +370,13 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             for opportunity in queryset:
                 opportunity.review_status = OpportunityReviewStatus.APPROVED
                 opportunity.is_published = False
+                opportunity.published_at = None
+                opportunity.rejection_reason = ""
                 opportunity.last_reviewed_at = timezone.now()
                 opportunity.last_reviewed_by = request.user
 
                 opportunity.save()
+                audit(request.user, "trade.approved_unpublished", opportunity)
                 updated += 1
 
         self.message_user(
@@ -389,18 +389,25 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     # Reject opportunities
     # --------------------------------------------------
 
-    @admin.action(description="✕ رد و لغو انتشار")
+    @admin.action(description="✕ رد و لغو انتشار", permissions=["moderate"])
     def reject_and_unpublish(self, request, queryset):
+        reason = request.POST.get("rejection_reason", "").strip()
+        if not reason:
+            self.message_user(request, "برای رد فرصت، دلیل رد را وارد کنید.", messages.ERROR)
+            return
         updated = 0
 
         with transaction.atomic():
             for opportunity in queryset:
                 opportunity.review_status = OpportunityReviewStatus.REJECTED
                 opportunity.is_published = False
+                opportunity.published_at = None
+                opportunity.rejection_reason = reason
                 opportunity.last_reviewed_at = timezone.now()
                 opportunity.last_reviewed_by = request.user
 
                 opportunity.save()
+                audit(request.user, "trade.rejected", opportunity, reason=reason)
                 updated += 1
 
         self.message_user(
@@ -413,14 +420,39 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     # Unpublish opportunities
     # --------------------------------------------------
 
-    @admin.action(description="مخفی‌کردن فرصت‌ها از سایت")
+    @admin.action(description="درخواست اصلاح از ثبت‌کننده", permissions=["moderate"])
+    def request_changes(self, request, queryset):
+        reason = request.POST.get("rejection_reason", "").strip()
+        if not reason:
+            self.message_user(request, "برای درخواست اصلاح، دلیل را وارد کنید.", messages.ERROR)
+            return
+        updated = 0
+        with transaction.atomic():
+            for opportunity in queryset:
+                opportunity.review_status = OpportunityReviewStatus.PENDING
+                opportunity.is_published = False
+                opportunity.published_at = None
+                opportunity.rejection_reason = reason
+                opportunity.last_reviewed_at = timezone.now()
+                opportunity.last_reviewed_by = request.user
+                opportunity.save()
+                audit(request.user, "trade.changes_requested", opportunity, reason=reason)
+                updated += 1
+        self.message_user(request, f"برای {updated} فرصت درخواست اصلاح ثبت شد.", messages.SUCCESS)
+
+    @admin.action(
+        description="مخفی‌کردن فرصت‌ها از سایت",
+        permissions=["moderate"],
+    )
     def unpublish_opportunities(self, request, queryset):
         updated = 0
 
         with transaction.atomic():
             for opportunity in queryset:
                 opportunity.is_published = False
-                opportunity.save(update_fields=["is_published", "updated_at"])
+                opportunity.published_at = None
+                opportunity.save(update_fields=["is_published", "published_at", "updated_at"])
+                audit(request.user, "trade.unpublished", opportunity)
                 updated += 1
 
         self.message_user(
@@ -433,7 +465,7 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     # Expire opportunities
     # --------------------------------------------------
 
-    @admin.action(description="پایان اعتبار فرصت‌های انتخاب‌شده")
+    @admin.action(description="پایان اعتبار فرصت‌های انتخاب‌شده", permissions=["moderate"])
     def expire_opportunities(self, request, queryset):
         yesterday = timezone.localdate() - timedelta(days=1)
         updated = 0
@@ -442,10 +474,12 @@ class TradeOpportunityAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             for opportunity in queryset:
                 opportunity.valid_until = yesterday
                 opportunity.is_published = False
+                opportunity.published_at = None
                 opportunity.last_reviewed_at = timezone.now()
                 opportunity.last_reviewed_by = request.user
 
                 opportunity.save()
+                audit(request.user, "trade.expired", opportunity)
                 updated += 1
 
         self.message_user(

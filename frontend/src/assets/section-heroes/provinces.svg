@@ -1,0 +1,205 @@
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 560 300"
+     fill="none">
+
+  <defs>
+    <!-- Background -->
+    <radialGradient id="bg" cx=".5" cy=".45" r=".8">
+      <stop stop-color="#243F59"/>
+      <stop offset=".55" stop-color="#14243A"/>
+      <stop offset="1" stop-color="#091625"/>
+    </radialGradient>
+
+    <!-- Map surface -->
+    <linearGradient id="surface" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#53758F"/>
+      <stop offset=".45" stop-color="#304E69"/>
+      <stop offset="1" stop-color="#172D43"/>
+    </linearGradient>
+
+    <!-- Metallic gold -->
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F5DFB4"/>
+      <stop offset=".45" stop-color="#C9A76E"/>
+      <stop offset="1" stop-color="#806139"/>
+    </linearGradient>
+
+    <!-- Subtle grid -->
+    <pattern id="grid" width="30" height="30"
+             patternUnits="userSpaceOnUse">
+      <path d="M30 0H0V30"
+            stroke="#A3BDD2"
+            stroke-opacity=".055"/>
+    </pattern>
+
+    <!-- Surface texture -->
+    <pattern id="texture" width="6" height="6"
+             patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r=".65"
+              fill="#D4E4EF" opacity=".15"/>
+    </pattern>
+
+    <!-- Depth -->
+    <filter id="shadow" x="-40%" y="-40%"
+            width="180%" height="200%">
+      <feDropShadow dx="0" dy="12"
+                    stdDeviation="10"
+                    flood-color="#020810"
+                    flood-opacity=".75"/>
+    </filter>
+
+    <filter id="glow" x="-100%" y="-100%"
+            width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Iran geographic outline -->
+    <path id="iran" d="
+      M197.1 195.3
+      L189.3 186.3 189.4 177.5 184.8 177.3
+      187.5 165.3 180.6 152.5 163.8 142.6
+      154.9 126.3 158.8 113.5 166 108.1
+      165.5 98.3 156.8 92.8 149.3 72.4
+      143 58.5 146 53.5 143.3 34.1
+      152.5 30 154.1 36.4 160.2 44.5
+      169 47.3 173.7 47 189.6 35.4
+      194.5 34.3 198.1 39.3 193.4 47.4
+      201.3 56.4 204.6 55.6 208.5 68
+      221 71.7 230.2 80.1 249.3 82.8
+      270.1 78 271.3 74 282.8 70.4
+      291.8 60.5 300.7 60.5 306.3 57
+      315.8 58 331 65.3 341.8 66.3
+      358.5 79.6 368.6 79.2 371.3 93.2
+      367.8 114.6 365.1 127.1 371.5 129
+      366.3 138.7 372.2 151.7 374.3 162.2
+      385.4 164 387.7 174.7 375.9 191.1
+      383.9 199.2 390.8 208.8 405.7 214.9
+      407.5 229.7 415 231.7 417 239.3
+      395.9 250 391.8 270 362.7 267
+      346 264.2 328.8 262.9 321.4 242.8
+      314.1 240.1 302.8 243.6 287.9 252.1
+      269.5 247.1 254.3 234.5 240 229.9
+      230.2 214.1 219.6 191.9 211.8 194.5
+      202.6 188.9 Z"/>
+
+    <clipPath id="mapClip">
+      <use href="#iran"/>
+    </clipPath>
+
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="560" height="300" fill="url(#bg)"/>
+  <rect width="560" height="300" fill="url(#grid)"/>
+
+  <!-- Three-dimensional map base -->
+  <g filter="url(#shadow)">
+    <use href="#iran"
+         transform="translate(0 9)"
+         fill="#081522"
+         stroke="#10283C"
+         stroke-width="2"/>
+
+    <use href="#iran"
+         transform="translate(0 6)"
+         fill="#142B40"
+         stroke="#38546B"
+         stroke-width="1"/>
+
+    <use href="#iran"
+         transform="translate(0 3)"
+         fill="#203B52"
+         stroke="#55748B"
+         stroke-width="1"/>
+  </g>
+
+  <!-- Main map -->
+  <use href="#iran"
+       fill="url(#surface)"
+       stroke="url(#gold)"
+       stroke-width="1.6"
+       stroke-linejoin="round"/>
+
+  <!-- Map details -->
+  <g clip-path="url(#mapClip)">
+
+    <rect width="560" height="300"
+          fill="url(#texture)"/>
+
+    <!-- Decorative topographic contours -->
+    <g stroke="#B3CADB"
+       stroke-width=".8"
+       stroke-opacity=".16">
+
+      <path d="M100 45Q170 100 240 58T440 80"/>
+      <path d="M100 58Q170 113 240 71T440 93"/>
+      <path d="M100 71Q170 126 240 84T440 106"/>
+      <path d="M100 84Q170 139 240 97T440 119"/>
+      <path d="M100 97Q170 152 240 110T440 132"/>
+      <path d="M100 110Q170 165 240 123T440 145"/>
+      <path d="M100 123Q170 178 240 136T440 158"/>
+      <path d="M100 136Q170 191 240 149T440 171"/>
+      <path d="M100 149Q170 204 240 162T440 184"/>
+      <path d="M100 162Q170 217 240 175T440 197"/>
+      <path d="M100 175Q170 230 240 188T440 210"/>
+      <path d="M100 188Q170 243 240 201T440 223"/>
+      <path d="M100 201Q170 256 240 214T440 236"/>
+      <path d="M100 214Q170 269 240 227T440 249"/>
+      <path d="M100 227Q170 282 240 240T440 262"/>
+
+    </g>
+
+    <!-- Abstract economic connections -->
+    <g stroke="#E5C58D"
+       stroke-width="1"
+       stroke-opacity=".5"
+       stroke-dasharray="3 5">
+
+      <path d="M180 80Q225 65 265 108"/>
+      <path d="M265 108Q305 65 350 100"/>
+      <path d="M265 108Q230 140 220 175"/>
+      <path d="M265 108Q300 125 280 165"/>
+      <path d="M280 165Q330 160 350 100"/>
+      <path d="M220 175Q245 210 275 215"/>
+      <path d="M280 165Q300 195 320 240"/>
+      <path d="M275 215Q300 225 320 240"/>
+
+    </g>
+
+    <!-- Economic hubs -->
+    <g fill="url(#gold)">
+      <circle cx="180" cy="80" r="3"/>
+      <circle cx="350" cy="100" r="3"/>
+      <circle cx="220" cy="175" r="3"/>
+      <circle cx="280" cy="165" r="3.5"/>
+      <circle cx="275" cy="215" r="3"/>
+      <circle cx="320" cy="240" r="3"/>
+    </g>
+
+    <!-- Central hub -->
+    <circle cx="265" cy="108" r="15"
+            stroke="#C9A76E" stroke-opacity=".18"/>
+
+    <circle cx="265" cy="108" r="10"
+            stroke="#C9A76E" stroke-opacity=".4"/>
+
+    <circle cx="265" cy="108" r="5"
+            fill="url(#gold)" filter="url(#glow)"/>
+
+    <circle cx="265" cy="108" r="2"
+            fill="#FFF1D0"/>
+
+  </g>
+
+  <!-- Refined metallic edge -->
+  <use href="#iran"
+       stroke="#F1D6A3"
+       stroke-width=".6"
+       stroke-opacity=".65"/>
+
+</svg>

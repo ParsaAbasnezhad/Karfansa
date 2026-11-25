@@ -24,82 +24,14 @@
   margin-top: 16px;
 }
 
-/* ---------- Hero ---------- */
-
-.industries-hero {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: clamp(22px, 4vw, 36px) clamp(20px, 4vw, 40px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
-  background:
-    radial-gradient(ellipse at 8% 120%, rgba(116, 145, 255, 0.34), transparent 48%),
-    radial-gradient(ellipse at 100% 0%, rgba(147, 197, 253, 0.2), transparent 42%),
-    linear-gradient(120deg, var(--navy) 0%, var(--blue) 72%, #5074e7 100%);
-  color: #fff;
-  box-shadow: 0 16px 38px rgba(15, 28, 90, 0.14);
+@media (max-width: 768px) {
+  .industries-page { padding-inline: 16px; }
 }
 
-.industries-hero::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px);
-  background-size: 21px 21px;
-  content: '';
-  mask-image: linear-gradient(to left, #000, transparent 68%);
-}
-
-.industries-hero-copy {
-  max-width: 600px;
-}
-
-.industries-eyebrow,
-.industries-hero-copy > span {
+.industries-eyebrow {
   color: var(--industry-green);
   font-size: 12px;
   font-weight: 800;
-}
-
-.industries-hero .industries-eyebrow,
-.industries-hero .industries-hero-copy > span {
-  color: #dbe5ff;
-}
-
-.industries-hero h1 {
-  margin: 6px 0;
-  color: #fff;
-  font-size: clamp(22px, 3vw, 30px);
-  font-weight: 850;
-  line-height: 1.45;
-}
-
-.industries-hero p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 14px;
-  line-height: 1.9;
-}
-
-/* برچسب‌ها در نسخه‌ی مینیمال لازم نیست */
-.industries-hero-meta {
-  display: none;
-}
-
-.industries-hero-art {
-  flex: none;
-  width: 190px;
-}
-
-.industries-art-svg {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 /* ---------- Filters ---------- */
@@ -598,15 +530,7 @@
 @media (max-width: 640px) {
   .industries-page {
     margin-top: 14px;
-    padding: 0 12px;
-  }
-
-  .industries-hero {
-    padding: 18px;
-  }
-
-  .industries-hero-art {
-    display: none;
+    padding: 0 16px;
   }
 
   .industries-grid {

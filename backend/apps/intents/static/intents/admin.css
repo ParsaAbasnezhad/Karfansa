@@ -1,0 +1,55 @@
+.intent-admin {
+  margin: 0 0 22px;
+  padding: 22px;
+  border: 1px solid var(--border-color, #dce5f1);
+  border-radius: 18px;
+  background: var(--darkened-bg, #f8faff);
+  color: var(--body-fg, #152444);
+}
+
+.intent-admin-heading span {
+  color: var(--link-fg, #2857b6);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.intent-admin-heading h2 { margin: 3px 0; font-size: 20px; }
+.intent-admin-heading p { margin: 0; color: var(--body-quiet-color, #61718c); font-size: 12px; }
+
+.intent-admin-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.intent-admin-cards > div,
+.intent-admin-chart {
+  border: 1px solid var(--border-color, #e2e9f4);
+  border-radius: 12px;
+  background: var(--body-bg, #fff);
+}
+
+.intent-admin-cards > div { padding: 14px; }
+.intent-admin-cards small { display: block; color: var(--body-quiet-color, #61718c); font-size: 12px; }
+.intent-admin-cards strong { display: block; margin-top: 5px; color: var(--body-fg, #142451); font-size: 22px; }
+.intent-admin-chart { padding: 16px; }
+.intent-admin-chart h3 { margin: 0 0 12px; font-size: 14px; }
+.intent-admin-chart h3 small { margin-inline-start: 8px; color: var(--body-quiet-color, #75839d); font-size: 11px; font-weight: 400; }
+
+.intent-admin-chart-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(90px, 2fr) 30px;
+  align-items: center;
+  gap: 10px;
+  margin: 9px 0;
+  font-size: 12px;
+}
+
+.intent-admin-track { height: 7px; overflow: hidden; border-radius: 99px; background: var(--border-color, #e9eef8); }
+.intent-admin-track i { display: block; height: 100%; border-radius: inherit; background: var(--primary, #3366ce); }
+
+@media (max-width: 700px) {
+  .intent-admin-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .intent-admin-chart-row { grid-template-columns: minmax(110px, 1fr) minmax(60px, 1fr) 25px; }
+}

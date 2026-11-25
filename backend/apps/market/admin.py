@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib import admin
 
+from apps.core.admin import KarfansaModelAdmin
 from apps.market.models import MarketDataProvider, MarketIndicator, MarketPrice
 
 
@@ -23,14 +24,14 @@ class MarketDataProviderForm(forms.ModelForm):  # type: ignore[type-arg]
 
 
 @admin.register(MarketDataProvider)
-class MarketDataProviderAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class MarketDataProviderAdmin(KarfansaModelAdmin):  # type: ignore[type-arg]
     form = MarketDataProviderForm
     list_display = ("name", "rest_base_url", "is_active", "updated_at")
     list_filter = ("is_active",)
 
 
 @admin.register(MarketIndicator)
-class MarketIndicatorAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class MarketIndicatorAdmin(KarfansaModelAdmin):  # type: ignore[type-arg]
     list_display = ("name", "symbol", "category", "currency", "unit", "is_featured", "is_active")
     list_filter = ("category", "is_featured", "is_active")
     search_fields = ("name", "symbol")
@@ -38,7 +39,7 @@ class MarketIndicatorAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
 
 @admin.register(MarketPrice)
-class MarketPriceAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+class MarketPriceAdmin(KarfansaModelAdmin):  # type: ignore[type-arg]
     list_display = ("indicator", "value", "change_percent", "observed_at", "source")
     list_filter = ("indicator__category",)
     search_fields = ("indicator__symbol", "indicator__name")

@@ -5,16 +5,14 @@ import { renderWithProviders } from '@/test/render'
 import { HomePage } from './HomePage'
 
 describe('HomePage (mock API)', () => {
-  it('renders every section from the API', async () => {
+  it('renders market, transport and analysis sections without news', async () => {
     vi.stubEnv('VITE_USE_MOCK', 'true')
     renderWithProviders(<HomePage />)
-    expect(await screen.findByText('مهم', { exact: true })).toBeVisible()
     expect(await screen.findByRole('heading', { name: 'شرکت‌های حمل و نقل' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'بازارهای مالی' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'اخبار شرکت‌ها' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'تحلیل و گزارش' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'تیتر اخبار مهم ایران' })).toBeInTheDocument()
-    await waitFor(() => expect(screen.getAllByRole('article').length).toBeGreaterThan(5))
+    expect(screen.queryByRole('heading', { name: /اخبار/ })).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByRole('article').length).toBeGreaterThan(3))
   })
 
   it('filters transport companies by tab', async () => {
@@ -34,5 +32,12 @@ describe('HomePage (mock API)', () => {
     renderWithProviders(<HomePage />)
     expect((await screen.findAllByRole('alert')).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: 'تلاش دوباره' }).length).toBeGreaterThan(0)
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.every(([url]) => !/news|ticker|newsletter/.test(String(url))),
+    ).toBe(true)
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/v1/home/slides/'))).toBe(true)
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/v1/trade/opportunities/'))).toBe(true)
   })
 })

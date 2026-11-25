@@ -37,7 +37,12 @@ def sync_product_opportunity(
     opportunity.max_value = listing.price
     opportunity.currency = listing.currency if listing.price is not None else ""
     opportunity.source = "محصول ثبت‌شده در بازار محصولات کارفنسا"
-    opportunity.created_by = listing.seller.user
+    if listing.seller_id:
+        opportunity.created_by = listing.seller.user
+    elif reviewer is not None:
+        opportunity.created_by = reviewer
+    if listing.organization_id:
+        opportunity.company = listing.organization
     opportunity.review_status = (
         OpportunityReviewStatus.APPROVED
         if approved

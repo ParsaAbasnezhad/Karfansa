@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 300" fill="none" role="img" aria-labelledby="title desc">
+<title id="title">Karfansa international trade logistics</title><desc id="desc">Detailed vector cargo ship, stacked shipping containers, port crane and trade route on a dark navy background.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="560" y2="300" gradientUnits="userSpaceOnUse"><stop stop-color="#09182B"/><stop offset=".55" stop-color="#142C46"/><stop offset="1" stop-color="#1A3B57"/></linearGradient>
+<linearGradient id="hull" x1="0" y1="202" x2="0" y2="271" gradientUnits="userSpaceOnUse"><stop stop-color="#46647D"/><stop offset=".35" stop-color="#223F59"/><stop offset="1" stop-color="#0A1B30"/></linearGradient>
+<linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#547D9C"/><stop offset="1" stop-color="#29455F"/></linearGradient>
+<linearGradient id="slate" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8BA4B6"/><stop offset="1" stop-color="#455D73"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E6C88F"/><stop offset="1" stop-color="#9B7749"/></linearGradient>
+<linearGradient id="sea" x1="0" y1="250" x2="0" y2="300"><stop stop-color="#224B66" stop-opacity=".6"/><stop offset="1" stop-color="#0C2135" stop-opacity=".2"/></linearGradient>
+<pattern id="rib" width="12" height="70" patternUnits="userSpaceOnUse"><path d="M2 0V70M4 0V70" stroke="#081C30" stroke-opacity=".35" stroke-width="1.5"/><path d="M7 0V70" stroke="#E8F3FC" stroke-opacity=".17"/></pattern>
+<pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" stroke="#A7C4D6" stroke-opacity=".055"/></pattern>
+<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+<g id="lock"><rect width="6" height="7" rx="1" fill="#C2D3DE" stroke="#21384B" stroke-width=".8"/><circle cx="3" cy="3.5" r="1" fill="#37536A"/></g>
+</defs>
+<rect width="560" height="300" rx="16" fill="url(#bg)"/><rect width="560" height="300" rx="16" fill="url(#grid)"/>
+<circle cx="410" cy="97" r="104" stroke="#B7D2E0" stroke-opacity=".10"/><circle cx="410" cy="97" r="77" stroke="#B7D2E0" stroke-opacity=".08"/><path d="M306 97H514M410-7V201M329 42c45 34 111 34 162 0M329 152c45-34 111-34 162 0" stroke="#B7D2E0" stroke-opacity=".08"/>
+<path d="M94 60C183 7 309 17 422 70" stroke="#A9D0DF" stroke-opacity=".6" stroke-width="1.5" stroke-dasharray="4 6"/><path d="M407 60l15 10-18 1" stroke="#DDBD7E" stroke-width="2" stroke-linejoin="round"/><circle cx="94" cy="60" r="7" fill="#DDBD7E" fill-opacity=".2"/><circle cx="94" cy="60" r="3.5" fill="#E4C384"/><circle cx="422" cy="70" r="4" fill="#E4C384"/>
+<!-- port crane -->
+<path d="M51 190V43H60V190M55 43L124 43M55 51L119 51M65 43L80 26H92L103 43" stroke="#90AABD" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M56 74l23-23M56 111l35-60M56 147l35-60" stroke="#6F8CA3" stroke-width="1.5"/><path d="M104 51V89" stroke="#C9D9E3" stroke-width="1.6"/><path d="M99 88h10l-2 8h-6z" fill="#E1BB7D"/><path d="M104 96v8m0 0-6 7m6-7 6 7" stroke="#E1BB7D" stroke-width="1.8" stroke-linecap="round"/>
+<!-- shadows -->
+<ellipse cx="288" cy="257" rx="235" ry="16" fill="#030D18" opacity=".35"/>
+<!-- cargo deck and stacks -->
+<path d="M91 201h390v13H91z" fill="#7895A9"/><path d="M91 209h390" stroke="#D4E4EC" stroke-opacity=".65"/>
+<!-- lower containers -->
+<g><rect x="111" y="132" width="111" height="69" rx="2" fill="url(#blue)" stroke="#9EB8C9" stroke-width="1.4"/><rect x="111" y="132" width="111" height="69" fill="url(#rib)"/><path d="M115 138h103M115 195h103" stroke="#D4E3ED" stroke-opacity=".3"/><use href="#lock" x="113" y="133"/><use href="#lock" x="213" y="133"/><use href="#lock" x="113" y="193"/><use href="#lock" x="213" y="193"/></g>
+<g><rect x="225" y="132" width="111" height="69" rx="2" fill="url(#slate)" stroke="#C2D3DF" stroke-width="1.4"/><rect x="225" y="132" width="111" height="69" fill="url(#rib)"/><path d="M229 138h103M229 195h103" stroke="#E3EEF4" stroke-opacity=".3"/><use href="#lock" x="227" y="133"/><use href="#lock" x="327" y="133"/><use href="#lock" x="227" y="193"/><use href="#lock" x="327" y="193"/></g>
+<g><rect x="339" y="132" width="111" height="69" rx="2" fill="url(#gold)" stroke="#E9D3AB" stroke-width="1.4"/><rect x="339" y="132" width="111" height="69" fill="url(#rib)"/><path d="M343 138h103M343 195h103" stroke="#FFF0D2" stroke-opacity=".35"/><use href="#lock" x="341" y="133"/><use href="#lock" x="441" y="133"/><use href="#lock" x="341" y="193"/><use href="#lock" x="441" y="193"/></g>
+<!-- upper containers -->
+<g><rect x="168" y="75" width="111" height="54" rx="2" fill="url(#slate)" stroke="#B8CDD9" stroke-width="1.4"/><rect x="168" y="75" width="111" height="54" fill="url(#rib)"/><path d="M172 81h103M172 123h103" stroke="#F3FAFE" stroke-opacity=".28"/><use href="#lock" x="170" y="76"/><use href="#lock" x="270" y="76"/><use href="#lock" x="170" y="121"/><use href="#lock" x="270" y="121"/></g>
+<g><rect x="282" y="75" width="111" height="54" rx="2" fill="url(#blue)" stroke="#A8C2D2" stroke-width="1.4"/><rect x="282" y="75" width="111" height="54" fill="url(#rib)"/><path d="M286 81h103M286 123h103" stroke="#F3FAFE" stroke-opacity=".28"/><use href="#lock" x="284" y="76"/><use href="#lock" x="384" y="76"/><use href="#lock" x="284" y="121"/><use href="#lock" x="384" y="121"/></g>
+<!-- ship bridge -->
+<path d="M449 146h29l10 15v40h-39z" fill="#B4C7D2" stroke="#E1EAF0"/><path d="M455 153h20l7 10h-27z" fill="#1A3B56"/><path d="M461 146v-15m-9 8h18" stroke="#B6CAD6" stroke-width="1.8"/><path d="M458 173h22M458 180h22" stroke="#496B84" stroke-width="2"/>
+<!-- hull -->
+<path d="M53 205H509L481 257Q475 265 461 265H126Q110 265 100 253L53 205Z" fill="url(#hull)" stroke="#9DB8C8" stroke-width="2" stroke-linejoin="round"/><path d="M63 213H498M91 236h393" stroke="#B5CBD8" stroke-opacity=".45" stroke-width="1.4"/><path d="M99 252q12 13 29 13h333q15 0 22-11" stroke="#D6B47C" stroke-opacity=".85" stroke-width="2"/><path d="M102 207v-10h390v10M116 197v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6m22 6v-6" stroke="#A8C1D0" stroke-width="1.5"/>
+<path d="M75 218h14m20 0h14m20 0h14m20 0h14m20 0h14m20 0h14m20 0h14m20 0h14m20 0h14m20 0h14m20 0h14" stroke="#E8C68D" stroke-width="2.5" stroke-linecap="round" opacity=".85"/>
+<!-- water -->
+<path d="M0 258c72-10 110 14 180 4s113-10 175 0 137-9 205-3v41H0z" fill="url(#sea)"/><path d="M16 273c61-11 103 9 160 0s116-8 178 1 124-11 190-3M45 286c60-8 116 8 185-1s112-5 166 0 97-4 137-2" stroke="#82B6D1" stroke-opacity=".28" stroke-width="1.6"/><path d="M92 267c28 5 44 5 73 0m242 1c29 5 51 4 81-2" stroke="#E5F4FC" stroke-opacity=".45" stroke-width="2"/>
+<path d="M510 114h25m-12-12v25" stroke="#B6D0DD" stroke-opacity=".38" stroke-width="1.5"/>
+</svg>

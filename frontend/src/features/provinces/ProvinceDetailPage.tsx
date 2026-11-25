@@ -1,13 +1,16 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { apiGet } from '@/lib/api-client'
 import { formatNumber } from '@/lib/format'
 import { useQuery } from '@tanstack/react-query'
 import { EconomicStatistics } from './EconomicStatistics'
-import provinceMap from './iran-provinces-map.json'
 import type { ProvinceDetail } from './types'
 import './provinces.css'
 import './province-detail.css'
+
+const ProvinceShape = lazy(() =>
+  import('./ProvinceShape').then((module) => ({ default: module.ProvinceShape })),
+)
 
 /* ---------- small helpers ---------- */
 
@@ -103,27 +106,6 @@ function Stat({ label, value, icon }: { label: string; value: string | null; ico
   )
 }
 
-/** Draws a single province from the shared Iran map, cropped to its own bounds. */
-function ProvinceShape({ slug }: { slug: string }) {
-  const region = provinceMap.provinces.find((item) => item.slug === slug)
-  const pathRef = useRef<SVGPathElement>(null)
-  const [viewBox, setViewBox] = useState('0 0 640 570')
-
-  useLayoutEffect(() => {
-    const box = pathRef.current?.getBBox()
-    if (!box) return
-    const pad = 4
-    setViewBox(`${box.x - pad} ${box.y - pad} ${box.width + pad * 2} ${box.height + pad * 2}`)
-  }, [slug])
-
-  if (!region) return null
-  return (
-    <svg className="province-shape" viewBox={viewBox} aria-hidden="true" focusable="false">
-      <path ref={pathRef} d={region.path} />
-    </svg>
-  )
-}
-
 /* ---------- page ---------- */
 
 export function ProvinceDetailPage() {
@@ -156,7 +138,6 @@ export function ProvinceDetailPage() {
   }
 
   const data = province.data
-  const hasShape = provinceMap.provinces.some((item) => item.slug === data.slug)
   const companyCount = new Set(
     data.industries.flatMap((item) => item.companies.map((company) => company.slug)),
   ).size
@@ -222,7 +203,9 @@ export function ProvinceDetailPage() {
             </strong>
             {data.capital?.name_en && <small>{data.capital.name_en}</small>}
           </div>
-          <ProvinceShape slug={data.slug} />
+          <Suspense fallback={null}>
+            <ProvinceShape slug={data.slug} />
+          </Suspense>
         </div>
       </header>
 
@@ -244,11 +227,11 @@ export function ProvinceDetailPage() {
             <h2>شناسنامهٔ استان</h2>
           </div>
           <div className="province-overview-body">
-            {hasShape && (
-              <div className="province-overview-shape">
+            <div className="province-overview-shape">
+              <Suspense fallback={null}>
                 <ProvinceShape slug={data.slug} />
-              </div>
-            )}
+              </Suspense>
+            </div>
             <div className="province-overview-grid">
               <Stat label="نام فارسی" value={data.name_fa} icon="doc" />
               <Stat label="نام انگلیسی" value={data.name_en || null} icon="globe" />
@@ -438,7 +421,11 @@ export function ProvinceDetailPage() {
                         <strong>شرکت‌های فعال</strong>
                         <ul>
                           {item.companies.map((company) => (
-                            <li key={company.slug}>{company.name}</li>
+                            <li key={company.slug}>
+                              <Link to={`/companies/${encodeURIComponent(company.slug)}`}>
+                                {company.name}
+                              </Link>
+                            </li>
                           ))}
                         </ul>
                       </div>

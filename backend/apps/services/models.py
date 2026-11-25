@@ -1,4 +1,5 @@
 from typing import Any, ClassVar
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -8,6 +9,7 @@ from django.utils import timezone
 from apps.core.slugs import build_unique_slug
 from apps.core.uploads import UploadTo
 from apps.core.validators import validate_image_extension, validate_image_size
+from apps.core.verification import VerificationStatus
 from apps.geography.models import City, Province
 
 from .search import normalize_search_text
@@ -21,6 +23,37 @@ class SellerProfile(models.Model):
     )
     display_name = models.CharField(max_length=120, verbose_name="نام نمایشی")
     bio = models.TextField(blank=True, max_length=1500, verbose_name="درباره فروشنده")
+    professional_title = models.CharField(max_length=120, blank=True, verbose_name="عنوان حرفه‌ای")
+    public_phone = models.CharField(max_length=20, blank=True, verbose_name="تلفن عمومی")
+    public_email = models.EmailField(blank=True, verbose_name="ایمیل عمومی")
+    profile_image = models.ImageField(
+        upload_to=UploadTo("services/profiles"),
+        blank=True,
+        validators=[validate_image_extension, validate_image_size],
+        verbose_name="تصویر پروفایل",
+    )
+    cover_image = models.ImageField(
+        upload_to=UploadTo("services/covers"),
+        blank=True,
+        validators=[validate_image_extension, validate_image_size],
+        verbose_name="تصویر پوششی",
+    )
+    verification_status = models.CharField(
+        max_length=20,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.DRAFT,
+        verbose_name="وضعیت تأیید",
+    )
+    rejection_reason = models.CharField(max_length=500, blank=True, verbose_name="دلیل رد")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="reviewed_seller_profiles",
+    )
     province = models.ForeignKey(
         Province,
         null=True,
@@ -44,6 +77,12 @@ class SellerProfile(models.Model):
     class Meta:
         verbose_name = "پروفایل فروشنده"
         verbose_name_plural = "پروفایل‌های فروشنده"
+        permissions = [
+            ("moderate_sellerprofile", "Can moderate individual seller profiles"),
+        ]
+        indexes = [
+            models.Index(fields=["verification_status"], name="svc_seller_verify_idx"),
+        ]
 
     def __str__(self) -> str:
         return self.display_name
@@ -75,7 +114,9 @@ class ServiceCategory(models.Model):
         ordering = ["sort_order", "name"]
         verbose_name = "دسته‌بندی بازار محصولات"
         verbose_name_plural = "دسته‌بندی‌های بازار محصولات"
-        indexes = [models.Index(fields=["parent", "is_active"], name="svc_cat_parent_active")]
+        indexes = [
+            models.Index(fields=["parent", "is_active"], name="svc_cat_parent_active"),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -111,8 +152,31 @@ class ProductListing(models.Model):
         REJECTED = "rejected", "ردشده"
         ARCHIVED = "archived", "بایگانی‌شده"
 
+    class Kind(models.TextChoices):
+        PRODUCT = "product", "محصول"
+        SERVICE = "service", "خدمت"
+
     seller = models.ForeignKey(
-        SellerProfile, on_delete=models.CASCADE, related_name="listings", verbose_name="فروشنده"
+        SellerProfile,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="listings",
+        verbose_name="فروشنده حقیقی",
+    )
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="product_listings",
+        verbose_name="شرکت مالک",
+    )
+    listing_kind = models.CharField(
+        max_length=16,
+        choices=Kind.choices,
+        default=Kind.PRODUCT,
+        verbose_name="نوع آگهی",
     )
     category = models.ForeignKey(
         ServiceCategory,
@@ -168,6 +232,9 @@ class ProductListing(models.Model):
         ordering = ["-published_at", "-created_at"]
         verbose_name = "محصول فروشنده"
         verbose_name_plural = "محصولات فروشندگان"
+        permissions = [
+            ("moderate_productlisting", "Can moderate product and service listings"),
+        ]
         constraints = [
             models.CheckConstraint(condition=models.Q(quantity__gt=0), name="svc_qty_positive"),
             models.CheckConstraint(
@@ -183,6 +250,13 @@ class ProductListing(models.Model):
                 condition=~models.Q(status="approved") | models.Q(is_active=True),
                 name="svc_approved_active",
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(seller__isnull=False, organization__isnull=True)
+                    | models.Q(seller__isnull=True, organization__isnull=False)
+                ),
+                name="svc_listing_one_owner",
+            ),
         ]
         indexes = [
             models.Index(
@@ -191,6 +265,8 @@ class ProductListing(models.Model):
             models.Index(fields=["category", "status"], name="svc_cat_status_idx"),
             models.Index(fields=["province", "city", "status"], name="svc_location_idx"),
             models.Index(fields=["sale_mode", "status"], name="svc_mode_status_idx"),
+            models.Index(fields=["organization", "status"], name="svc_org_status_idx"),
+            models.Index(fields=["listing_kind", "status"], name="svc_kind_status_idx"),
             models.Index(fields=["price"], name="svc_price_idx"),
             models.Index(fields=["quantity"], name="svc_quantity_idx"),
         ]
@@ -337,13 +413,40 @@ class ProductSpecification(models.Model):
 class ProductInquiry(models.Model):
     class Status(models.TextChoices):
         NEW = "new", "جدید"
+        REVIEWING = "reviewing", "در حال بررسی"
+        ACCEPTED = "accepted", "پذیرفته‌شده"
+        REJECTED = "rejected", "ردشده"
         READ = "read", "خوانده‌شده"
         REPLIED = "replied", "پاسخ‌داده‌شده"
         CLOSED = "closed", "بسته‌شده"
 
     listing = models.ForeignKey(
-        ProductListing, on_delete=models.CASCADE, related_name="inquiries", verbose_name="محصول"
+        ProductListing, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="inquiries", verbose_name="محصول"
     )
+    trade_opportunity = models.ForeignKey(
+        "trade.TradeOpportunity", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="inquiries",
+    )
+    public_id = models.UUIDField(default=uuid4, unique=True, editable=False)
+    client_key = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+    owner_organization = models.ForeignKey(
+        "organizations.Organization", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="received_inquiries",
+    )
+    owner_seller = models.ForeignKey(
+        SellerProfile, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="received_inquiries",
+    )
+    owner_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="received_direct_inquiries",
+    )
+    category = models.CharField(max_length=24, default="purchase")
+    subject = models.CharField(max_length=180, blank=True)
+    last_activity_at = models.DateTimeField(default=timezone.now)
+    owner_seen_at = models.DateTimeField(null=True, blank=True)
+    applicant_seen_at = models.DateTimeField(null=True, blank=True)
     buyer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -354,7 +457,7 @@ class ProductInquiry(models.Model):
     quantity = models.DecimalField(
         max_digits=20, decimal_places=4, null=True, blank=True, verbose_name="مقدار درخواستی"
     )
-    status = models.CharField(max_length=8, choices=Status.choices, default=Status.NEW)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.NEW)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -367,13 +470,102 @@ class ProductInquiry(models.Model):
                 fields=["listing", "status", "-created_at"], name="svc_inquiry_status_idx"
             ),
             models.Index(fields=["buyer", "-created_at"], name="svc_inquiry_buyer_idx"),
+            models.Index(
+                fields=["owner_organization", "status", "-last_activity_at"],
+                name="svc_inq_org_activity",
+            ),
+            models.Index(
+                fields=["owner_seller", "status", "-last_activity_at"],
+                name="svc_inq_seller_activity",
+            ),
+            models.Index(
+                fields=["owner_user", "status", "-last_activity_at"],
+                name="svc_inq_user_activity",
+            ),
+            models.Index(
+                fields=["buyer", "status", "-last_activity_at"],
+                name="svc_inq_buyer_activity",
+            ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(listing__isnull=False, trade_opportunity__isnull=True)
+                           | models.Q(listing__isnull=True, trade_opportunity__isnull=False)),
+                name="svc_inquiry_one_target",
+            ),
         ]
 
     def __str__(self) -> str:
         return f"درخواست {self.listing} از {self.buyer}"
 
     def clean(self) -> None:
-        if self.listing_id and self.buyer_id and self.listing.seller.user_id == self.buyer_id:
-            raise ValidationError({"buyer": "نمی‌توانید برای محصول خودتان درخواست بفرستید."})
+        if bool(self.listing_id) == bool(self.trade_opportunity_id):
+            raise ValidationError("درخواست باید دقیقاً یک آگهی یا فرصت تجاری داشته باشد.")
+        if self.listing_id and self.buyer_id:
+            listing = self.listing
+            if listing.seller_id and listing.seller.user_id == self.buyer_id:
+                raise ValidationError({"buyer": "نمی‌توانید برای محصول خودتان درخواست بفرستید."})
+            if (
+                listing.organization_id
+                and listing.organization.members.filter(pk=self.buyer_id).exists()
+            ):
+                raise ValidationError(
+                    {"buyer": "نمی‌توانید برای محصول شرکت خودتان درخواست بفرستید."}
+                )
         if self.quantity is not None and self.quantity <= 0:
             raise ValidationError({"quantity": "مقدار درخواستی باید بیشتر از صفر باشد."})
+
+
+class InquiryMessage(models.Model):
+    inquiry = models.ForeignKey(ProductInquiry, on_delete=models.CASCADE, related_name="thread")
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    body = models.TextField(max_length=4000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [models.Index(fields=["inquiry", "created_at"], name="svc_inq_msg_time")]
+
+    def __str__(self) -> str:
+        return f"Message on inquiry {self.inquiry_id}"
+
+
+class InquiryStatusEvent(models.Model):
+    inquiry = models.ForeignKey(
+        ProductInquiry, on_delete=models.CASCADE, related_name="status_events"
+    )
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    from_status = models.CharField(max_length=12)
+    to_status = models.CharField(max_length=12)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self) -> str:
+        return f"Inquiry {self.inquiry_id}: {self.from_status} → {self.to_status}"
+
+
+class InquiryNotification(models.Model):
+    inquiry = models.ForeignKey(
+        ProductInquiry, on_delete=models.CASCADE, related_name="notifications"
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="inquiry_notifications",
+    )
+    kind = models.CharField(max_length=24)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["recipient", "read_at", "-created_at"],
+                name="svc_inq_notif_unread",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.kind} for user {self.recipient_id}"

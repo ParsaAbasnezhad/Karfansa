@@ -304,7 +304,7 @@
 .about-stats {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: -1px 5% 0;
   padding: 20px 10px 26px;
   border: 1px solid var(--about-line);
@@ -641,7 +641,7 @@
 
 .about-services-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-top: 25px;
 }
@@ -1737,7 +1737,6 @@
 .about-globe-halo {
   opacity: 0.08;
 }
-
 
 .about-globe-canvas {
   cursor: default;

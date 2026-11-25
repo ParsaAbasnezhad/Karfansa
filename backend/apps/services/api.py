@@ -2,11 +2,13 @@ from decimal import Decimal
 from math import ceil
 from typing import Any
 
+from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from ninja import File, Query, Router, Status, UploadedFile
 from ninja.decorators import decorate_view
@@ -14,10 +16,14 @@ from ninja.errors import HttpError
 
 from apps.accounts.models import User
 from apps.core.errors import ApiError
+from apps.core.verification import VerificationStatus
 from apps.geography.models import City, Province
+from apps.organizations.access import can_edit_listing, identity_or_default
+from apps.organizations.models import MembershipStatus, Organization
 
 from .integrations import sync_product_opportunity
 from .models import (
+    InquiryStatusEvent,
     ListingImage,
     ProductInquiry,
     ProductListing,
@@ -61,11 +67,49 @@ def _seller_data(profile: SellerProfile) -> SellerOut:
         "province_name": province.name_fa if province else None,
         "city_name": city.name_fa if city else None,
         "is_public": profile.is_public,
+        "professional_title": profile.professional_title,
+        "profile_image": profile.profile_image.url if profile.profile_image else None,
+        "cover_image": profile.cover_image.url if profile.cover_image else None,
+        "is_verified": profile.verification_status == VerificationStatus.VERIFIED,
+        "listings_count": 0,
+        "organization_slug": None,
     })
+
+
+def _public_seller(listing: ProductListing) -> SellerOut:
+    organization = listing.organization
+    if organization is not None:
+        return SellerOut.model_validate({
+            "id": listing.seller_id or 0,
+            "display_name": organization.name,
+            "bio": organization.description[:1500],
+            "province_id": organization.province_id,
+            "city_id": organization.city_id,
+            "province_name": organization.province.name_fa if organization.province_id else None,
+            "city_name": organization.city.name_fa if organization.city_id else None,
+            "is_public": organization.is_active,
+            "professional_title": organization.get_organization_type_display(),
+            "profile_image": organization.logo.url if organization.logo else None,
+            "cover_image": organization.cover_image.url if organization.cover_image else None,
+            "is_verified": organization.is_verified,
+            "listings_count": 0,
+            "organization_slug": organization.slug,
+        })
+    if listing.seller is None:
+        raise ApiError("فروشنده این آگهی مشخص نیست.", status_code=404)
+    return _seller_data(listing.seller)
+
+
+def _public_listing_queryset() -> QuerySet[ProductListing]:
+    approved = Q(status=ProductListing.Status.APPROVED, is_active=True, category__is_active=True)
+    individual = Q(organization__isnull=True, seller__is_public=True)
+    company = Q(organization__isnull=False, organization__is_active=True)
+    return _listing_queryset().filter(approved & (individual | company))
 
 
 def _listing_data(listing: ProductListing) -> ListingOut:
     city = listing.city
+    organization = listing.organization
     return ListingOut.model_validate({
         "id": listing.pk,
         "title": listing.title,
@@ -74,7 +118,11 @@ def _listing_data(listing: ProductListing) -> ListingOut:
         "category_id": listing.category_id,
         "category_name": listing.category.name,
         "category_slug": listing.category.slug,
-        "seller": _seller_data(listing.seller),
+        "seller": _public_seller(listing),
+        "listing_kind": listing.listing_kind,
+        "organization_id": str(organization.pk) if organization else None,
+        "organization_name": organization.name if organization else None,
+        "organization_slug": organization.slug if organization else None,
         "province_id": listing.province_id,
         "province_name": listing.province.name_fa,
         "province_slug": listing.province.slug,
@@ -117,7 +165,15 @@ def _listing_data(listing: ProductListing) -> ListingOut:
 
 def _listing_queryset() -> QuerySet[ProductListing]:
     return ProductListing.objects.select_related(
-        "category", "seller", "seller__province", "seller__city", "province", "city"
+        "category",
+        "seller",
+        "seller__province",
+        "seller__city",
+        "organization",
+        "organization__province",
+        "organization__city",
+        "province",
+        "city",
     ).prefetch_related("images", "specifications")
 
 
@@ -165,6 +221,8 @@ def listings(
     province: str = "",
     city: str = "",
     seller: int | None = None,
+    organization: str = "",
+    listing_kind: str = "",
     export: bool | None = None,
     domestic: bool | None = None,
     min_price: Decimal | None = Query(None, ge=0),  # type: ignore[type-arg]  # noqa: B008
@@ -178,12 +236,7 @@ def listings(
         raise HttpError(422, "min_price must not exceed max_price")
     if min_quantity is not None and max_quantity is not None and min_quantity > max_quantity:
         raise HttpError(422, "min_quantity must not exceed max_quantity")
-    queryset = _listing_queryset().filter(
-        status=ProductListing.Status.APPROVED,
-        is_active=True,
-        seller__is_public=True,
-        category__is_active=True,
-    )
+    queryset = _public_listing_queryset()
     if category:
         category_item = ServiceCategory.objects.filter(slug=category, is_active=True).first()
         if category_item:
@@ -204,7 +257,20 @@ def listings(
             else queryset.filter(city__slug=city)
         )
     if seller is not None:
-        queryset = queryset.filter(seller_id=seller)
+        queryset = queryset.filter(seller_id=seller, organization__isnull=True)
+    if organization:
+        from uuid import UUID
+
+        try:
+            UUID(organization)
+        except ValueError:
+            queryset = queryset.filter(organization__slug=organization)
+        else:
+            queryset = queryset.filter(organization_id=organization)
+    if listing_kind:
+        if listing_kind not in ProductListing.Kind.values:
+            raise HttpError(422, "listing_kind must be product or service")
+        queryset = queryset.filter(listing_kind=listing_kind)
     if export is True:
         queryset = queryset.filter(sale_mode__in=["export", "both"])
     if export is False:
@@ -249,14 +315,7 @@ def models_q_search(query: str) -> Any:
 
 @router.get("/listings/{slug}", response=ListingOut, operation_id="services_listing_detail")
 def listing_detail(request: HttpRequest, slug: str) -> ListingOut:
-    listing = get_object_or_404(
-        _listing_queryset(),
-        slug=slug,
-        status=ProductListing.Status.APPROVED,
-        is_active=True,
-        seller__is_public=True,
-        category__is_active=True,
-    )
+    listing = get_object_or_404(_public_listing_queryset(), slug=slug)
     return _listing_data(listing)
 
 
@@ -305,6 +364,8 @@ def update_seller_profile(request: HttpRequest, payload: SellerProfileIn) -> Sel
     profile.province = province
     profile.city = city
     profile.is_public = payload.is_public
+    if profile.verification_status == VerificationStatus.SUSPENDED:
+        profile.is_public = False
     try:
         profile.full_clean()
     except DjangoValidationError as exc:
@@ -351,6 +412,8 @@ def _listing_fields(payload: ListingIn) -> dict[str, Any]:
             raise ApiError("شهر انتخاب‌شده با استان انتخابی مطابقت ندارد.")
     if payload.sale_mode not in ProductListing.SaleMode.values:
         raise ApiError("نوع فروش انتخاب‌شده معتبر نیست.")
+    if payload.listing_kind not in ProductListing.Kind.values:
+        raise ApiError("نوع آگهی معتبر نیست.")
     return {
         "category": category,
         "province": province,
@@ -366,6 +429,7 @@ def _listing_fields(payload: ListingIn) -> dict[str, Any]:
         "minimum_order_quantity": payload.minimum_order_quantity,
         "quality": payload.quality.strip(),
         "packaging": payload.packaging.strip(),
+        "listing_kind": payload.listing_kind,
     }
 
 
@@ -378,6 +442,39 @@ def my_listings(request: HttpRequest) -> list[ListingOut]:
     ]
 
 
+def _listing_owner(request: HttpRequest) -> tuple[SellerProfile | None, Organization | None]:
+    user = require_user(request)
+    active = identity_or_default(request, user)
+    if active is not None and active.organization is not None:
+        if active.role not in {"owner", "admin", "manager"}:
+            raise ApiError("نقش شما اجازه انتشار آگهی را نمی‌دهد.", status_code=403)
+        if (
+            active.organization.verification_status == VerificationStatus.SUSPENDED
+            or not active.organization.is_active
+        ):
+            raise ApiError("شرکت تعلیق‌شده اجازه انتشار ندارد.", status_code=403)
+        return None, active.organization
+    profile = _profile_for_user(user)
+    if profile.verification_status == VerificationStatus.SUSPENDED:
+        raise ApiError("پروفایل تعلیق‌شده اجازه انتشار ندارد.", status_code=403)
+    return profile, None
+
+
+def _editable_listing(request: HttpRequest, listing_id: int) -> ProductListing:
+    user = require_user(request)
+    listing = get_object_or_404(ProductListing.objects.select_related("seller"), pk=listing_id)
+    if not can_edit_listing(user, listing):
+        raise ApiError("آگهی پیدا نشد.", status_code=404)
+    if listing.seller_id and listing.seller.verification_status == VerificationStatus.SUSPENDED:
+        raise ApiError("پروفایل تعلیق‌شده اجازه ویرایش انتشار را نمی‌دهد.", status_code=403)
+    if listing.organization_id and (
+        not listing.organization.is_active
+        or listing.organization.verification_status == VerificationStatus.SUSPENDED
+    ):
+        raise ApiError("شرکت تعلیق‌شده اجازه ویرایش انتشار را نمی‌دهد.", status_code=403)
+    return listing
+
+
 @router.post(
     "/my/listings",
     response={201: ListingOut},
@@ -385,9 +482,9 @@ def my_listings(request: HttpRequest) -> list[ListingOut]:
 )
 @decorate_view(csrf_protect)
 def create_listing(request: HttpRequest, payload: ListingIn) -> Status[ListingOut]:
-    profile = _profile_for_user(require_user(request))
+    seller, organization = _listing_owner(request)
     values = _listing_fields(payload)
-    listing = ProductListing(seller=profile, **values)
+    listing = ProductListing(seller=seller, organization=organization, **values)
     try:
         with transaction.atomic():
             listing.full_clean()
@@ -408,8 +505,8 @@ def create_listing(request: HttpRequest, payload: ListingIn) -> Status[ListingOu
 )
 @decorate_view(csrf_protect)
 def update_listing(request: HttpRequest, listing_id: int, payload: ListingIn) -> ListingOut:
-    profile = _profile_for_user(require_user(request))
-    listing = get_object_or_404(_listing_queryset(), pk=listing_id, seller=profile)
+    listing = _editable_listing(request, listing_id)
+    listing = _listing_queryset().get(pk=listing.pk)
     values = _listing_fields(payload)
     try:
         with transaction.atomic():
@@ -442,8 +539,7 @@ def update_listing(request: HttpRequest, listing_id: int, payload: ListingIn) ->
 )
 @decorate_view(csrf_protect)
 def archive_listing(request: HttpRequest, listing_id: int) -> tuple[int, dict[str, str]]:
-    profile = _profile_for_user(require_user(request))
-    listing = get_object_or_404(ProductListing, pk=listing_id, seller=profile)
+    listing = _editable_listing(request, listing_id)
     try:
         listing.transition_to(ProductListing.Status.ARCHIVED)
         sync_product_opportunity(listing)
@@ -464,8 +560,7 @@ def upload_listing_image(
     file: UploadedFile = File(...),  # type: ignore[type-arg]  # noqa: B008
     alt_text: str = "",
 ) -> Status[dict[str, object]]:
-    profile = _profile_for_user(require_user(request))
-    listing = get_object_or_404(ProductListing, pk=listing_id, seller=profile)
+    listing = _editable_listing(request, listing_id)
     if listing.images.count() >= 10:
         raise ApiError("برای هر محصول حداکثر 10 تصویر می‌توان ثبت کرد.")
     image = ListingImage(listing=listing, image=file, alt_text=alt_text[:160])
@@ -489,10 +584,10 @@ def upload_listing_image(
 )
 @decorate_view(csrf_protect)
 def delete_listing_image(request: HttpRequest, image_id: int) -> tuple[int, dict[str, str]]:
-    profile = _profile_for_user(require_user(request))
+    user = require_user(request)
     image = get_object_or_404(ListingImage.objects.select_related("listing__seller"), pk=image_id)
-    if image.listing.seller_id != profile.pk:
-        raise ApiError("اجازه حذف این تصویر را ندارید.", status_code=403)
+    if not can_edit_listing(user, image.listing):
+        raise ApiError("تصویر پیدا نشد.", status_code=404)
     if image.listing.status == ProductListing.Status.APPROVED:
         image.listing.transition_to(ProductListing.Status.PENDING_REVIEW)
     image.image.delete(save=False)
@@ -539,8 +634,12 @@ def _inquiry_data(inquiry: ProductInquiry) -> InquiryOut:
     operation_id="services_inquiries_received",
 )
 def received_inquiries(request: HttpRequest) -> list[InquiryOut]:
-    profile = _profile_for_user(require_user(request))
-    inquiries = ProductInquiry.objects.filter(listing__seller=profile).select_related(
+    user = require_user(request)
+    from .inquiries_api import _owner_scope
+
+    inquiries = ProductInquiry.objects.filter(
+        _owner_scope(request, user), listing__isnull=False
+    ).select_related(
         "listing", "buyer"
     )
     return [_inquiry_data(item) for item in inquiries]
@@ -552,9 +651,9 @@ def received_inquiries(request: HttpRequest) -> list[InquiryOut]:
     operation_id="services_inquiries_submitted",
 )
 def submitted_inquiries(request: HttpRequest) -> list[InquiryOut]:
-    inquiries = ProductInquiry.objects.filter(buyer=require_user(request)).select_related(
-        "listing", "buyer"
-    )
+    inquiries = ProductInquiry.objects.filter(
+        buyer=require_user(request), listing__isnull=False
+    ).select_related("listing", "buyer")
     return [_inquiry_data(item) for item in inquiries]
 
 
@@ -572,18 +671,37 @@ def create_inquiry(request: HttpRequest, slug: str, payload: InquiryIn) -> Statu
         status=ProductListing.Status.APPROVED,
         is_active=True,
     )
-    if listing.seller.user_id == buyer.pk:
+    if listing.seller_id and listing.seller.user_id == buyer.pk:
         raise ApiError("نمی‌توانید برای محصول خودتان درخواست بفرستید.")
+    if listing.organization_id and buyer.organization_memberships.filter(
+        organization_id=listing.organization_id, status=MembershipStatus.ACTIVE
+    ).exists():
+        raise ApiError("نمی‌توانید برای محصول شرکت خودتان درخواست بفرستید.")
+    rate_key = f"legacy-inquiry:{buyer.pk}:{listing.pk}"
+    if not cache.add(rate_key, "1", timeout=5):
+        raise ApiError("چند لحظه پیش درخواست ارسال کرده‌اید.", status_code=429)
+    now = timezone.now()
     inquiry = ProductInquiry(
         listing=listing,
         buyer=buyer,
         message=payload.message.strip(),
         quantity=payload.quantity,
+        subject=listing.title[:180],
+        category="purchase",
+        owner_organization=listing.organization,
+        owner_seller=listing.seller,
+        applicant_seen_at=now,
+        last_activity_at=now,
     )
     try:
-        inquiry.full_clean()
-        inquiry.save()
+        with transaction.atomic():
+            inquiry.full_clean()
+            inquiry.save()
+            from .inquiries_api import _notify
+
+            _notify(inquiry, "new", owner=True)
     except DjangoValidationError as exc:
+        cache.delete(rate_key)
         raise ApiError("اطلاعات درخواست معتبر نیست.") from exc
     return Status(
         201,
@@ -602,12 +720,9 @@ def create_inquiry(request: HttpRequest, slug: str, payload: InquiryIn) -> Statu
 def update_inquiry(
     request: HttpRequest, inquiry_id: int, payload: InquiryStatusIn
 ) -> InquiryOut:
-    profile = _profile_for_user(require_user(request))
-    inquiry = get_object_or_404(
-        ProductInquiry.objects.select_related("listing", "buyer"),
-        pk=inquiry_id,
-        listing__seller=profile,
-    )
+    user = require_user(request)
+    from .inquiries_api import _notify, _owner_scope
+
     allowed: dict[str, set[str]] = {
         ProductInquiry.Status.NEW: {ProductInquiry.Status.READ, ProductInquiry.Status.CLOSED},
         ProductInquiry.Status.READ: {
@@ -617,8 +732,23 @@ def update_inquiry(
         ProductInquiry.Status.REPLIED: {ProductInquiry.Status.CLOSED},
         ProductInquiry.Status.CLOSED: set(),
     }
-    if payload.status not in allowed[inquiry.status]:
-        raise ApiError("تغییر وضعیت درخواست مجاز نیست.")
-    inquiry.status = payload.status
-    inquiry.save(update_fields=["status", "updated_at"])
+    with transaction.atomic():
+        inquiry = get_object_or_404(
+            ProductInquiry.objects.select_related("listing", "listing__seller", "buyer")
+            .select_for_update(of=("self",))
+            .filter(_owner_scope(request, user), listing__isnull=False),
+            pk=inquiry_id,
+        )
+        if payload.status not in allowed.get(inquiry.status, set()):
+            raise ApiError("تغییر وضعیت درخواست مجاز نیست.")
+        old_status = inquiry.status
+        now = timezone.now()
+        inquiry.status = payload.status
+        inquiry.last_activity_at = now
+        inquiry.owner_seen_at = now
+        inquiry.save(update_fields=["status", "last_activity_at", "owner_seen_at", "updated_at"])
+        InquiryStatusEvent.objects.create(
+            inquiry=inquiry, actor=user, from_status=old_status, to_status=payload.status
+        )
+        _notify(inquiry, "status", owner=False)
     return _inquiry_data(inquiry)

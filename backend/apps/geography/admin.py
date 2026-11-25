@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from apps.core.admin import KarfansaModelAdmin, KarfansaTabularInline
+
 from .forms import ProvinceIndustryForm
 from .models import City, Country, Province, ProvinceIndustry, ProvinceStatistics
 
 
-class ProvinceIndustryInline(admin.TabularInline):
+class ProvinceIndustryInline(KarfansaTabularInline):
     model = ProvinceIndustry
     form = ProvinceIndustryForm
     extra = 0
@@ -12,14 +14,14 @@ class ProvinceIndustryInline(admin.TabularInline):
 
 
 @admin.register(Country)
-class CountryAdmin(admin.ModelAdmin):
+class CountryAdmin(KarfansaModelAdmin):
     list_display = ("name_fa", "name_en", "iso2")
     search_fields = ("name_fa", "name_en", "iso2")
     ordering = ("name_fa",)
 
 
 @admin.register(Province)
-class ProvinceAdmin(admin.ModelAdmin):
+class ProvinceAdmin(KarfansaModelAdmin):
     list_display = ("name_fa", "name_en", "capital", "is_published", "country")
     list_filter = ("is_published", "country")
     search_fields = (
@@ -45,7 +47,7 @@ class ProvinceAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProvinceIndustry)
-class ProvinceIndustryAdmin(admin.ModelAdmin):
+class ProvinceIndustryAdmin(KarfansaModelAdmin):
     form = ProvinceIndustryForm
     list_display = (
         "industry",
@@ -69,7 +71,7 @@ class ProvinceIndustryAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProvinceStatistics)
-class ProvinceStatisticsAdmin(admin.ModelAdmin):
+class ProvinceStatisticsAdmin(KarfansaModelAdmin):
     list_display = (
         "province",
         "get_indicator_display",
@@ -95,32 +97,38 @@ class ProvinceStatisticsAdmin(admin.ModelAdmin):
     ordering = ("-statistical_year", "indicator", "province__name_fa")
     fieldsets = (
         ("شاخص آماری", {"fields": ("province", "indicator", "category")}),
-        ("مقدار و دوره", {
-            "fields": (
-                "value",
-                "value_text",
-                "item_label",
-                "unit",
-                "statistical_year",
-                "period",
-                "period_number",
-            )
-        }),
-        ("منبع و اعتبارسنجی", {
-            "fields": (
-                "source",
-                "source_url",
-                "source_published_at",
-                "collected_at",
-                "notes",
-                "validation_status",
-            )
-        }),
+        (
+            "مقدار و دوره",
+            {
+                "fields": (
+                    "value",
+                    "value_text",
+                    "item_label",
+                    "unit",
+                    "statistical_year",
+                    "period",
+                    "period_number",
+                )
+            },
+        ),
+        (
+            "منبع و اعتبارسنجی",
+            {
+                "fields": (
+                    "source",
+                    "source_url",
+                    "source_published_at",
+                    "collected_at",
+                    "notes",
+                    "validation_status",
+                )
+            },
+        ),
     )
 
 
 @admin.register(City)
-class CityAdmin(admin.ModelAdmin):
+class CityAdmin(KarfansaModelAdmin):
     list_display = ("name_fa", "name_en", "province", "is_county_center", "country_name")
     list_filter = ("province__country", "province", "is_county_center")
     search_fields = (

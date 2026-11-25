@@ -24,24 +24,24 @@ export interface LinkItem {
   label: string
 }
 
+export const NEWS_SITE_URL = 'https://karfansa.news.ir'
+
 export const NAV: NavItem[] = [
   { href: '/', label: 'صفحه اصلی', icon: 'home' },
-  { href: '/news/', label: 'اخبار اقتصادی', icon: 'news' },
+  { href: NEWS_SITE_URL, label: 'اخبار', icon: 'news' },
   { href: '/companies/', label: 'شرکت‌ها', icon: 'building' },
+  { href: '/transportation/companies/', label: 'حمل‌ونقل', icon: 'truck' },
+  { href: '/individuals/', label: 'فعالان فردی', icon: 'factory' },
   { href: '/markets/', label: 'بازارها', icon: 'trend', live: true },
   { href: '/provinces/', label: 'استان‌ها', icon: 'pin' },
-  { href: '/bourse/', label: 'بورس', icon: 'bars' },
   { href: '/industries/', label: 'مناطق و صنایع', icon: 'factory' },
   { href: '/trade/', label: 'فرصت‌های تجاری', icon: 'building' },
   { href: '/services/', label: 'بازار محصولات', icon: 'factory' },
-  { href: '/analysis/', label: 'تحلیل و گزارش', icon: 'file' },
-  { href: '/tech/', label: 'فناوری و نوآوری', icon: 'bolt' },
 ]
 
 export const TOP_LINKS: LinkItem[] = [
   { href: '/about/', label: 'درباره ما' },
   { href: '/contact/', label: 'تماس با ما' },
-  { href: '/submit-news/', label: 'ارسال خبر' },
   { href: '/ads/', label: 'تبلیغات' },
 ]
 
@@ -65,48 +65,15 @@ export const TRENDING: LinkItem[] = [
 
 export const DRAWER_LINKS: LinkItem[] = [
   ...TOP_LINKS,
-  { href: '/register-company/', label: 'ثبت شرکت' },
-  { href: '/archive/', label: 'آرشیو اخبار' },
-]
-
-export const FOOTER_SECTIONS: LinkItem[] = [
-  { href: '/news/', label: 'اخبار اقتصادی' },
-  { href: '/companies/', label: 'شرکت‌ها' },
-  { href: '/provinces/', label: 'استان‌های ایران' },
-  { href: '/markets/', label: 'بازارها' },
-  { href: '/bourse/', label: 'بورس' },
-  { href: '/industries/', label: 'مناطق و صنایع' },
-  { href: '/trade/', label: 'فرصت‌های تجاری و صادرات' },
-  { href: '/services/', label: 'بازار محصولات تولیدکنندگان' },
-  { href: '/analysis/', label: 'تحلیل و گزارش' },
-  { href: '/transport/', label: 'حمل و نقل' },
-  { href: '/tech/', label: 'فناوری و نوآوری' },
-]
-export const FOOTER_QUICK: LinkItem[] = [
-  { href: '/', label: 'صفحه اصلی' },
-  { href: '/archive/', label: 'آرشیو اخبار' },
-  { href: '/register-company/', label: 'ثبت شرکت' },
-  { href: '/login/', label: 'ورود / ثبت‌نام' },
-  { href: '/submit-news/', label: 'ارسال خبر' },
-  { href: '/ads/', label: 'تبلیغات در کارفنسا' },
-]
-export const FOOTER_ABOUT: LinkItem[] = [
-  { href: '/about/', label: 'درباره ما' },
-  { href: '/contact/', label: 'تماس با ما' },
-  { href: '/careers/', label: 'همکاری با ما' },
-  { href: '/terms/', label: 'قوانین استفاده' },
-  { href: '/privacy/', label: 'حریم خصوصی' },
-  { href: '/faq/', label: 'سوالات متداول' },
+  { href: '/join/', label: 'ثبت کسب‌وکار' },
+  { href: '/business/', label: 'داشبورد کسب‌وکار' },
 ]
 
 export const URLS = {
   login: '/login/',
-  allNews: '/news/',
   markets: '/markets/',
-  transportAll: '/transport/',
-  registerTransport: '/transport/register/',
-  companyNewsAll: '/companies/news/',
-  archive: '/archive/',
-  analysisAll: '/analysis/',
-  reportsAll: '/analysis/reports/',
+  transportAll: '/transportation/companies',
+  registerTransport: '/join',
+  analysisAll: '/analysis',
+  reportsAll: '/analysis',
 } as const

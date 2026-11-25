@@ -3,67 +3,6 @@ import type { TradeOpportunityType } from './types'
 
 /* تصویرهای خط‌طرح ساده (SVG درون‌خطی) با نماد تجارت و اقتصاد */
 
-export function TradeHeroArt() {
-  return (
-    <svg
-      className="trade-art-svg"
-      viewBox="0 0 220 150"
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      role="img"
-      aria-label="نمادی از تجارت جهانی و رشد اقتصادی"
-    >
-      {/* کره زمین */}
-      <circle cx="146" cy="48" r="38" stroke="var(--trade-primary)" strokeWidth="2" />
-      <ellipse
-        cx="146"
-        cy="48"
-        rx="15"
-        ry="38"
-        stroke="var(--trade-primary)"
-        strokeOpacity="0.45"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M108 48h76M115 30h62M115 66h62"
-        stroke="var(--trade-primary)"
-        strokeOpacity="0.45"
-        strokeWidth="1.5"
-      />
-      {/* نمودار رشد */}
-      <path d="M16 128h188" stroke="#dbe5ff" strokeWidth="1.5" />
-      <rect x="22" y="104" width="16" height="24" rx="3" stroke="var(--trade-primary)" strokeWidth="2" />
-      <rect x="46" y="88" width="16" height="40" rx="3" stroke="var(--trade-primary)" strokeWidth="2" />
-      <rect x="70" y="70" width="16" height="58" rx="3" stroke="var(--trade-primary)" strokeWidth="2" />
-      <path d="M22 92l26-18 22-4 40-36" stroke="#c99a3b" strokeWidth="2.5" />
-      <path d="M100 28l10 6-8 8" stroke="#c99a3b" strokeWidth="2.5" />
-      {/* کشتی */}
-      <path d="M118 128l-4-12h54l-4 12" stroke="var(--trade-primary)" strokeWidth="2" />
-      <rect
-        x="126"
-        y="104"
-        width="14"
-        height="12"
-        rx="2"
-        stroke="var(--trade-primary)"
-        strokeOpacity="0.6"
-        strokeWidth="1.5"
-      />
-      <rect
-        x="144"
-        y="104"
-        width="14"
-        height="12"
-        rx="2"
-        stroke="var(--trade-primary)"
-        strokeOpacity="0.6"
-        strokeWidth="1.5"
-      />
-    </svg>
-  )
-}
-
 export function TradeCtaArt() {
   return (
     <svg

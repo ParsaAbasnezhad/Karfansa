@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}داشبورد | مدیریت کارفنسا{% endblock %}
+
+{% block branding %}
+  {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {% if admin_analytics %}
+    <script defer src="{% static 'core/admin/vendor/chart.umd.min.js' %}"></script>
+    <script defer src="{% static 'core/admin/dashboard.js' %}"></script>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% if admin_analytics %}
+    {{ admin_analytics.charts|json_script:"ka-dashboard-data" }}
+    <main class="ka-dashboard" dir="rtl">
+      <header class="ka-dashboard__header">
+        <div>
+          <p class="ka-dashboard__eyebrow">KARFANSA · ADMIN CONSOLE</p>
+          <h1>نمای کلی کارفنسا</h1>
+          <p>شاخص‌های واقعی سامانه و روند فعالیت‌ها</p>
+        </div>
+        <span class="ka-dashboard__live"><i></i> گزارش به‌روز</span>
+      </header>
+
+      <section class="ka-metric-grid" aria-label="شاخص‌های اصلی">
+        {% for card in admin_analytics.cards %}
+          <a class="ka-metric-card" href="{{ card.url }}">
+            <span>{{ card.label }}</span>
+            <strong>{{ card.value }}</strong>
+            <small>مشاهده فهرست <b aria-hidden="true">←</b></small>
+          </a>
+        {% endfor %}
+      </section>
+
+      <section class="ka-chart-grid" aria-label="نمودارهای تحلیلی">
+        <article class="ka-chart-card">
+          <h2>ثبت‌نام کاربران</h2>
+          <p>روند ماهانه در ۱۲ ماه اخیر</p>
+          <canvas data-chart="users" role="img" aria-label="نمودار ثبت‌نام کاربران"></canvas>
+        </article>
+        <article class="ka-chart-card">
+          <h2>ثبت شرکت‌ها</h2>
+          <p>روند ماهانه در ۱۲ ماه اخیر</p>
+          <canvas data-chart="companies" role="img" aria-label="نمودار ثبت شرکت‌ها"></canvas>
+        </article>
+        <article class="ka-chart-card">
+          <h2>وضعیت ارسال محصولات</h2>
+          <p>تفکیک محصولات بر اساس وضعیت بررسی</p>
+          <canvas data-chart="product_status" role="img" aria-label="وضعیت محصولات"></canvas>
+        </article>
+        <article class="ka-chart-card">
+          <h2>فرصت‌های تجاری بر اساس دسته</h2>
+          <p>توزیع فرصت‌های ثبت‌شده در صنایع</p>
+          <canvas data-chart="opportunity_categories" role="img" aria-label="فرصت‌ها بر اساس دسته"></canvas>
+        </article>
+        <article class="ka-chart-card">
+          <h2>روند تصمیم‌های بررسی</h2>
+          <p>تأیید و رد محصولات و فرصت‌ها</p>
+          <canvas data-chart="reviews" role="img" aria-label="روند تأیید و رد"></canvas>
+        </article>
+        <article class="ka-chart-card">
+          <h2>کسب‌وکارها بر اساس استان</h2>
+          <p>شرکت‌ها و پروفایل‌های فردی</p>
+          <canvas data-chart="provinces" role="img" aria-label="کسب‌وکارها بر اساس استان"></canvas>
+        </article>
+      </section>
+    </main>
+  {% else %}
+    <p>برای مشاهده گزارش‌ها به مجوز مشاهده همه مدل‌های تحلیلی نیاز دارید.</p>
+  {% endif %}
+{% endblock %}

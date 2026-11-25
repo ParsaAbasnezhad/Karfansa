@@ -162,6 +162,11 @@ class TradeOpportunity(models.Model):
         default=OpportunityReviewStatus.PENDING,
         verbose_name="وضعیت بررسی",
     )
+    rejection_reason = models.CharField(
+        max_length=500,
+        blank=True,
+        verbose_name="دلیل رد یا درخواست اصلاح",
+    )
     is_published = models.BooleanField(default=False, verbose_name="منتشر شده")
     relevance_score = models.PositiveSmallIntegerField(
         default=0,
@@ -190,6 +195,9 @@ class TradeOpportunity(models.Model):
         ordering = ["-published_at", "title"]
         verbose_name = "فرصت تجاری"
         verbose_name_plural = "فرصت‌های تجاری"
+        permissions = [
+            ("moderate_tradeopportunity", "Can moderate trade opportunities"),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(required_volume__isnull=True)

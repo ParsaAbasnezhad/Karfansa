@@ -1,17 +1,19 @@
 from django.contrib import admin
 
+from apps.core.admin import KarfansaModelAdmin
+
 from .models import TransportCompany, TransportMode, VehicleType
 
 
 @admin.register(TransportMode)
-class TransportModeAdmin(admin.ModelAdmin):
+class TransportModeAdmin(KarfansaModelAdmin):
     list_display = ("name_fa", "name_en", "code", "sort_order")
     search_fields = ("name_fa", "name_en", "code")
     ordering = ("sort_order", "name_fa")
 
 
 @admin.register(VehicleType)
-class VehicleTypeAdmin(admin.ModelAdmin):
+class VehicleTypeAdmin(KarfansaModelAdmin):
     list_display = ("name_fa", "name_en", "slug", "mode")
     list_filter = ("mode",)
     search_fields = ("name_fa", "name_en", "slug", "mode__name_fa")
@@ -21,7 +23,7 @@ class VehicleTypeAdmin(admin.ModelAdmin):
 
 
 @admin.register(TransportCompany)
-class TransportCompanyAdmin(admin.ModelAdmin):
+class TransportCompanyAdmin(KarfansaModelAdmin):
     list_display = (
         "name",
         "english_name",
@@ -80,7 +82,17 @@ class TransportCompanyAdmin(admin.ModelAdmin):
         ("موقعیت و نشانی", {"fields": ("country", "province", "city", "address")}),
         (
             "راه‌های ارتباطی",
-            {"fields": ("phone", "mobile", "email", "website", "whatsapp", "telegram")},
+            {
+                "fields": (
+                    "phone",
+                    "mobile",
+                    "email",
+                    "website",
+                    "whatsapp",
+                    "telegram",
+                    "instagram",
+                )
+            },
         ),
         ("وضعیت", {"fields": ("is_verified", "is_active")}),
         ("زمان‌ها", {"fields": ("id", "created_at", "updated_at")}),

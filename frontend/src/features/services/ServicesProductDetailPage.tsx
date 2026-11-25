@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { apiGet } from '@/lib/api-client'
 import { formatNumber } from '@/lib/format'
+import { InquiryActions } from '@/features/inquiries/InquiryActions'
 import type { ProductListing, ServiceImage } from './types'
-import { ErrorState, InquiryForm, Loading } from './shared'
+import { ErrorState, Loading } from './shared'
 import { API } from './services.utils'
 
 function ProductGallery({ images, title }: { images: ServiceImage[]; title: string }) {
@@ -133,13 +134,26 @@ export function ServicesProductDetailPage() {
           </dl>
         </div>
         <aside className="svc-detail-aside">
-          <Link className="svc-seller-card" to={`/services/sellers/${item.seller.id}`}>
+          <Link
+            className="svc-seller-card"
+            to={
+              item.organization_slug
+                ? `/companies/${encodeURIComponent(item.organization_slug)}`
+                : `/individuals/${item.seller.id}`
+            }
+          >
             <span className="svc-avatar" aria-hidden="true">{item.seller.display_name.slice(0, 1)}</span>
             <strong>{item.seller.display_name}</strong>
             <small>{item.seller.province_name}{item.seller.city_name ? `، ${item.seller.city_name}` : ''}</small>
             {item.seller.bio && <span>{item.seller.bio}</span>}
           </Link>
-          <InquiryForm listing={item} />
+          <InquiryActions
+            key={item.slug}
+            targetType={item.listing_kind || 'product'}
+            slug={item.slug}
+            title={item.title}
+            ownerName={item.organization_name || item.seller.display_name}
+          />
         </aside>
       </div>
     </div>

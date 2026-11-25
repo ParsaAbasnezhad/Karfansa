@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
-import { useMarkets, useTicker } from '@/features/home/data'
+import { NotificationBell } from '@/features/inquiries/NotificationBell'
+import { useMarkets } from '@/features/home/data'
 import { Icon } from '@/features/home/icons'
 import { SearchForm } from '@/features/home/SearchForm'
-import { formatChange, formatClock, formatNumber } from '@/lib/format'
-import { scrollToNewsletter, useTehranClock } from '@/lib/hooks'
+import { formatChange, formatNumber } from '@/lib/format'
+import { useTehranClock } from '@/lib/hooks'
 import { NAV, SOCIAL, TOP_LINKS, URLS } from '@/lib/site'
 import { Logo } from './Logo'
 import { MobileDrawer } from './MobileDrawer'
@@ -16,7 +17,6 @@ export function SiteHeader() {
   const { pathname } = useLocation()
   const { data: user } = useAuth()
   const markets = useMarkets().data?.results
-  const ticker = useTicker().data?.results ?? []
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const burgerRef = useRef<HTMLButtonElement>(null)
@@ -101,6 +101,7 @@ export function SiteHeader() {
           <Logo />
           <SearchForm variant="masthead" />
           <div className="mast-tools">
+            <NotificationBell enabled={Boolean(user)} />
             <button
               type="button"
               className="iconbtn sbtn"
@@ -111,15 +112,6 @@ export function SiteHeader() {
               }}
             >
               <Icon name="search" />
-            </button>
-            <button
-              type="button"
-              className="iconbtn bell"
-              aria-label="خبرنامه"
-              onClick={scrollToNewsletter}
-            >
-              <Icon name="bell" />
-              <span className="dot" />
             </button>
             {user ? (
               <AppLink className="btn login" href="/account/">
@@ -152,52 +144,8 @@ export function SiteHeader() {
               </AppLink>
             ))}
           </div>
-          <div className="nav-act">
-            <a
-              className="nbtn"
-              href="#nl"
-              onClick={(e) => {
-                e.preventDefault()
-                scrollToNewsletter()
-              }}
-            >
-              <Icon name="mail" />
-              دریافت خبرنامه
-            </a>
-          </div>
         </div>
       </nav>
-
-      <div className="ticker">
-        <div className="wrap">
-          <div className="label">
-            <i />
-            خبر فوری
-          </div>
-          <div className="view">
-            <div className="track">
-              {(['a', 'b'] as const).map((copy) =>
-                ticker.map((t) => (
-                  <AppLink
-                    className="item"
-                    key={copy + t.id}
-                    href={t.url}
-                    aria-hidden={copy === 'b' ? true : undefined}
-                    tabIndex={copy === 'b' ? -1 : undefined}
-                  >
-                    <time dateTime={t.published_at}>{formatClock(t.published_at)}</time>
-                    {t.title}
-                  </AppLink>
-                )),
-              )}
-            </div>
-          </div>
-          <AppLink className="all" href={URLS.allNews}>
-            همه اخبار
-            <Icon name="chev-l" />
-          </AppLink>
-        </div>
-      </div>
 
       <MobileDrawer
         open={drawerOpen}

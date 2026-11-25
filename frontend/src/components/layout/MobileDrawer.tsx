@@ -77,8 +77,8 @@ export function MobileDrawer({ open, onClose, today, time, markets, authenticate
         <div className="dscroll">
           <SearchForm variant="drawer" onDone={onClose} />
 
-          <div className="dt">بخش‌های خبری</div>
-          <nav className="dnav" aria-label="بخش‌های خبری">
+          <div className="dt">بخش‌ها</div>
+          <nav className="dnav" aria-label="بخش‌ها">
             {NAV.map((n) => (
               <AppLink
                 key={n.href}

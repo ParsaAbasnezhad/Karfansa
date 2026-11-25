@@ -58,15 +58,9 @@ function AboutStats() {
     queryFn: ({ signal }) =>
       apiGet<CountResponse>('/v1/services/listings/', { page_size: 1 }, signal),
   })
-  const news = useQuery({
-    queryKey: ['about', 'news-count'],
-    queryFn: ({ signal }) => apiGet<CountResponse>('/v1/news/', { page_size: 1 }, signal),
-  })
-
   const stats: StatItem[] = [
     { label: 'فرصت‌های منتشرشده', query: opportunities },
     { label: 'محصولات تأییدشده', query: products },
-    { label: 'خبرهای در دسترس', query: news },
   ]
 
   return (
@@ -104,12 +98,6 @@ const services = [
     title: 'استان‌ها و صنایع',
     text: 'مرور اطلاعات اقتصادی و ظرفیت‌های ثبت‌شده برای استان‌ها و صنایع.',
     href: '/provinces/',
-  },
-  {
-    icon: 'news',
-    title: 'اخبار و بازارها',
-    text: 'دسترسی به خبرهای اقتصادی و داده‌های بازارهای در دسترس.',
-    href: '/news/',
   },
 ]
 
@@ -206,7 +194,7 @@ export function AboutPage() {
         <div className="about-story-art" aria-hidden="true">
           <div className="about-story-grid" />
           <div className="about-story-node node-a">
-            <Icon name="news" />
+            <Icon name="file" />
             <span>اطلاعات</span>
           </div>
           <div className="about-story-node node-b">

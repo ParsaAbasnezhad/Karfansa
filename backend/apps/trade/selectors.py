@@ -4,6 +4,19 @@ from django.utils import timezone
 from .models import OpportunityReviewStatus, TradeOpportunity
 
 
+def visible_linked_listing_q() -> Q:
+    approved = Q(service_listing__status="approved", service_listing__is_active=True)
+    individual = approved & Q(
+        service_listing__organization__isnull=True,
+        service_listing__seller__is_public=True,
+    )
+    company = approved & Q(
+        service_listing__organization__isnull=False,
+        service_listing__organization__is_active=True,
+    )
+    return Q(service_listing__isnull=True) | individual | company
+
+
 def public_opportunities(
     *,
     province: str = "",
@@ -11,6 +24,7 @@ def public_opportunities(
     industry: str = "",
     opportunity_type: str = "",
     query: str = "",
+    company: str = "",
     ordering: str = "newest",
 ) -> QuerySet[TradeOpportunity]:
     opportunities = (
@@ -19,14 +33,7 @@ def public_opportunities(
             review_status=OpportunityReviewStatus.APPROVED,
             is_published=True,
         )
-        .filter(
-            Q(service_listing__isnull=True)
-            | Q(
-                service_listing__status="approved",
-                service_listing__is_active=True,
-                service_listing__seller__is_public=True,
-            )
-        )
+        .filter(visible_linked_listing_q())
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=timezone.localdate()))
         .select_related(
             "province",
@@ -37,6 +44,8 @@ def public_opportunities(
             "service_listing",
         )
     )
+    if company:
+        opportunities = opportunities.filter(company__slug=company)
     if province:
         opportunities = opportunities.filter(province__slug=province)
     if product:
