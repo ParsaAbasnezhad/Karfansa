@@ -3,21 +3,19 @@ import { useLocation } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { SearchForm } from '@/features/home/SearchForm'
 import { Icon } from '@/features/home/icons'
-import { formatChange, formatNumber } from '@/lib/format'
 import { DRAWER_LINKS, NAV, SOCIAL, TRENDING, URLS } from '@/lib/site'
-import type { Market } from '@/lib/types'
 import { Logo } from './Logo'
+import { PwaPromoCard } from '@/pwa/PwaInstallButton'
 
 interface Props {
   open: boolean
   onClose: () => void
   today: string
   time: string
-  markets?: Market[]
   authenticated: boolean
 }
 
-export function MobileDrawer({ open, onClose, today, time, markets, authenticated }: Props) {
+export function MobileDrawer({ open, onClose, today, time, authenticated }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null)
   const asideRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
@@ -32,7 +30,7 @@ export function MobileDrawer({ open, onClose, today, time, markets, authenticate
     closeRef.current?.focus({ preventScroll: true })
     document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) onClose()
     }
     const mq = matchMedia('(min-width:641px)')
     const onMq = (e: MediaQueryListEvent) => {
@@ -76,6 +74,7 @@ export function MobileDrawer({ open, onClose, today, time, markets, authenticate
 
         <div className="dscroll">
           <SearchForm variant="drawer" onDone={onClose} />
+          <PwaPromoCard />
 
           <div className="dt">بخش‌ها</div>
           <nav className="dnav" aria-label="بخش‌ها">
@@ -95,25 +94,6 @@ export function MobileDrawer({ open, onClose, today, time, markets, authenticate
               </AppLink>
             ))}
           </nav>
-
-          <div className="dt">
-            بازارها
-            <span className="live">
-              <i />
-              زنده
-            </span>
-          </div>
-          <div className="dq">
-            {(markets ?? []).map((m) => (
-              <div key={m.id}>
-                <small>{m.title}</small>
-                <b>{formatNumber(m.value)}</b>
-                <span className={'chg' + (m.change < 0 ? ' down' : '')}>
-                  {formatChange(m.change)}
-                </span>
-              </div>
-            ))}
-          </div>
 
           <div className="dt">موضوعات داغ</div>
           <div className="dchips">

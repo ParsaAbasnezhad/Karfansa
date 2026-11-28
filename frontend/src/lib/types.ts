@@ -9,20 +9,6 @@ export interface HomeSlide {
   created_at: string
 }
 
-export interface Market {
-  id: string
-  title: string
-  short_title: string
-  subtitle: string
-  /** Icon name, for example "dollar", "coins", "bars", "drop". */
-  icon: string
-  value: number
-  /** Percent change; negative means a drop. */
-  change: number
-  /** Optional points for the small trend chart. */
-  spark?: number[]
-}
-
 export type TransportType = 'road' | 'sea' | 'rail' | 'air' | 'log' | 'trans'
 export type TransportFilter = 'all' | Exclude<TransportType, 'trans'>
 

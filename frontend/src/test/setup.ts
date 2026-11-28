@@ -18,6 +18,19 @@ Object.defineProperty(window, 'matchMedia', {
 })
 window.scrollTo = vi.fn()
 Element.prototype.scrollIntoView = vi.fn()
+Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+  configurable: true,
+  value() {
+    this.setAttribute('open', '')
+  },
+})
+Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+  configurable: true,
+  value() {
+    this.removeAttribute('open')
+    this.dispatchEvent(new Event('close'))
+  },
+})
 
 afterEach(() => {
   cleanup()

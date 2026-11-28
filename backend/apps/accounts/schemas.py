@@ -81,6 +81,7 @@ class ProfileOut(UserOut):
     province_name: str | None
     city_id: int | None
     city_name: str | None
+    control_center_access: bool = False
 
 
 class ProfileUpdateIn(Schema):

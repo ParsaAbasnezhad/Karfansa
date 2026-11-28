@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@/test/render'
@@ -14,6 +14,22 @@ describe('SiteHeader authentication actions', () => {
 
     expect(await screen.findAllByText('ورود / ثبت‌نام')).toHaveLength(2)
     expect(screen.getByText('ثبت‌نام')).toBeInTheDocument()
+  })
+
+  it('offers the install action in the header and mobile drawer', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'true')
+    const { container } = renderWithProviders(<SiteHeader />)
+
+    expect(container.querySelector('.pwa-header-install')).toHaveTextContent('راهنمای نصب')
+    await userEvent.click(screen.getByRole('button', { name: 'منو' }))
+    const drawer = screen.getByRole('complementary', { name: 'منوی کارفنسا' })
+    expect(within(drawer).getByRole('region', { name: 'اپلیکیشن کارفنسا' })).toBeInTheDocument()
+    expect(within(drawer).getByRole('button', { name: 'راهنمای نصب' })).toBeVisible()
+    await userEvent.click(within(drawer).getByRole('button', { name: 'راهنمای نصب' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(drawer).toHaveClass('open')
+    fireEvent(dialog, new Event('cancel', { cancelable: true }))
   })
 
   it('keeps header navigation out of the footer and links only to existing help pages', async () => {
@@ -41,7 +57,6 @@ describe('SiteHeader authentication actions', () => {
     for (const headerItem of [
       'اخبار',
       'شرکت‌ها',
-      'بازارها',
       'صفحه اصلی',
       'تماس با ما',
       'ورود / ثبت‌نام',

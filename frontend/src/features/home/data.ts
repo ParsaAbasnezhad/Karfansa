@@ -8,7 +8,6 @@ import type {
   CountedListResponse,
   HomeSlide,
   ListResponse,
-  Market,
   Report,
   TransportCompany,
   TransportFilter,
@@ -54,13 +53,6 @@ export const useSlides = () =>
     queryKey: ['home', 'slides'],
     queryFn: ({ signal }) => apiGet<ListResponse<HomeSlide>>('/v1/home/slides/', undefined, signal),
     staleTime: 5 * 60_000,
-  })
-
-export const useMarkets = () =>
-  useQuery({
-    queryKey: ['markets'],
-    queryFn: ({ signal }) => apiGet<ListResponse<Market>>('/markets/', undefined, signal),
-    refetchInterval: 60_000,
   })
 
 export const useTransportCompanies = (type: TransportFilter) =>

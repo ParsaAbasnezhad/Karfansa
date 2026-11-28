@@ -23,6 +23,10 @@ Invoke-Step 'frontend: prettier'        @('frontend', 'npm', 'run', 'format:chec
 Invoke-Step 'frontend: typecheck'       @('frontend', 'npm', 'run', 'typecheck')
 Invoke-Step 'frontend: vitest'          @('frontend', 'npm', 'test')
 Invoke-Step 'frontend: build'           @('frontend', 'npm', 'run', 'build')
+Invoke-Step 'console: lint'             @('admin_frontend', 'npm', 'run', 'lint')
+Invoke-Step 'console: typecheck'        @('admin_frontend', 'npm', 'run', 'typecheck')
+Invoke-Step 'console: vitest'           @('admin_frontend', 'npm', 'test')
+Invoke-Step 'console: build'            @('admin_frontend', 'npm', 'run', 'build')
 
 Write-Host ''
 Write-Host 'All checks passed.' -ForegroundColor Green

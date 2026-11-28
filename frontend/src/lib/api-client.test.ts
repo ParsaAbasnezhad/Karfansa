@@ -24,14 +24,14 @@ describe('real API mode', () => {
 
   it('GETs under /api with the query string', async () => {
     const fetchMock = useFetch({ json: async () => ({ ok: 1 }) })
-    await expect(apiGet('/markets/', { limit: 4 })).resolves.toEqual({ ok: 1 })
-    expect(String(fetchMock.mock.calls[0]![0])).toBe('/api/markets/?limit=4')
+    await expect(apiGet('/v1/home/slides/', { limit: 4 })).resolves.toEqual({ ok: 1 })
+    expect(String(fetchMock.mock.calls[0]![0])).toBe('/api/v1/home/slides/?limit=4')
   })
 
   it('throws ApiError with the status on failure', async () => {
     useFetch({ ok: false, status: 500, json: async () => ({ detail: 'x' }) })
-    await expect(apiGet('/markets/')).rejects.toMatchObject({ name: 'ApiError', status: 500 })
-    await expect(apiGet('/markets/')).rejects.toBeInstanceOf(ApiError)
+    await expect(apiGet('/v1/home/slides/')).rejects.toMatchObject({ name: 'ApiError', status: 500 })
+    await expect(apiGet('/v1/home/slides/')).rejects.toBeInstanceOf(ApiError)
   })
 
   it('sends the CSRF token from the cookie on POST', async () => {

@@ -3,20 +3,18 @@ import { useLocation } from 'react-router-dom'
 import { AppLink } from '@/components/AppLink'
 import { useAuth } from '@/features/auth/useAuth'
 import { NotificationBell } from '@/features/inquiries/NotificationBell'
-import { useMarkets } from '@/features/home/data'
 import { Icon } from '@/features/home/icons'
 import { SearchForm } from '@/features/home/SearchForm'
-import { formatChange, formatNumber } from '@/lib/format'
 import { useTehranClock } from '@/lib/hooks'
 import { NAV, SOCIAL, TOP_LINKS, URLS } from '@/lib/site'
 import { Logo } from './Logo'
 import { MobileDrawer } from './MobileDrawer'
+import { PwaInstallButton } from '@/pwa/PwaInstallButton'
 
 export function SiteHeader() {
   const clock = useTehranClock()
   const { pathname } = useLocation()
   const { data: user } = useAuth()
-  const markets = useMarkets().data?.results
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const burgerRef = useRef<HTMLButtonElement>(null)
@@ -53,16 +51,6 @@ export function SiteHeader() {
               <i />
               <span>{clock.time}</span>
             </span>
-          </div>
-          <div className="quotes" aria-label="نرخ‌های لحظه‌ای">
-            {(markets ?? []).map((m) => (
-              <span className="quote" key={m.id}>
-                {m.short_title} <b>{formatNumber(m.value)}</b>
-                <em className={m.change < 0 ? 'down' : ''}>
-                  {formatChange(m.change).replace(/^[+−]/, '')}
-                </em>
-              </span>
-            ))}
           </div>
           <div className="links">
             {TOP_LINKS.map((l) => (
@@ -101,6 +89,7 @@ export function SiteHeader() {
           <Logo />
           <SearchForm variant="masthead" />
           <div className="mast-tools">
+            <PwaInstallButton className="pwa-header-install" />
             <NotificationBell enabled={Boolean(user)} />
             <button
               type="button"
@@ -152,7 +141,6 @@ export function SiteHeader() {
         onClose={closeDrawer}
         today={clock.today}
         time={clock.time}
-        markets={markets}
         authenticated={Boolean(user)}
       />
     </>

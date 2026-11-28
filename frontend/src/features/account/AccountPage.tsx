@@ -11,6 +11,7 @@ import { useIranProvinces, useProvinceCities } from './geography'
 import { useAuth, type AuthUser } from '@/features/auth/useAuth'
 import { statusLabels } from '@/features/business/BusinessDashboardStatus'
 import { emptySummary, type TicketPage } from '@/features/support/types'
+import { openControlCenter } from '@/lib/control-center'
 import './account.css'
 import '@/features/support/support.css'
 
@@ -439,6 +440,24 @@ export function AccountPage() {
               <span>مسیرهای سریع کارفنسا</span>
             </div>
             <div className="account-actions">
+              {user.control_center_access && (
+                <button
+                  type="button"
+                  className="account-control-center"
+                  onClick={() => openControlCenter()}
+                >
+                  <span className="account-control-center-icon" aria-hidden="true">
+                    <Icon name="shield-check" />
+                  </span>
+                  <span className="account-control-center-copy">
+                    <b>ورود به پنل مدیریت کارفانسا</b>
+                    <small>دسترسی به مرکز مدیریت و کنترل سامانه کارفانسا</small>
+                  </span>
+                  <span className="account-control-center-external" aria-hidden="true">
+                    <Icon name="external-link" />
+                  </span>
+                </button>
+              )}
               <ActionCard
                 icon="compass"
                 title="هدف من در کارفنسا"

@@ -1,53 +1,10 @@
 // Sample data for VITE_USE_MOCK=true. The shapes are the API contract (lib/types.ts).
-import type { AnalysisResponse, Analyst, Counts, Market, Report, TransportCompany } from './types'
+import type { AnalysisResponse, Analyst, Counts, Report, TransportCompany } from './types'
 
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString()
 const IMG = {
   hero: '/img/hero.jpg',
 }
-
-export const markets: Market[] = [
-  {
-    id: 'usd',
-    title: 'دلار',
-    short_title: 'دلار',
-    subtitle: 'بازار آزاد · تومان',
-    icon: 'dollar',
-    value: 103520,
-    change: 0.61,
-    spark: [8, 9, 8.5, 10, 9.5, 11, 10.5, 12, 11.5, 13],
-  },
-  {
-    id: 'gold18',
-    title: 'طلا ۱۸ عیار',
-    short_title: 'طلا ۱۸ عیار',
-    subtitle: 'هر گرم · تومان',
-    icon: 'coins',
-    value: 10870000,
-    change: 0.52,
-    spark: [6, 7, 7, 8.5, 8, 9.5, 10, 10.5, 11.5, 12.5],
-  },
-  {
-    id: 'tedpix',
-    title: 'شاخص کل بورس',
-    short_title: 'شاخص کل',
-    subtitle: 'امتیاز',
-    icon: 'bars',
-    value: 2912450,
-    change: 0.31,
-    spark: [10, 8, 9, 7, 8.5, 7.5, 9, 10.5, 10, 11.5],
-  },
-  {
-    id: 'brent',
-    title: 'نفت برنت',
-    short_title: 'برنت',
-    subtitle: 'دلار در هر بشکه',
-    icon: 'drop',
-    value: 73.42,
-    change: 0.87,
-    spark: [6, 7.5, 7, 8, 9, 8.5, 10, 11, 10.5, 12],
-  },
-]
 
 // `featured` (1..6) marks the companies shown under the "all" tab, in that order.
 export type MockTransportCompany = TransportCompany & { featured?: number }

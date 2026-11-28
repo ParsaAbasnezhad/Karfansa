@@ -6,6 +6,8 @@ from .base import *  # noqa: F403
 
 DEBUG = False
 ALLOWED_HOSTS = ["testserver", "localhost"]
+MANAGEMENT_ALLOWED_HOSTS = ["testserver", "localhost"]
+MANAGEMENT_MFA_REQUIRED = False
 API_DOCS_ENABLED = True
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

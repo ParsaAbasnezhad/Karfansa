@@ -5,6 +5,9 @@ from .base import ALLOWED_HOSTS, SECRET_KEY, env
 
 DEBUG = False
 
+# Management login is password-only. Ignore any leftover MANAGEMENT_MFA_REQUIRED env.
+MANAGEMENT_MFA_REQUIRED = False
+
 if len(SECRET_KEY) < 50 or SECRET_KEY.startswith(("dev-only", "test-only", "change-me")):
     raise ImproperlyConfigured("DJANGO_SECRET_KEY must be a long, random, production-only value.")
 if not ALLOWED_HOSTS:

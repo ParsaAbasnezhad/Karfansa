@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     "apps.geography",
     # Keep legacy models registered so existing news tables and migration history remain intact.
     "apps.news",
-    "apps.market",
+    "apps.management.apps.ManagementConfig",
     "apps.organization_news",
     "apps.organizations",
     "apps.trade",
@@ -102,6 +102,7 @@ PASSWORD_HASHERS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "apps.management.middleware.ManagementSecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -150,6 +151,14 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
+MANAGEMENT_ALLOWED_HOSTS = env.list("MANAGEMENT_ALLOWED_HOSTS", default=["console.karfansa.ir"])
+MANAGEMENT_TRUSTED_PROXY_IPS = env.list("MANAGEMENT_TRUSTED_PROXY_IPS", default=[])
+# Control Center authentication is email + password only in every environment.
+# The setting is retained for schema/API compatibility but is never enabled.
+MANAGEMENT_MFA_REQUIRED = False
+MANAGEMENT_SESSION_COOKIE_NAME = "karfansa_console_session"
+MANAGEMENT_SESSION_TTL_SECONDS = env.int("MANAGEMENT_SESSION_TTL_SECONDS", default=8 * 3600)
+MANAGEMENT_INACTIVITY_SECONDS = env.int("MANAGEMENT_INACTIVITY_SECONDS", default=30 * 60)
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@karfansa.ir")
 SUPPORT_INBOX_EMAIL = env("SUPPORT_INBOX_EMAIL", default=DEFAULT_FROM_EMAIL)
@@ -194,8 +203,8 @@ CELERY_TASK_SOFT_TIME_LIMIT = 240
 CELERY_TASK_TIME_LIMIT = 300
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BEAT_SCHEDULE = {
-    "refresh-market-data-every-minute": {
-        "task": "apps.market.refresh_quotes",
+    "management-beat-heartbeat": {
+        "task": "apps.management.tasks.beat_heartbeat",
         "schedule": 60.0,
     },
 }

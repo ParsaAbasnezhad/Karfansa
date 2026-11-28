@@ -32,7 +32,6 @@ export const NAV: NavItem[] = [
   { href: '/companies/', label: 'شرکت‌ها', icon: 'building' },
   { href: '/transportation/companies/', label: 'حمل‌ونقل', icon: 'truck' },
   { href: '/individuals/', label: 'فعالان فردی', icon: 'factory' },
-  { href: '/markets/', label: 'بازارها', icon: 'trend', live: true },
   { href: '/provinces/', label: 'استان‌ها', icon: 'pin' },
   { href: '/industries/', label: 'مناطق و صنایع', icon: 'factory' },
   { href: '/trade/', label: 'فرصت‌های تجاری', icon: 'building' },
@@ -71,7 +70,6 @@ export const DRAWER_LINKS: LinkItem[] = [
 
 export const URLS = {
   login: '/login/',
-  markets: '/markets/',
   transportAll: '/transportation/companies',
   registerTransport: '/join',
   analysisAll: '/analysis',

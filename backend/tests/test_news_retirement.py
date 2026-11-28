@@ -20,6 +20,12 @@ def test_news_has_no_admin_or_beat_entry() -> None:
     assert all(
         "apps.news" not in entry["task"] for entry in settings.CELERY_BEAT_SCHEDULE.values()
     )
-    assert settings.CELERY_BEAT_SCHEDULE["refresh-market-data-every-minute"]["task"] == (
-        "apps.market.refresh_quotes"
-    )
+
+
+def test_market_module_is_fully_retired(client) -> None:
+    assert "apps.market" not in settings.INSTALLED_APPS
+    assert "refresh-market-data-every-minute" not in settings.CELERY_BEAT_SCHEDULE
+    assert all("apps.market" not in entry["task"] for entry in settings.CELERY_BEAT_SCHEDULE.values())
+    assert client.get("/api/v1/market/overview/").status_code == 404
+    assert client.get("/api/v1/market/quotes/").status_code == 404
+    assert client.get("/api/v1/market/history/").status_code == 404

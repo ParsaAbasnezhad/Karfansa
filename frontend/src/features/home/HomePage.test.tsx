@@ -5,12 +5,13 @@ import { renderWithProviders } from '@/test/render'
 import { HomePage } from './HomePage'
 
 describe('HomePage (mock API)', () => {
-  it('renders market, transport and analysis sections without news', async () => {
+  it('renders transport and analysis sections without news or financial markets', async () => {
     vi.stubEnv('VITE_USE_MOCK', 'true')
     renderWithProviders(<HomePage />)
     expect(await screen.findByRole('heading', { name: 'شرکت‌های حمل و نقل' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'بازارهای مالی' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'تحلیل و گزارش' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'بازارهای مالی' })).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'اپلیکیشن کارفنسا' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /اخبار/ })).not.toBeInTheDocument()
     await waitFor(() => expect(screen.getAllByRole('article').length).toBeGreaterThan(3))
   })
@@ -33,11 +34,13 @@ describe('HomePage (mock API)', () => {
     expect((await screen.findAllByRole('alert')).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: 'تلاش دوباره' }).length).toBeGreaterThan(0)
     expect(
-      vi
-        .mocked(fetch)
-        .mock.calls.every(([url]) => !/news|ticker|newsletter/.test(String(url))),
+      vi.mocked(fetch).mock.calls.every(([url]) => !/news|ticker|newsletter/.test(String(url))),
     ).toBe(true)
-    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/v1/home/slides/'))).toBe(true)
-    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/v1/trade/opportunities/'))).toBe(true)
+    expect(
+      vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/v1/home/slides/')),
+    ).toBe(true)
+    expect(
+      vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/v1/trade/opportunities/')),
+    ).toBe(true)
   })
 })

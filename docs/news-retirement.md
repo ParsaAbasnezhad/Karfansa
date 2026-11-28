@@ -41,7 +41,7 @@ web-server configuration or sitemap to edit.
 
 The RSS Beat entry and its task implementation have been removed from source.
 Restart Beat and workers when deploying so the persistent Beat schedule is
-reconciled with settings. Preserve the unrelated market refresh entry. Verify
+reconciled with settings. Verify
 the running scheduler and worker queues after deployment; the checked-in
 `backend/celerybeat-schedule` runtime file is not a source of truth and is not
 altered by this change.

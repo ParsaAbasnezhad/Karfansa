@@ -167,6 +167,116 @@ describe('AccountPage', () => {
     expect(screen.queryByRole('button', { name: 'باز کردن منوی پنل' })).not.toBeInTheDocument()
   })
 
+  it('shows the Control Center entry only for authorized administrators', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    const openSpy = vi.fn()
+    vi.stubGlobal('open', openSpy)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input)
+        if (url.includes('/v1/auth/me')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ...profile,
+              first_name: 'سارا',
+              last_name: 'احمدی',
+              province_id: 1,
+              province_name: 'تهران',
+              city_id: 10,
+              city_name: 'تهران',
+              control_center_access: true,
+            }),
+          }
+        }
+        if (url.includes('/v1/business/identities')) {
+          return { ok: true, status: 200, json: async () => ({ identities: [], active: null }) }
+        }
+        if (url.includes('/v1/inquiries/')) {
+          return { ok: true, status: 200, json: async () => ({ results: [], unread_count: 0 }) }
+        }
+        if (url.includes('/v1/support/tickets')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              results: [],
+              count: 0,
+              page: 1,
+              page_size: 4,
+              total_pages: 0,
+              summary: { total: 0, open: 0, waiting_for_user: 0, answered: 0, unread: 0 },
+            }),
+          }
+        }
+        return { ok: true, status: 200, json: async () => ([]) }
+      }),
+    )
+    renderWithProviders(<AccountPage />)
+
+    const entry = await screen.findByRole('button', { name: /ورود به پنل مدیریت کارفانسا/ })
+    expect(entry).toBeVisible()
+    expect(screen.getByText('دسترسی به مرکز مدیریت و کنترل سامانه کارفانسا')).toBeInTheDocument()
+    await userEvent.click(entry)
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/127\.0\.0\.1:5174|console\.karfansa\.ir/),
+      '_blank',
+      'noopener,noreferrer',
+    )
+  })
+
+  it('hides the Control Center entry for ordinary users', async () => {
+    vi.stubEnv('VITE_USE_MOCK', 'false')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input)
+        if (url.includes('/v1/auth/me')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ...profile,
+              first_name: 'سارا',
+              last_name: 'احمدی',
+              province_id: 1,
+              province_name: 'تهران',
+              city_id: 10,
+              city_name: 'تهران',
+              control_center_access: false,
+            }),
+          }
+        }
+        if (url.includes('/v1/business/identities')) {
+          return { ok: true, status: 200, json: async () => ({ identities: [], active: null }) }
+        }
+        if (url.includes('/v1/inquiries/')) {
+          return { ok: true, status: 200, json: async () => ({ results: [], unread_count: 0 }) }
+        }
+        if (url.includes('/v1/support/tickets')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              results: [],
+              count: 0,
+              page: 1,
+              page_size: 4,
+              total_pages: 0,
+              summary: { total: 0, open: 0, waiting_for_user: 0, answered: 0, unread: 0 },
+            }),
+          }
+        }
+        return { ok: true, status: 200, json: async () => ([]) }
+      }),
+    )
+    renderWithProviders(<AccountPage />)
+    expect(await screen.findByText('خوش آمدید، سارا احمدی')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /ورود به پنل مدیریت کارفانسا/ })).not.toBeInTheDocument()
+  })
+
   it('shows a login prompt when there is no authenticated session', async () => {
     vi.stubEnv('VITE_USE_MOCK', 'false')
     vi.stubGlobal(

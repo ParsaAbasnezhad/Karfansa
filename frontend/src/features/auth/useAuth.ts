@@ -11,6 +11,8 @@ export interface AuthUser {
   province_name: string | null
   city_id: number | null
   city_name: string | null
+  /** Backend-authorized Control Center eligibility (UX only; not a security boundary). */
+  control_center_access?: boolean
 }
 
 export const useAuth = () =>

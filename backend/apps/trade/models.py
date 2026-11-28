@@ -151,6 +151,12 @@ class TradeOpportunity(models.Model):
         editable=False,
         verbose_name="تاریخ انتشار",
     )
+    scheduled_for = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="زمان‌بندی انتشار",
+    )
     valid_until = models.DateField(
         null=True,
         blank=True,

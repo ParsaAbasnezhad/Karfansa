@@ -58,3 +58,17 @@ def test_production_requires_allowed_hosts() -> None:
 
     assert result.returncode != 0
     assert "DJANGO_ALLOWED_HOSTS" in result.stderr
+
+
+def test_production_forces_password_only_management_auth() -> None:
+    result = _manage(
+        "shell",
+        "-c",
+        "from django.conf import settings; "
+        "assert settings.MANAGEMENT_MFA_REQUIRED is False; "
+        "print('password-only')",
+        env=_production_env(MANAGEMENT_MFA_REQUIRED="true"),
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "password-only" in result.stdout

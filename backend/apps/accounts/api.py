@@ -35,8 +35,24 @@ from apps.accounts.services import (
 from apps.core.errors import ApiError
 from apps.geography.models import City, Province
 from apps.intents.services import claim_guest_intent
+from apps.management.access import has_control_center_access
 
 router = Router()
+
+
+def _profile_out(user) -> ProfileOut:  # type: ignore[no-untyped-def]
+    return ProfileOut(
+        email=user.email,
+        phone=user.phone,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        date_joined=user.date_joined,
+        province_id=user.province_id,
+        province_name=user.province.name_fa if user.province_id else None,
+        city_id=user.city_id,
+        city_name=user.city.name_fa if user.city_id else None,
+        control_center_access=has_control_center_access(user),
+    )
 
 
 @router.get("/csrf", response=MessageOut)
@@ -137,21 +153,7 @@ def verify_code(request: HttpRequest, payload: VerifyIn) -> UserOut:
 def me(request: HttpRequest) -> Status[ProfileOut | dict[str, str]]:
     if not request.user.is_authenticated:
         return Status(401, {"message": "وارد حساب کاربری نشده‌اید."})
-    user = request.user
-    return Status(
-        200,
-        ProfileOut(
-            email=user.email,
-            phone=user.phone,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            date_joined=user.date_joined,
-            province_id=user.province_id,
-            province_name=user.province.name_fa if user.province_id else None,
-            city_id=user.city_id,
-            city_name=user.city.name_fa if user.city_id else None,
-        ),
-    )
+    return Status(200, _profile_out(request.user))
 
 
 @router.patch("/me", response={200: ProfileOut, 401: MessageOut})
@@ -179,20 +181,7 @@ def update_profile(
     user.province = province
     user.city = city
     user.save(update_fields=["first_name", "last_name", "province", "city"])
-    return Status(
-        200,
-        ProfileOut(
-            email=user.email,
-            phone=user.phone,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            date_joined=user.date_joined,
-            province_id=user.province_id,
-            province_name=province.name_fa,
-            city_id=user.city_id,
-            city_name=city.name_fa,
-        ),
-    )
+    return Status(200, _profile_out(user))
 
 
 @router.post("/logout", response=MessageOut)

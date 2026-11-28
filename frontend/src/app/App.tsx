@@ -17,7 +17,6 @@ import { SearchPage } from '@/features/search/SearchPage'
 import { AboutPage } from '@/features/about/AboutPage'
 import { ContactPage } from '@/features/about/ContactPage'
 import { AuthPage } from '@/features/auth/AuthPage'
-import { MarketsPage } from '@/features/markets/MarketsPage'
 import { AccountPage } from '@/features/account/AccountPage'
 import { BusinessDashboardPage } from '@/features/business/BusinessDashboardPage'
 import { JoinPage } from '@/features/business/JoinPage'
@@ -99,7 +98,6 @@ const pageTitles: { paths: string[]; title: string }[] = [
   { paths: ['/business'], title: 'داشبورد کسب‌وکار' },
   { paths: ['/about'], title: 'درباره ما' },
   { paths: ['/contact'], title: 'تماس با ما' },
-  { paths: ['/markets'], title: 'بازارها' },
   { paths: ['/analysis', '/analysis/:slug'], title: 'تحلیل و گزارش' },
   { paths: ['/provinces', '/provinces/:slug'], title: 'استان‌ها' },
   { paths: ['/industries'], title: 'مناطق و صنایع' },
@@ -183,7 +181,6 @@ function AppRoutes() {
             <Route index element={<HomePage />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="contact" element={<ContactPage />} />
-            <Route path="markets" element={<MarketsPage />} />
             <Route
               path="analysis"
               element={

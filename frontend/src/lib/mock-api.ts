@@ -17,58 +17,6 @@ const str = (v: QueryParams[string], fallback: string) =>
 const num = (v: QueryParams[string], fallback: number) =>
   v == null || v === '' ? fallback : Number(v)
 
-function marketQuotes() {
-  const categories: Record<string, string> = {
-    usd: 'exchange',
-    gold18: 'gold',
-    tedpix: 'stock',
-    brent: 'oil',
-  }
-  return data.markets.map((market) => {
-    const spark = market.spark ?? [market.value]
-    const min = Math.min(...spark)
-    const max = Math.max(...spark)
-    const history = spark.map((point, index) => ({
-      value: String(
-        Number((market.value * (0.99 + ((point - min) / (max - min || 1)) * 0.02)).toFixed(2)),
-      ),
-      change_percent: String(market.change),
-      observed_at: new Date(Date.now() - (spark.length - index - 1) * 3600_000).toISOString(),
-    }))
-    const category = categories[market.id] ?? 'exchange'
-    return {
-      category,
-      symbol: market.id,
-      name: market.title,
-      value: String(market.value),
-      currency: market.subtitle.includes('دلار') ? 'USD' : 'IRR',
-      unit: market.subtitle,
-      change_percent: String(market.change),
-      source: 'نمونه',
-      observed_at: history.at(-1)?.observed_at ?? new Date().toISOString(),
-      is_featured: true,
-      history,
-    }
-  })
-}
-
-function marketOverview() {
-  return {
-    results: marketQuotes(),
-    provider: {
-      name: 'StreamData',
-      website_url: 'https://streamdata.ir',
-      rest_base_url: '',
-      websocket_url: '',
-      rest_requests_per_minute: 60,
-      websocket_connections: 5,
-      subscription_pricing: '',
-      coverage: ['دلار و طلا در بازار ایران', 'شاخص‌ها و سهام بورس تهران', 'نفت و کالاهای جهانی'],
-      configured: false,
-    },
-  }
-}
-
 function search(query: string): SearchResponse {
   const q = query.trim()
   const pool: SearchResult[] = [
@@ -207,28 +155,6 @@ const routes: Record<string, (p: QueryParams) => unknown> = {
     }
     return [...authors.values()]
   },
-  '/v1/market/overview/': () => marketOverview(),
-  '/v1/market/quotes/': (p) => {
-    const category = str(p.category, '')
-    return { results: marketQuotes().filter((quote) => !category || quote.category === category) }
-  },
-  '/v1/market/history/': (p) => {
-    const category = str(p.category, '')
-    const symbol = str(p.symbol, '')
-    const quote = marketQuotes().find(
-      (item) => item.category === category && item.symbol === symbol,
-    )
-    if (!quote) return { category, symbol, name: symbol, currency: '', unit: '', results: [] }
-    return {
-      category: quote.category,
-      symbol: quote.symbol,
-      name: quote.name,
-      currency: quote.currency,
-      unit: quote.unit,
-      results: quote.history.slice(-num(p.limit, 100)),
-    }
-  },
-  '/markets/': () => ({ results: data.markets }),
   '/transport-companies/': (p) => {
     const type = str(p.type, 'all')
     const list =
